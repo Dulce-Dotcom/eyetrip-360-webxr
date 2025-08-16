@@ -1,0 +1,36 @@
+{
+  "name": "eyetrip-360-webxr",
+  "version": "1.0.0",
+  "description": "360° WebXR Experience with APK support",
+  "main": "src/js/app.js",
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production",
+    "build:android": "npm run build && npx cap sync android && npx cap build android",
+    "serve:android": "npx cap run android",
+    "emulator": "npx cap run android --target emulator",
+    "deploy:siteground": "npm run build && rsync -avz --delete dist/ user@server:/public_html/"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.0.0",
+    "@capacitor/app": "^5.0.0",
+    "@capacitor/core": "^5.0.0",
+    "@capacitor/splash-screen": "^5.0.0",
+    "@capacitor/status-bar": "^5.0.0",
+    "three": "^0.128.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.0.0",
+    "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^6.8.1",
+    "css-minimizer-webpack-plugin": "^5.0.1",
+    "file-loader": "^6.2.0",
+    "html-webpack-plugin": "^5.5.3",
+    "style-loader": "^3.3.3",
+    "terser-webpack-plugin": "^5.3.9",
+    "webpack": "^5.88.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^4.15.1",
+    "workbox-webpack-plugin": "^7.0.0"
+  }
+}

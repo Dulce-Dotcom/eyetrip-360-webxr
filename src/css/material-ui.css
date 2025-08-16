@@ -1,0 +1,142 @@
+:root {
+    --md-primary: #1976d2;
+    --md-primary-dark: #115293;
+    --md-secondary: #ff4081;
+    --md-surface: rgba(33, 33, 33, 0.95);
+    --md-on-surface: #ffffff;
+    --md-elevation-1: 0 2px 4px rgba(0,0,0,0.2);
+    --md-elevation-2: 0 4px 8px rgba(0,0,0,0.3);
+    --md-elevation-3: 0 8px 16px rgba(0,0,0,0.4);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    overflow: hidden;
+    background: #000;
+}
+
+.md-button {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--md-on-surface);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.md-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.md-button:active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.md-button.md-primary {
+    background: var(--md-primary);
+}
+
+.md-button.md-primary:hover {
+    background: var(--md-primary-dark);
+}
+
+.md-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+}
+
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.md-top-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: var(--md-surface);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    box-shadow: var(--md-elevation-2);
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+.md-top-bar.hidden {
+    transform: translateY(-100%);
+}
+
+.md-title {
+    flex: 1;
+    color: var(--md-on-surface);
+    font-size: 20px;
+    font-weight: 500;
+    margin-left: 16px;
+}
+
+.md-controls {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--md-surface);
+    backdrop-filter: blur(10px);
+    border-radius: 28px;
+    padding: 8px 16px;
+    display: flex;
+    gap: 8px;
+    box-shadow: var(--md-elevation-3);
+    transition: transform 0.3s ease;
+    z-index: 10;
+}
+
+.md-controls.hidden {
+    transform: translateX(-50%) translateY(200%);
+}
+
+.md-fab {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--md-secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    box-shadow: var(--md-elevation-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    z-index: 10;
+}
+
+.md-fab:hover {
+    transform: scale(1.05);
+    box-shadow: var(--md-elevation-3), 0 0 20px rgba(255, 64, 129, 0.3);
+}

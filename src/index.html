@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1976d2">
+    <title>EyeTrip Images - 360° Experience</title>
+    <link rel="manifest" href="/manifest.json">
+    <!-- WebXR Polyfill for broader support - load first -->
+    <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    <script>
+        // Initialize WebXR polyfill immediately
+        if (window.WebXRPolyfill) {
+            console.log('WebXR Polyfill loaded and initialized');
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/material-ui.css">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div class="md-ui-layer">
+            <div class="md-top-bar" id="topBar">
+                <button class="md-button" id="menuBtn">
+                    <span class="material-icons">menu</span>
+                </button>
+                <div class="md-title">EyeTrip Images - 360° Experience</div>
+                <button class="md-button" id="settingsBtn">
+                    <span class="material-icons">settings</span>
+                </button>
+                <style>
+                    #settingsBtn { display: none !important; }
+                </style>
+            </div>
+
+            <div class="md-scene-selector hidden" id="sceneSelector">
+                <!-- Scene items will be generated dynamically -->
+            </div>
+
+            <div class="md-controls" id="controls">
+                <button class="md-button" id="prevBtn">
+                    <span class="material-icons">skip_previous</span>
+                </button>
+                <button class="md-button md-primary" id="playBtn">
+                    <span class="material-icons">play_arrow</span>
+                </button>
+                <button class="md-button" id="nextBtn">
+                    <span class="material-icons">skip_next</span>
+                </button>
+                <button class="md-button" id="fullscreenBtn">
+    <!-- Debug overlay for sphere/texture status -->
+    <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
+                    <span class="material-icons">fullscreen</span>
+                </button>
+                <!-- VRButton from Three.js will be injected by PanoramaPlayer.js -->
+            </div>
+
+            <div class="md-vr-indicator" id="vrIndicator">
+                VR Mode Active
+            </div>
+
+            <div class="md-loading" id="loadingOverlay">
+                <div class="md-spinner"></div>
+                <div>Loading 360° Experience...</div>
+            </div>
+
+            <div class="webxr-badge" id="webxrBadge"></div>
+
+            <button class="md-fab" id="fabBtn">
+                <span class="material-icons">360</span>
+            </button>
+            <style>
+                #fabBtn { display: none !important; }
+            </style>
+        </div>
+    </div>
+
+    <!-- Webpack will inject the correct bundled script automatically. -->
+</body>
+</html>
