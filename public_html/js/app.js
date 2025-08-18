@@ -1,4 +1,4 @@
-// src/js/app.js - Main Application Entry Point
+// js/app.js - Main Application Entry Point
 import { PanoramaPlayer } from './modules/PanoramaPlayer.js';
 import { UIController } from './modules/UIController.js';
 import { SceneManager } from './modules/SceneManager.js';

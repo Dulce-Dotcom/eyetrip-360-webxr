@@ -1,0 +1,5 @@
+body     { color: black; font-size: large; font-family: Verdana, Trebuchet, Helvetica, Geneva, Arial, SunSans-Regular, sans-serif; background-color: white }
+p     { font-size: medium; font-weight: bold }
+.big { font-size: large; font-weight: bold; }
+.sub  { font-size: small; font-style: italic; font-weight: bold }
+.hop    { font-size: x-small; font-weight: normal; font-family: Comic Sans, Verdana, Trebuchet, Helvetica, Geneva, Arial, SunSans-Regular, sans-serif}

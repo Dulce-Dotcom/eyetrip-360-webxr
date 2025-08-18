@@ -6,7 +6,7 @@
 echo "🎨 Creating icons for EyeTrip 360..."
 
 # Create icons directory
-mkdir -p src/assets/icons
+mkdir -p assets/icons
 
 # Check if ImageMagick is installed
 if command -v convert &> /dev/null; then
@@ -21,7 +21,7 @@ if command -v convert &> /dev/null; then
             -font Arial-Bold \
             -pointsize $((size/3)) \
             label:"360°" \
-            src/assets/icons/icon-${size}x${size}.png
+            assets/icons/icon-${size}x${size}.png
         echo "✅ Created icon-${size}x${size}.png"
     done
     
@@ -35,7 +35,7 @@ from PIL import Image, ImageDraw, ImageFont
 import sys
 
 # Create icons directory
-os.makedirs('src/assets/icons', exist_ok=True)
+os.makedirs('assets/icons', exist_ok=True)
 
 # Icon sizes
 sizes = [72, 96, 128, 144, 192, 512]
@@ -91,7 +91,7 @@ for size in sizes:
     draw.text((vr_x, vr_y), vr_text, fill=text_color)
     
     # Save image
-    filename = f'src/assets/icons/icon-{size}x{size}.png'
+    filename = f'assets/icons/icon-{size}x{size}.png'
     img.save(filename, 'PNG')
     print(f'✅ Created {filename}')
 
@@ -110,7 +110,7 @@ else
 </head>
 <body>
     <h1>Icon Generator for EyeTrip 360</h1>
-    <p>Right-click each icon and save as the specified filename in src/assets/icons/</p>
+    <p>Right-click each icon and save as the specified filename in assets/icons/</p>
     
     <script>
         const sizes = [72, 96, 128, 144, 192, 512];
@@ -178,7 +178,7 @@ fi
 
 # Create a simple SVG icon as fallback
 echo "Creating SVG icon as additional option..."
-cat > src/assets/icons/icon.svg << 'SVG'
+cat > assets/icons/icon.svg << 'SVG'
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" fill="#1976d2"/>
   <circle cx="256" cy="256" r="200" fill="none" stroke="white" stroke-width="20"/>

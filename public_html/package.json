@@ -2,7 +2,7 @@
   "name": "eyetrip-360-webxr",
   "version": "1.0.0",
   "description": "360° WebXR Experience with APK support",
-  "main": "src/js/app.js",
+  "main": "js/app.js",
   "scripts": {
     "dev": "webpack serve --mode development",
     "build": "webpack --mode production",

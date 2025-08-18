@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1976d2">
     <title>EyeTrip Images - 360° Experience</title>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>
@@ -21,6 +21,9 @@
 </head>
 <body>
     <div id="container">
+        <div id="videoProgressBar" style="position:fixed;top:0;left:0;width:100vw;height:6px;background:#eee;z-index:99999;display:none;">
+            <div id="videoProgress" style="height:100%;width:0;background:#1976d2;transition:width 0.2s;"></div>
+        </div>
         <div id="canvas-container"></div>
         
         <div class="md-ui-layer">

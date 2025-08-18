@@ -44,7 +44,7 @@ npm run deploy:siteground
 
 ## Adding Videos
 
-Place your 360° videos in `src/assets/videos/` and update the scenes array in `src/js/modules/SceneManager.js`.
+Place your 360° videos in `assets/videos/` and update the scenes array in `js/modules/SceneManager.js`.
 
 ### Video Optimization
 ```bash

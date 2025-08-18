@@ -12,7 +12,7 @@ module.exports = (env, argv) => {
   
   return {
     mode,
-    entry: './src/js/app.js',
+    entry: './js/app.js',
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: 'js/[name].[contenthash].js',
@@ -47,31 +47,31 @@ module.exports = (env, argv) => {
         patterns: [
           // Only copy specific small files, not everything
           { 
-            from: 'src/assets/videos/processed/**/info.json',
+            from: 'assets/videos/processed/**/info.json',
             to: 'assets/videos/processed/[path][name][ext]',
             noErrorOnMissing: true,
             context: 'src'
           },
           { 
-            from: 'src/assets/videos/processed/**/*_preview.mp4',
+            from: 'assets/videos/processed/**/*_preview.mp4',
             to: 'assets/videos/processed/[path][name][ext]',
             noErrorOnMissing: true,
             context: 'src'
           },
           { 
-            from: 'src/assets/videos/processed/**/*_720p.mp4',
+            from: 'assets/videos/processed/**/*_720p.mp4',
             to: 'assets/videos/processed/[path][name][ext]',
             noErrorOnMissing: true,
             context: 'src'
           },
           { 
-            from: 'src/assets/videos/processed/**/*_thumb.jpg',
+            from: 'assets/videos/processed/**/*_thumb.jpg',
             to: 'assets/videos/processed/[path][name][ext]',
             noErrorOnMissing: true,
             context: 'src'
           },
           { 
-            from: 'src/assets/thumbnails', 
+            from: 'assets/thumbnails', 
             to: 'assets/thumbnails',
             noErrorOnMissing: true,
             globOptions: {
@@ -79,7 +79,7 @@ module.exports = (env, argv) => {
             }
           },
           { 
-            from: 'src/assets/icons', 
+            from: 'assets/icons', 
             to: 'assets/icons',
             noErrorOnMissing: true 
           },

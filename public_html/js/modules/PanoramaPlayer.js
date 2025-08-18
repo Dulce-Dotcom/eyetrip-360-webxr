@@ -102,7 +102,24 @@ export class PanoramaPlayer {
             }
             this.video.src = url;
             this.video.load();
+            // Show progress bar
+            const progressBar = document.getElementById('videoProgressBar');
+            const progressFill = document.getElementById('videoProgress');
+            if (progressBar && progressFill) {
+                progressBar.style.display = 'block';
+                progressFill.style.width = '0';
+            }
+            // Listen for progress events
+            this.video.addEventListener('progress', () => {
+                if (this.video.buffered.length > 0 && this.video.duration > 0) {
+                    const bufferedEnd = this.video.buffered.end(this.video.buffered.length - 1);
+                    const percent = Math.min(100, Math.round((bufferedEnd / this.video.duration) * 100));
+                    if (progressFill) progressFill.style.width = percent + '%';
+                }
+            });
+            // Hide progress bar when loaded
             this.video.addEventListener('loadeddata', () => {
+                if (progressBar) progressBar.style.display = 'none';
                 this.texture = new THREE.VideoTexture(this.video);
                 this.texture.minFilter = THREE.LinearFilter;
                 this.texture.magFilter = THREE.LinearFilter;
@@ -118,6 +135,7 @@ export class PanoramaPlayer {
                 resolve();
             });
             this.video.addEventListener('error', (e) => {
+                if (progressBar) progressBar.style.display = 'none';
                 reject(e);
             });
         });

@@ -55,11 +55,30 @@ export class SceneManager {
     }
     
     async loadScene(index) {
-    if (index < 0 || index >= this.scenes.length) return;
-    const scene = this.scenes[index];
+        if (index < 0 || index >= this.scenes.length) return;
+        const scene = this.scenes[index];
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const progressBar = document.getElementById('videoProgressBar');
+        const progressFill = document.getElementById('videoProgress');
         try {
+            if (loadingOverlay) loadingOverlay.style.display = 'block';
+            if (progressBar && progressFill) {
+                progressBar.style.display = 'block';
+                progressFill.style.width = '0';
+            }
             const videoUrl = this.getVideoUrl(scene);
             console.log(`Loading video: ${videoUrl}`);
+
+            // Listen for video progress during initial load
+            if (this.player && this.player.video) {
+                this.player.video.addEventListener('progress', () => {
+                    if (this.player.video.buffered.length > 0 && this.player.video.duration > 0) {
+                        const bufferedEnd = this.player.video.buffered.end(this.player.video.buffered.length - 1);
+                        const percent = Math.min(100, Math.round((bufferedEnd / this.player.video.duration) * 100));
+                        if (progressFill) progressFill.style.width = percent + '%';
+                    }
+                });
+            }
 
             await this.player.loadVideo(videoUrl);
             this.updateSceneUI();
@@ -70,9 +89,8 @@ export class SceneManager {
             console.error('Failed to load scene:', error);
             alert(`Failed to load video: ${this.getVideoUrl(scene)}`);
         } finally {
-            if (loadingOverlay) {
-                loadingOverlay.style.display = 'none';
-            }
+            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            if (progressBar) progressBar.style.display = 'none';
         }
     }
     
