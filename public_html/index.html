@@ -2,30 +2,128 @@
 
 	<head>
 		<meta http-equiv="content-type" content="text/html;charset=iso-8859-1">
-		<title>David Aughenbaugh</title>
+	<meta charset="utf-8">
+	<title>EyeTrip 360&#176; Experience - Coming Soon -- 2025</title>
 		<meta name="description" content="This is the future site of EyeTripVR">
 		<meta name="KEYWORDS" content="David Aughenbaugh, foggybog, EyeTrip, VR, ">
 		<meta name="note" content="Radiation will frizz your heirs.">
-		<link href="style1.css" rel="stylesheet" type="text/css" media="all">
+	<link href="style1.css" rel="stylesheet" type="text/css" media="all">
+	<link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
 	</head>
-		<body>
-			<table width="166" border="0" cellspacing="10" cellpadding="0" align="center">
-				<tr>
-					<td width="290"></td>
-					<td></td>
-				</tr>
-				<tr>
-					<td nowrap width="280"><span class="big">This is the place</span>
-					<p></p>
-					<p></p>
-				</td>
-					<td><img src="images/plane_1b.jpg" alt="" height="360" width="269" border="0"></td>
-				</tr>
-				<tr>
-				<td colspan="2"><span class="hop">looking for <a href="http://www.toonopedia.com/hoppity.htm" target="_blank">Hoppity Hooper</a>, the famous frog from Foggybog, Wisconsin? Good for you</span></td>
-			</tr>
-			</table>
-		<a name="Anchor-27044" id="Anchor-27044"></a>
-	</body>
+			<body style="margin:0; padding:0; min-height:100vh; background:#111;">
+				<!-- Parallax background with cycling images -->
+				<div id="parallax-bg" style="position:fixed; inset:0; z-index:-1; overflow:hidden;">
+					<img id="bg-img1" src="http://eyetripimages.com/wp-content/uploads/2025/02/5169_1202pGvPc1GlGvPc1GaPAll14kq8-scaled.jpg" alt="Neuphoria Art" style="width:110vw; height:110vh; object-fit:cover; filter:brightness(0.6) blur(2px); position:absolute; left:0; top:0; transition:opacity 1.5s, transform 0.5s; opacity:1;">
+					<img id="bg-img2" src="" alt="Gallery Art" style="width:110vw; height:110vh; object-fit:cover; filter:brightness(0.6) blur(2px); position:absolute; left:0; top:0; transition:opacity 1.5s, transform 0.5s; opacity:0;">
+				</div>
+				<div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh;">
+					<h1 style="color:#fff; font-size:3rem; font-weight:700; margin-bottom:1.5rem; text-shadow:0 2px 16px #000;">EyeTrip 360&#176; Experience</h1>
+					<h2 style="color:#fff; font-size:2rem; font-weight:400; margin-bottom:1.5rem; text-shadow:0 2px 12px #000;">Coming Soon</h2>
+					<p style="color:#fff; font-size:1.25rem; margin-bottom:2rem; text-shadow:0 1px 8px #000; text-align:center;">A new immersive art experience is launching soon.<br>Sign up to be notified!</p>
+					<form id="notify-form" action="https://formspree.io/f/xgvzbgvq" method="POST" style="background:rgba(0,0,0,0.7); padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px #000; display:flex; flex-direction:column; align-items:center; gap:1rem; max-width:340px; width:100%;">
+						<input type="email" name="email" placeholder="Your email address" required style="width:100%; padding:0.75rem 1rem; border-radius:6px; border:none; font-size:1rem; margin-bottom:1rem;">
+						<button type="submit" style="width:100%; background:#1976d2; color:#fff; font-size:1.1rem; font-weight:500; border:none; border-radius:6px; padding:0.75rem 1rem; cursor:pointer; box-shadow:0 2px 8px #1976d2;">Notify Me</button>
+					</form>
+					<div id="form-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#222; color:#fff; padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px #000; z-index:1000; font-size:1.2rem; text-align:center;">
+    Thank you! You'll be notified when EyeTrip 360&#176; launches.
+    <br><br>
+    <button onclick="document.getElementById('form-popup').style.display='none'" style="margin-top:1rem; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.2rem; font-size:1rem; cursor:pointer;">Close</button>
+</div>
+					<div style="margin-top:2rem; color:#fff; font-size:0.95rem; opacity:0.7;">Art by David Aughenbaugh &bull; <a href='https://eyetripimages.com/' style='color:#fff;text-decoration:underline;' target='_blank'>eyetripimages.com</a></div>
+				</div>
+				<script>
+				// Smooth parallax and crossfade slideshow
+				const bgImages = [
+					'http://eyetripimages.com/wp-content/uploads/2025/02/5169_1202pGvPc1GlGvPc1GaPAll14kq8-scaled.jpg',
+					'https://eyetripimages.com/wp-content/uploads/2025/02/0127Gv0957Gv4kq8-scaled.jpg',
+					'https://eyetripimages.com/wp-content/uploads/2025/02/0421c2GaGv4kq8-scaled.jpg',
+					'https://eyetripimages.com/wp-content/uploads/2025/02/1407bYpGsGs4kq8-scaled.jpg'
+				];
+				let bgIdx = 0;
+				let active = 1;
+				const bgImg1 = document.getElementById('bg-img1');
+				const bgImg2 = document.getElementById('bg-img2');
+				// Improved crossfade: only fade in the incoming image, never flash outgoing
+				// Improved crossfade: only update src of incoming image before fade-in, never update outgoing image src until it becomes incoming
+				// Crossfade waits for image to load before fading in
+				function crossfadeBg(nextIdx) {
+					const fadeInImg = active === 1 ? bgImg2 : bgImg1;
+					const fadeOutImg = active === 1 ? bgImg1 : bgImg2;
+					// Prepare fade-in image
+					fadeInImg.style.transition = 'none';
+					fadeInImg.style.opacity = 0;
+					// Only start fade when image is loaded
+					fadeInImg.onload = function() {
+						void fadeInImg.offsetWidth;
+						fadeInImg.style.transition = 'opacity 1.5s, transform 0.5s';
+						fadeInImg.style.opacity = 1;
+						fadeOutImg.style.transition = 'opacity 1.5s, transform 0.5s';
+						fadeOutImg.style.opacity = 0;
+						setTimeout(() => {
+							active = active === 1 ? 2 : 1;
+							bgIdx = nextIdx;
+						}, 1500);
+					};
+					fadeInImg.src = bgImages[nextIdx];
+				}
+				setInterval(() => crossfadeBg((bgIdx + 1) % bgImages.length), 7000);
 
+				// Smooth parallax using requestAnimationFrame
+				let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+				function setParallaxTarget(x, y) {
+					targetX = Math.max(-20, Math.min(20, x));
+					targetY = Math.max(-12, Math.min(12, y));
+				}
+				function animateParallax() {
+					currentX += (targetX - currentX) * 0.08;
+					currentY += (targetY - currentY) * 0.08;
+					const t = `translate(${-currentX}px, ${-currentY}px) scale(1.05)`;
+					bgImg1.style.transform = t;
+					bgImg2.style.transform = t;
+					requestAnimationFrame(animateParallax);
+				}
+				animateParallax();
+				document.addEventListener('mousemove', function(e) {
+					const x = (e.clientX / window.innerWidth - 0.5) * 32;
+					const y = (e.clientY / window.innerHeight - 0.5) * 18;
+					setParallaxTarget(x, y);
+				});
+				window.addEventListener('deviceorientation', function(e) {
+					if (e.gamma !== null && e.beta !== null) {
+						const x = e.gamma * 1.2;
+						const y = (e.beta - 45) * 1.0;
+						setParallaxTarget(x, y);
+					}
+				});
+				const notifyForm = document.getElementById('notify-form');
+const formPopup = document.getElementById('form-popup');
+if (notifyForm) {
+  notifyForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(notifyForm);
+    fetch(notifyForm.action, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'Accept': 'application/json'
+      }
+    })
+    .then(response => {
+      if (response.ok) {
+        formPopup.style.display = 'block';
+        notifyForm.reset();
+      } else {
+        response.json().then(data => {
+          alert(data.error || 'Oops! Something went wrong.');
+        });
+      }
+    })
+    .catch(() => {
+      alert('Oops! Something went wrong.');
+    });
+  });
+}
+				</script>
+				</div>
+			</body>
 </html>

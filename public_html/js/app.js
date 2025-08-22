@@ -1,4 +1,5 @@
 // js/app.js - Main Application Entry Point
+console.log('[DEBUG] app.js loaded');
 import { PanoramaPlayer } from './modules/PanoramaPlayer.js';
 import { UIController } from './modules/UIController.js';
 import { SceneManager } from './modules/SceneManager.js';
@@ -82,7 +83,7 @@ class App {
             console.log('🎮 Setting up UI controls...');
             this.ui = new UIController(this.player, this.sceneManager, this.xrHandler);
             
-            // Step 5: Load the first scene
+            // Step 5: Load the first scene automatically (restored)
             console.log('📦 Loading initial scene...');
             await this.sceneManager.loadScene(0);
             

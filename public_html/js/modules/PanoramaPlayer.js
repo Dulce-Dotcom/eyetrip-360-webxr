@@ -1,35 +1,48 @@
 // --- Three.js WebXR VR Panorama Player ---
 // Refactored for official VRButton usage and best practices
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
 import { VRButton } from '../vendor/VRButton.js';
 import { XRControllerModelFactory } from '../vendor/XRControllerModelFactory.js';
 
 export class PanoramaPlayer {
+    // Play video by index (always reloads, even if same)
+    playVideoByIndex(idx) {
+        if (!this.videosList || idx < 0 || idx >= this.videosList.length) return;
+        this.currentVideoIndex = idx;
+        this.loadVideo(this.videosList[idx]);
+    }
     constructor(container) {
-        this.container = container;
-        this.scene = null;
-        this.camera = null;
-        this.renderer = null;
-        this.sphere = null;
-        this.video = null;
-        this.texture = null;
-        this.isPlaying = false;
-        // Camera controls
-        this.lon = 0;
-        this.lat = 0;
-        this.phi = 0;
-        this.theta = 0;
-        this.distance = 0.5;
+    this.container = container;
+    this.scene = null;
+    this.camera = null;
+    this.renderer = null;
+    this.sphere = null;
+    this.video = null;
+    this.texture = null;
+    this.isPlaying = false;
+    // Camera controls
+    this.lon = 0;
+    this.lat = 0;
+    this.phi = 0;
+    this.theta = 0;
+    this.distance = 0.5;
     this.controllers = [];
     this.controllerGrips = [];
     this.controllerModels = [];
     this.controllerRays = [];
+    window.panoramaPlayer = this; // Ensure global access
     this.init();
     }
 
     // Initialize Three.js scene, camera, renderer, and VRButton
     init() {
         if (!this.container) throw new Error('Container element is required');
+        // Video playlist (up to 4 videos)
+        this.videosList = [
+            'assets/videos/eyetrip-test-video2.mp4',
+            // Add more video paths here as needed
+        ];
+        this.currentVideoIndex = 0;
         this.setupScene();
         this.setupCamera();
         this.setupRenderer();
@@ -39,7 +52,6 @@ export class PanoramaPlayer {
         const controlsBar = document.getElementById('controls');
         if (controlsBar) {
             const vrBtn = VRButton.createButton(this.renderer);
-            vrBtn.classList.add('md-button');
             vrBtn.style.position = 'static';
             vrBtn.style.marginLeft = '8px';
             vrBtn.style.width = 'auto';
@@ -91,17 +103,35 @@ export class PanoramaPlayer {
     // Load video and create texture
     async loadVideo(url) {
         return new Promise((resolve, reject) => {
-            if (!this.video) {
-                this.video = document.createElement('video');
-                this.video.crossOrigin = 'anonymous';
-                this.video.loop = true;
-                this.video.muted = true;
-                this.video.setAttribute('playsinline', '');
-                this.video.style.display = 'none';
-                document.body.appendChild(this.video);
+            // Remove previous video element if it exists
+            if (this.video && this.video instanceof HTMLVideoElement) {
+                this.video.pause();
+                this.video.src = '';
+                this.video.removeAttribute('src');
+                this.video.load();
+                if (this.video.parentNode) {
+                    this.video.parentNode.removeChild(this.video);
+                }
+                this.video = null;
             }
+            // Create new video element
+            this.video = document.createElement('video');
+            document.body.appendChild(this.video);
+            // Always set video properties before use
+            this.video.crossOrigin = 'anonymous';
+            this.video.loop = false;
+            this.video.muted = false; // Ensure audio is not muted by default
+            this.video.setAttribute('playsinline', '');
+            this.video.style.display = 'none';
+            console.log('[DEBUG] loadVideo called with:', url);
             this.video.src = url;
             this.video.load();
+            // Force play after load
+            this.video.play().then(() => {
+                console.log('[DEBUG] video.play() succeeded');
+            }).catch((err) => {
+                console.warn('[DEBUG] video.play() failed:', err);
+            });
             // Show progress bar
             const progressBar = document.getElementById('videoProgressBar');
             const progressFill = document.getElementById('videoProgress');
@@ -115,26 +145,40 @@ export class PanoramaPlayer {
                     const bufferedEnd = this.video.buffered.end(this.video.buffered.length - 1);
                     const percent = Math.min(100, Math.round((bufferedEnd / this.video.duration) * 100));
                     if (progressFill) progressFill.style.width = percent + '%';
+                    console.log('[Video Progress Event] percent:', percent);
                 }
             });
-            // Hide progress bar when loaded
+            // Fallback: if loadeddata fires before any progress, set bar to 100%
             this.video.addEventListener('loadeddata', () => {
-                if (progressBar) progressBar.style.display = 'none';
+                console.log('[DEBUG] loadeddata fired, video duration:', this.video.duration, 'currentTime:', this.video.currentTime, 'video:', this.video);
+                console.log('[DEBUG] video.muted:', this.video.muted, 'video.volume:', this.video.volume);
+                if (progressBar && progressFill) {
+                    progressFill.style.width = '100%';
+                    setTimeout(() => { progressBar.style.display = 'none'; }, 400);
+                }
                 this.texture = new THREE.VideoTexture(this.video);
                 this.texture.minFilter = THREE.LinearFilter;
                 this.texture.magFilter = THREE.LinearFilter;
-                this.texture.format = THREE.RGBFormat;
                 if (this.sphere && this.sphere.material) {
                     this.sphere.material.map = this.texture;
                     this.sphere.material.color.set(0xffffff);
                     this.sphere.material.needsUpdate = true;
                 }
-                // Set initial camera orientation to look at the front (try lon=90)
-                this.lon = 96;
+                // Set initial camera orientation to look at the center
+                this.lon = 0;
                 this.lat = 0;
+                // Try to play again in case autoplay was blocked
+                this.video.play().then(() => {
+                    console.log('[DEBUG] video.play() after loadeddata succeeded');
+                }).catch((err) => {
+                    console.warn('[DEBUG] video.play() after loadeddata failed:', err);
+                });
+                // Dispatch custom event for main video ready
+                window.dispatchEvent(new Event('mainVideoReady'));
                 resolve();
             });
             this.video.addEventListener('error', (e) => {
+                console.error('[DEBUG] video error:', e);
                 if (progressBar) progressBar.style.display = 'none';
                 reject(e);
             });
@@ -148,30 +192,30 @@ export class PanoramaPlayer {
         this.lat = Math.max(-85, Math.min(85, this.lat));
         let renderLon = this.lon;
         if (this.renderer.xr.isPresenting) {
-            renderLon = -this.lon;
-            console.log('[VR MODE] renderLon:', renderLon, 'lat:', this.lat);
+            renderLon = -this.lon; // Invert for VR mode
+            this.pollControllerThumbsticks();
+            // console.log('[VR MODE] renderLon:', renderLon, 'lat:', this.lat);
         } else {
-            console.log('[DESKTOP MODE] renderLon:', renderLon, 'lat:', this.lat);
+            // console.log('[DESKTOP MODE] renderLon:', renderLon, 'lat:', this.lat);
         }
+        // Debug: log lon/lat before lookAt calculation
+        // console.log('[DEBUG] lon:', this.lon, 'lat:', this.lat);
         // Camera fixed at sphere center for 360° video
         this.camera.position.set(0, 0, 0);
-        // Only use lookAt for orientation
-        const phi = THREE.MathUtils.degToRad(90 - this.lat);
-        const theta = THREE.MathUtils.degToRad(renderLon);
-        const radius = 1; // camera stays at center, only rotates
-        // Calculate direction vector
-        const x = radius * Math.sin(phi) * Math.cos(theta);
-        const y = radius * Math.cos(phi);
-        const z = radius * Math.sin(phi) * Math.sin(theta);
-        console.log('Camera lookAt:', x, y, z);
-        this.camera.lookAt(x, y, z);
+    // Spherical to Cartesian conversion (corrected)
+    // theta: longitude in radians (horizontal)
+    // phi: latitude in radians (vertical)
+    const phi = THREE.MathUtils.degToRad(90 - this.lat);
+    const theta = THREE.MathUtils.degToRad(renderLon);
+    const radius = 1;
+    // Swap x and z axes to match Three.js coordinate system
+    const x = radius * Math.sin(phi) * Math.sin(theta);
+    const y = radius * Math.cos(phi);
+    const z = radius * Math.sin(phi) * Math.cos(theta);
+    this.camera.lookAt(x, y, z);
         this.camera.updateMatrixWorld(true);
-        // Debug camera rotation
-        console.log('Camera rot:', this.camera.rotation.x, this.camera.rotation.y, this.camera.rotation.z, 'lon:', this.lon, 'lat:', this.lat);
-        // Handle XR controller input for rotation
-        if (this.renderer.xr.isPresenting) {
-            this.pollControllerThumbsticks();
-        }
+        // console.log('Camera lookAt:', x, y, z);
+        // console.log('Camera rot:', this.camera.rotation.x, this.camera.rotation.y, this.camera.rotation.z, 'lon:', this.lon, 'lat:', this.lat);
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -215,41 +259,33 @@ export class PanoramaPlayer {
 
     // Poll thumbstick axes for movement
     pollControllerThumbsticks() {
-    let debugText = '';
-    console.log('[pollControllerThumbsticks] called, lon:', this.lon, 'lat:', this.lat);
+        let debugText = '';
         const session = this.renderer.xr.getSession();
         if (!session) return;
         const inputSources = session.inputSources;
-        const deadzone = 0.1;
+        const deadzone = 0.15;
         for (let i = 0; i < inputSources.length; i++) {
             const inputSource = inputSources[i];
             if (inputSource && inputSource.gamepad && inputSource.gamepad.axes) {
                 const axes = inputSource.gamepad.axes;
                 const handedness = inputSource.handedness || 'unknown';
                 debugText += `Controller ${i} (${handedness}): axes=[${axes.map(a => a.toFixed(2)).join(', ')}]`;
-                let moved = false;
-                // Use axes[2], axes[3] for movement (swap mapping)
-                let x2 = Math.abs(axes[2]) > deadzone ? axes[2] : 0;
-                let y2 = Math.abs(axes[3]) > deadzone ? axes[3] : 0;
-                if (x2 || y2) {
-                    this.lon += x2 * 8.0;
-                    this.lat -= y2 * 8.0;
-                    debugText += ` | stick (axes[2],[3]) used | MOVED (lon: ${this.lon.toFixed(2)}, lat=${this.lat.toFixed(2)})`;
-                    moved = true;
-                    console.log(`Controller ${i} (${handedness}) stick: x=${x2}, y=${y2} | Camera lon=${this.lon}, lat=${this.lat}`);
+                // Most VR controllers: axes[2] (X, left/right), axes[3] (Y, up/down)
+                let x = Math.abs(axes[2]) > deadzone ? axes[2] : 0;
+                let y = Math.abs(axes[3]) > deadzone ? axes[3] : 0;
+                if (x || y) {
+                    // Adjust sensitivity as needed
+                    this.lon += x * 5.0;
+                    this.lat -= y * 5.0;
+                    debugText += ` | stick used | MOVED (lon: ${this.lon.toFixed(2)}, lat=${this.lat.toFixed(2)})`;
+                } else {
+                    debugText += ' | NO MOVEMENT';
                 }
-                // Optionally, log left stick for debugging but do not use for movement
-                let x1 = Math.abs(axes[0]) > deadzone ? axes[0] : 0;
-                let y1 = Math.abs(axes[1]) > deadzone ? axes[1] : 0;
-                if (x1 || y1) {
-                    debugText += ` | left stick detected (x=${x1}, y=${y1})`;
-                    console.log(`Controller ${i} (${handedness}) left stick: x=${x1}, y=${y1}`);
-                }
-                debugText += moved ? '' : ' | NO MOVEMENT';
                 debugText += '\n';
             }
-            // No direct manipulation of XR camera. Only update main camera's rotation.
         }
+        // Clamp latitude to avoid flipping
+        this.lat = Math.max(-85, Math.min(85, this.lat));
         // Show debug overlay
         const overlay = document.getElementById('debugOverlay');
         if (overlay) overlay.textContent = debugText;
@@ -336,6 +372,20 @@ export class PanoramaPlayer {
             } else {
                 this.video.pause();
             }
+        }
+    }
+
+    // Mute/unmute audio for experience video
+    toggleMute() {
+        if (this.video) {
+            this.video.muted = !this.video.muted;
+            this.isMuted = this.video.muted;
+        }
+    }
+    // Set volume for experience video
+    setVolume(val) {
+        if (this.video) {
+            this.video.volume = val;
         }
     }
 

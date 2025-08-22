@@ -60,7 +60,7 @@ ffmpeg -i input.mp4 -c:v libx264 -crf 23 -preset fast -profile:v baseline -level
 
 ## Project Structure
 ```
-├── src/                # Source files
+├── public_html/                # Source files
 │   ├── js/            # JavaScript modules
 │   ├── css/           # Stylesheets
 │   ├── assets/        # Videos, images, icons

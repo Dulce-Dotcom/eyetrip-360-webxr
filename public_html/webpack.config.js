@@ -36,7 +36,7 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new HtmlWebpackPlugin({
-        template: './src/index.html',
+        template: './index.html',
         minify: isProduction ? {
           removeComments: true,
           collapseWhitespace: true,
@@ -84,17 +84,17 @@ module.exports = (env, argv) => {
             noErrorOnMissing: true 
           },
           {
-            from: 'src/css',
+            from: 'css',
             to: 'css',
             noErrorOnMissing: true
           },
           { 
-            from: 'src/sw.js', 
+            from: 'sw.js', 
             to: 'sw.js',
             noErrorOnMissing: true 
           },
           { 
-            from: 'src/manifest.json', 
+            from: 'manifest.json', 
             to: 'manifest.json',
             noErrorOnMissing: true 
           }

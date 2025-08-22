@@ -1,6 +1,6 @@
 // Minimal stub for XRControllerModelFactory for local use
 // In production, use: import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
-import * as THREE from 'three';
+import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
 
 export class XRControllerModelFactory {
     createControllerModel(controllerGrip) {
