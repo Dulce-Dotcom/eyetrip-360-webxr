@@ -4,23 +4,49 @@ export class SceneManager {
         this.currentScene = 0;
         this.currentQuality = 'direct'; // For non-processed videos
         
-        // Scene configuration - UPDATE THIS
-        this.scenes = [
-            {
-                basename: 'stumpy_rect_2_1_4ktest_isVR',  // Updated to match your video file
-                title: 'EyeTrip Test Scene',
-                duration: '2:15',  // Update with actual duration
-                thumbnail: 'assets/thumbnails/eyetrip-test-video1.png',
-                hasProcessed: false  // Set to false since this is the direct file
-            }
-        ];
+        // Check for selected video from gallery
+        const selectedVideo = sessionStorage.getItem('selectedVideo');
+        const selectedTitle = sessionStorage.getItem('selectedTitle');
+        
+        // Scene configuration - dynamically set based on gallery selection
+        if (selectedVideo && selectedTitle) {
+            this.scenes = [
+                {
+                    basename: selectedVideo.replace(/\.(mp4|webm)$/, ''),  // Remove extension
+                    videoPath: selectedVideo,  // Full path including subdirectories
+                    title: selectedTitle,
+                    duration: '0:00',  // Will be updated when video loads
+                    thumbnail: 'assets/thumbnails/eyetrip-test-video2.jpg',
+                    hasProcessed: selectedVideo.includes('processed/')
+                }
+            ];
+            
+            // Clear session storage after use
+            sessionStorage.removeItem('selectedVideo');
+            sessionStorage.removeItem('selectedTitle');
+        } else {
+            // Default scene configuration
+            this.scenes = [
+                {
+                    basename: 'stumpy_sphereMap_4ktest1',
+                    videoPath: 'stumpy_rect_16_9_4ktest_isVR.mp4',
+                    title: 'EyeTrip Default Experience',
+                    duration: '4:18',
+                    thumbnail: 'assets/thumbnails/eyetrip-test-video2.jpg',
+                    hasProcessed: false
+                }
+            ];
+        }
         
         this.initSceneSelector();
     }
     
-    // Simplified getVideoUrl for direct video
+    // Updated getVideoUrl to handle full paths
     getVideoUrl(scene) {
-        if (scene.hasProcessed) {
+        if (scene.videoPath) {
+            // Use the full video path if provided
+            return `assets/videos/${scene.videoPath}`;
+        } else if (scene.hasProcessed) {
             // Use processed versions if available
             return `assets/videos/processed/${scene.basename}/${scene.basename}_preview.mp4`;
         } else {
@@ -81,6 +107,13 @@ export class SceneManager {
             }
 
             await this.player.loadVideo(videoUrl);
+            
+            // Update duration when video metadata is loaded
+            if (this.player.video && this.player.video.duration) {
+                const duration = this.formatDuration(this.player.video.duration);
+                this.scenes[index].duration = duration;
+            }
+            
             this.updateSceneUI();
             // Update play button icon after scene loads
             if (window.app && window.app.ui) window.app.ui.updatePlayButton();
@@ -113,5 +146,11 @@ export class SceneManager {
     prevScene() {
         const prev = this.currentScene === 0 ? this.scenes.length - 1 : this.currentScene - 1;
         this.loadScene(prev);
+    }
+    
+    formatDuration(seconds) {
+        const minutes = Math.floor(seconds / 60);
+        const remainingSeconds = Math.floor(seconds % 60);
+        return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     }
 }

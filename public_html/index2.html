@@ -71,26 +71,6 @@
                                 });
                             }
 
-                    // VR entry logic (ensure video/audio starts on VR entry)
-                    const enterVrBtn = document.getElementById('enterVrBtn');
-                            if (enterVrBtn) {
-                                enterVrBtn.addEventListener('click', () => {
-                                    if (window.sceneManager && typeof window.sceneManager.loadScene === 'function') {
-                                        window.sceneManager.loadScene(0).then(() => {
-                                            const video = window.panoramaPlayer && window.panoramaPlayer.video;
-                                            if (video) {
-                                                video.play().then(() => {
-                                                    document.getElementById('audioMuteBtn').disabled = false;
-                                                    document.getElementById('mainVolume').disabled = false;
-                                                    console.log('[AUDIO] controls enabled after VR entry');
-                                                }).catch((err) => {
-                                                    console.warn('[AUDIO] video play failed:', err);
-                                                });
-                                            }
-                                        });
-                                    }
-                                });
-                            }
                 });
         // Audio controls (mute/unmute, volume) remain unchanged and work in desktop mode
         </script>
@@ -218,7 +198,7 @@
                             <button class="play-experience-btn" data-index="2" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
                         </div>
                         <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
-                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video4.png" data-video="assets/videos/stumpy_sphereMap_4ktest1.mp4" data-index="3" alt="Video 4" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video4.png" data-video="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" data-index="3" alt="Video 4" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
                             <button class="play-experience-btn" data-index="3" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
                         </div>
                     </div>

@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - EyeTrip VR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%),
+                url('assets/thumbnails/eyetrip-test-video2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .gallery-container {
+            padding: 6rem 2rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .video-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .video-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+        }
+
+        .video-thumbnail {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .video-info {
+            padding: 1.5rem;
+        }
+
+        .video-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .video-description {
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .video-duration {
+            display: inline-block;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .play-button {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .play-button:hover {
+            background: linear-gradient(45deg, #ff5252, #ff7777);
+            transform: scale(1.05);
+        }
+
+        .play-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: #333;
+            opacity: 0;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .video-card:hover .play-icon {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .nav-links a {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .gallery-container {
+                padding: 5rem 1rem 2rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+        }
+
+        /* Loading overlay */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="logo">EyeTrip VR</a>
+        <div class="nav-links">
+            <a href="gallery.html">Gallery</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+            <a href="index2.html">Launch VR</a>
+        </div>
+    </div>
+
+    <div class="gallery-container">
+        <h1 class="page-title">VR Video Gallery</h1>
+        
+        <div class="gallery-grid">
+            <div class="video-card" data-video="eyetrip-test-video.mp4" data-title="EyeTrip Test Video">
+                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="EyeTrip Test Video" class="video-thumbnail">
+                <div class="play-icon">▶️</div>
+                <div class="video-info">
+                    <h3 class="video-title">EyeTrip Test Experience</h3>
+                    <div class="video-duration">🕐 2:15</div>
+                    <p class="video-description">
+                        Immerse yourself in this stunning 360° test experience featuring 
+                        beautiful landscapes and smooth camera movements.
+                    </p>
+                    <button class="play-button" onclick="playVideo('eyetrip-test-video.mp4', 'EyeTrip Test Experience')">
+                        🎬 Play in VR
+                    </button>
+                </div>
+            </div>
+
+            <div class="video-card" data-video="eyetrip-test-video2.mp4" data-title="EyeTrip Test Video 2">
+                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="EyeTrip Test Video 2" class="video-thumbnail">
+                <div class="play-icon">▶️</div>
+                <div class="video-info">
+                    <h3 class="video-title">EyeTrip Extended Experience</h3>
+                    <div class="video-duration">🕐 3:42</div>
+                    <p class="video-description">
+                        Extended journey through immersive environments with enhanced 
+                        visual effects and ambient soundscape.
+                    </p>
+                    <button class="play-button" onclick="playVideo('eyetrip-test-video2.mp4', 'EyeTrip Extended Experience')">
+                        🎬 Play in VR
+                    </button>
+                </div>
+            </div>
+
+            <div class="video-card" data-video="stumpy_rect_16_9_4ktest_isVR.mp4" data-title="Stumpy Sphere 4K">
+                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="Stumpy Sphere 4K" class="video-thumbnail">
+                <div class="play-icon">▶️</div>
+                <div class="video-info">
+                    <h3 class="video-title">Stumpy Sphere 4K Experience</h3>
+                    <div class="video-duration">🕐 4:18</div>
+                    <p class="video-description">
+                        Ultra high-definition 4K 360° video showcasing incredible detail 
+                        and clarity in virtual reality environments.
+                    </p>
+                    <button class="play-button" onclick="playVideo('stumpy_rect_16_9_4ktest_isVR.mp4', 'Stumpy Sphere 4K Experience')">
+                        🎬 Play in VR
+                    </button>
+                </div>
+            </div>
+
+            <div class="video-card" data-video="processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_4k.mp4" data-title="Overture Experience">
+                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="Overture 4K Experience" class="video-thumbnail">
+                <div class="play-icon">▶️</div>
+                <div class="video-info">
+                    <h3 class="video-title">Overture 4K Experience</h3>
+                    <div class="video-duration">🕐 5:33</div>
+                    <p class="video-description">
+                        Premium 4K 360° experience with advanced processing and 
+                        optimized streaming for the ultimate VR journey.
+                    </p>
+                    <button class="play-button" onclick="playVideo('processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_4k.mp4', 'Overture 4K Experience')">
+                        🎬 Play in VR
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-text">
+            <div>🎬 Loading VR Experience...</div>
+            <div style="margin-top: 1rem; font-size: 1rem; opacity: 0.8;">
+                Preparing immersive 360° video
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function playVideo(videoPath, title) {
+            // Show loading overlay
+            const loading = document.getElementById('loading');
+            loading.classList.add('active');
+            
+            // Store the selected video and title for the main VR experience
+            sessionStorage.setItem('selectedVideo', videoPath);
+            sessionStorage.setItem('selectedTitle', title);
+            
+            // Add a small delay for better UX, then redirect
+            setTimeout(() => {
+                window.location.href = 'index2.html';
+            }, 1500);
+        }
+
+        // Add click handlers to video cards for play functionality
+        document.querySelectorAll('.video-card').forEach(card => {
+            card.addEventListener('click', function(e) {
+                // Don't trigger if clicking the button directly
+                if (e.target.tagName !== 'BUTTON') {
+                    const video = this.dataset.video;
+                    const title = this.dataset.title;
+                    playVideo(video, title);
+                }
+            });
+        });
+
+        // Add hover effects
+        document.querySelectorAll('.video-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px) scale(1.02)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0) scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>

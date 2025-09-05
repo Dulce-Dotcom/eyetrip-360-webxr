@@ -19,6 +19,8 @@ export class PanoramaPlayer {
     this.sphere = null;
     this.video = null;
     this.texture = null;
+    this.lastVRMode = false; // Track VR mode changes
+    this.texture = null;
     this.isPlaying = false;
     // Camera controls
     this.lon = 0;
@@ -188,35 +190,132 @@ export class PanoramaPlayer {
     // Animation loop: update camera, handle XR controllers
     animate() {
         if (!this.camera) return;
+        
+        // Simple VR mode detection
+        const isVRMode = this.renderer.xr.isPresenting;
+        
+        // Handle UI visibility
+        if (isVRMode !== this.lastVRMode) {
+            console.log('🔄 [VR] Mode changed to:', isVRMode ? 'VR' : 'Desktop');
+            this.handleVRTransition(isVRMode);
+            this.lastVRMode = isVRMode;
+        }
+        
         // Clamp latitude
         this.lat = Math.max(-85, Math.min(85, this.lat));
         let renderLon = this.lon;
-        if (this.renderer.xr.isPresenting) {
+        
+        if (isVRMode) {
             renderLon = -this.lon; // Invert for VR mode
-            this.pollControllerThumbsticks();
-            // console.log('[VR MODE] renderLon:', renderLon, 'lat:', this.lat);
-        } else {
-            // console.log('[DESKTOP MODE] renderLon:', renderLon, 'lat:', this.lat);
+            this.handleVRControllers();
         }
         // Debug: log lon/lat before lookAt calculation
-        // console.log('[DEBUG] lon:', this.lon, 'lat:', this.lat);
+        if (isVRMode && (this.lon !== 0 || this.lat !== 0)) {
+            console.log('[VR Camera] lon:', this.lon.toFixed(1), 'lat:', this.lat.toFixed(1), 'renderLon:', renderLon.toFixed(1));
+        }
         // Camera fixed at sphere center for 360° video
         this.camera.position.set(0, 0, 0);
-    // Spherical to Cartesian conversion (corrected)
-    // theta: longitude in radians (horizontal)
-    // phi: latitude in radians (vertical)
-    const phi = THREE.MathUtils.degToRad(90 - this.lat);
-    const theta = THREE.MathUtils.degToRad(renderLon);
-    const radius = 1;
-    // Swap x and z axes to match Three.js coordinate system
-    const x = radius * Math.sin(phi) * Math.sin(theta);
-    const y = radius * Math.cos(phi);
-    const z = radius * Math.sin(phi) * Math.cos(theta);
-    this.camera.lookAt(x, y, z);
+        
+        if (isVRMode) {
+            // In VR mode, rotate the video sphere instead of the camera
+            // because WebXR controls the camera based on head tracking
+            if (this.sphere) {
+                // Convert lon/lat to sphere rotation
+                // Invert rotations to match expected behavior
+                this.sphere.rotation.y = THREE.MathUtils.degToRad(-this.lon);
+                this.sphere.rotation.x = THREE.MathUtils.degToRad(this.lat);
+                
+                if (this.lon !== 0 || this.lat !== 0) {
+                    console.log('[VR Sphere] rotY:', (-this.lon).toFixed(1) + '°', 'rotX:', this.lat.toFixed(1) + '°');
+                }
+            }
+        } else {
+            // Non-VR mode: use traditional camera lookAt
+            const phi = THREE.MathUtils.degToRad(90 - this.lat);
+            const theta = THREE.MathUtils.degToRad(renderLon);
+            const radius = 1;
+            // Swap x and z axes to match Three.js coordinate system
+            const x = radius * Math.sin(phi) * Math.sin(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.cos(theta);
+            
+            this.camera.lookAt(x, y, z);
+        }
+        
         this.camera.updateMatrixWorld(true);
-        // console.log('Camera lookAt:', x, y, z);
-        // console.log('Camera rot:', this.camera.rotation.x, this.camera.rotation.y, this.camera.rotation.z, 'lon:', this.lon, 'lat:', this.lat);
+        
         this.renderer.render(this.scene, this.camera);
+    }
+
+    // Handle VR mode transitions
+    handleVRTransition(isVRMode) {
+        console.log('🔄 [VR] Handling transition to:', isVRMode ? 'VR' : 'Desktop');
+        
+        // Hide/show UI elements
+        const controlsUI = document.querySelector('.md-ui-layer');
+        if (controlsUI) {
+            controlsUI.style.display = isVRMode ? 'none' : 'block';
+            console.log('� [VR] UI controls:', isVRMode ? 'hidden' : 'visible');
+        }
+        
+        // Ensure video continues playing
+        if (this.video && this.video.paused) {
+            console.log('🎬 [VR] Resuming video playback...');
+            this.video.play().catch(err => console.warn('🎬 [VR] Video play failed:', err));
+        }
+        
+        // Force texture update
+        if (this.texture) {
+            this.texture.needsUpdate = true;
+        }
+        
+        // Ensure sphere is properly configured
+        if (this.sphere && this.sphere.material && this.texture) {
+            this.sphere.material.map = this.texture;
+            this.sphere.material.needsUpdate = true;
+        }
+        
+        // Reset sphere rotation when exiting VR mode
+        if (!isVRMode && this.sphere) {
+            console.log('🔄 [VR] Resetting sphere rotation for desktop mode');
+            this.sphere.rotation.y = 0;
+            this.sphere.rotation.x = 0;
+        }
+    }
+
+    // Simplified VR controller handling
+    handleVRControllers() {
+        const session = this.renderer.xr.getSession();
+        if (!session || !session.inputSources) return;
+        
+        for (let i = 0; i < session.inputSources.length; i++) {
+            const inputSource = session.inputSources[i];
+            if (inputSource && inputSource.gamepad && inputSource.gamepad.axes) {
+                const axes = inputSource.gamepad.axes;
+                const deadzone = 0.2;
+                
+                // Try both axis mappings: [2,3] and [0,1]
+                let x = 0, y = 0;
+                if (axes.length >= 4 && (Math.abs(axes[2]) > deadzone || Math.abs(axes[3]) > deadzone)) {
+                    x = axes[2];
+                    y = axes[3];
+                } else if (axes.length >= 2 && (Math.abs(axes[0]) > deadzone || Math.abs(axes[1]) > deadzone)) {
+                    x = axes[0];
+                    y = axes[1];
+                }
+                
+                if (x !== 0 || y !== 0) {
+                    this.lon += x * 3.0;
+                    this.lat -= y * 3.0;
+                    console.log('🎮 [VR] Controller movement:', {
+                        x: x.toFixed(2), 
+                        y: y.toFixed(2), 
+                        newLon: this.lon.toFixed(1), 
+                        newLat: this.lat.toFixed(1)
+                    });
+                }
+            }
+        }
     }
 
     // Three.js best practice: setup controllers and models
@@ -257,48 +356,42 @@ export class PanoramaPlayer {
         this.controllerRays.push(line);
     }
 
-    // Poll thumbstick axes for movement
-    pollControllerThumbsticks() {
-        let debugText = '';
-        const session = this.renderer.xr.getSession();
-        if (!session) return;
-        const inputSources = session.inputSources;
-        const deadzone = 0.15;
-        for (let i = 0; i < inputSources.length; i++) {
-            const inputSource = inputSources[i];
-            if (inputSource && inputSource.gamepad && inputSource.gamepad.axes) {
-                const axes = inputSource.gamepad.axes;
-                const handedness = inputSource.handedness || 'unknown';
-                debugText += `Controller ${i} (${handedness}): axes=[${axes.map(a => a.toFixed(2)).join(', ')}]`;
-                // Most VR controllers: axes[2] (X, left/right), axes[3] (Y, up/down)
-                let x = Math.abs(axes[2]) > deadzone ? axes[2] : 0;
-                let y = Math.abs(axes[3]) > deadzone ? axes[3] : 0;
-                if (x || y) {
-                    // Adjust sensitivity as needed
-                    this.lon += x * 5.0;
-                    this.lat -= y * 5.0;
-                    debugText += ` | stick used | MOVED (lon: ${this.lon.toFixed(2)}, lat=${this.lat.toFixed(2)})`;
-                } else {
-                    debugText += ' | NO MOVEMENT';
-                }
-                debugText += '\n';
-            }
+        // Three.js best practice: setup controllers and models
+    setupControllers() {
+        console.log('🎮 [VR] Setting up basic VR controllers...');
+        // Simplified controller setup - let Three.js handle the heavy lifting
+        
+        const controllerModelFactory = new XRControllerModelFactory();
+        
+        // Basic controller setup for triggers only
+        for (let i = 0; i < 2; i++) {
+            const controller = this.renderer.xr.getController(i);
+            controller.addEventListener('selectstart', (event) => this.onSelectStart(event, i));
+            controller.addEventListener('selectend', (event) => this.onSelectEnd(event, i));
+            this.scene.add(controller);
+            
+            const controllerGrip = this.renderer.xr.getControllerGrip(i);
+            controllerGrip.add(controllerModelFactory.createControllerModel(controllerGrip));
+            this.scene.add(controllerGrip);
         }
-        // Clamp latitude to avoid flipping
-        this.lat = Math.max(-85, Math.min(85, this.lat));
-        // Show debug overlay
-        const overlay = document.getElementById('debugOverlay');
-        if (overlay) overlay.textContent = debugText;
     }
 
     // Event handlers for select/squeeze
     onSelectStart(event, i) {
-        const ray = this.controllers[i].getObjectByName('ray');
-        if (ray) ray.material.color.setHex(0xff0000);
+        console.log('🎮 [VR] Select start on controller', i);
+        // Safety check before accessing ray
+        if (this.controllers[i]) {
+            const ray = this.controllers[i].getObjectByName('ray');
+            if (ray) ray.material.color.setHex(0xff0000);
+        }
     }
     onSelectEnd(event, i) {
-        const ray = this.controllers[i].getObjectByName('ray');
-        if (ray) ray.material.color.setHex(0x00ff00);
+        console.log('🎮 [VR] Select end on controller', i);
+        // Safety check before accessing ray
+        if (this.controllers[i]) {
+            const ray = this.controllers[i].getObjectByName('ray');
+            if (ray) ray.material.color.setHex(0x00ff00);
+        }
     }
     onSqueezeStart(event, i) {
         // Custom logic for grip button

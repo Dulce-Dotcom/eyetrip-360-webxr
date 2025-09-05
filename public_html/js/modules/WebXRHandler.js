@@ -11,6 +11,10 @@ export class WebXRHandler {
         this.controllerGrips = [];
         this.handModels = [];
         
+        // Button state tracking for VR controllers
+        this.aButtonPressed = false;
+        this.bButtonPressed = false;
+        
         // Meta Quest specific features
         this.supportsHandTracking = false;
         this.supportsLayers = false;
@@ -175,29 +179,40 @@ export class WebXRHandler {
     }
     
     async enterVR() {
+        console.log('🥽 [DEBUG] enterVR() called');
+        
         if (!this.xrSupported) {
+            console.error('❌ [DEBUG] WebXR not supported');
             throw new Error('WebXR not supported');
         }
 
         try {
+            console.log('🥽 [DEBUG] Starting VR session request...');
+            
             // If we're using inline fallback for development
             if (this.useInlineFallback) {
+                console.log('🥽 [DEBUG] Using inline fallback');
                 return this.enterInlineFallback();
             }
 
             // Meta Quest optimized session creation
             const sessionOptions = this.getOptimalSessionOptions();
+            console.log('🥽 [DEBUG] Session options:', sessionOptions);
             
             try {
-                console.log('Attempting WebXR session with options:', sessionOptions);
+                console.log('🥽 [DEBUG] Requesting immersive-vr session...');
                 this.xrSession = await navigator.xr.requestSession('immersive-vr', sessionOptions);
-                console.log('WebXR session created successfully');
+                console.log('✅ [DEBUG] WebXR session created successfully:', this.xrSession);
                 
+                console.log('🥽 [DEBUG] Calling setupXRSession...');
                 await this.setupXRSession();
+                console.log('✅ [DEBUG] setupXRSession completed');
+                
                 return this.xrSession;
                 
             } catch (e) {
-                console.log('Primary WebXR session unavailable (no VR hardware detected)');
+                console.log('❌ [DEBUG] Primary WebXR session failed:', e);
+                console.log('🥽 [DEBUG] Trying fallback options...');
                 
                 // Try fallback with minimal options
                 const fallbackOptions = {
@@ -206,21 +221,23 @@ export class WebXRHandler {
                 };
                 
                 try {
-                    console.log('Attempting fallback WebXR session...');
+                    console.log('🥽 [DEBUG] Attempting fallback WebXR session...');
                     this.xrSession = await navigator.xr.requestSession('immersive-vr', fallbackOptions);
-                    console.log('Fallback WebXR session created');
+                    console.log('✅ [DEBUG] Fallback WebXR session created');
                     
+                    console.log('🥽 [DEBUG] Calling setupXRSession (fallback)...');
                     await this.setupXRSession();
                     return this.xrSession;
                     
                 } catch (fallbackError) {
-                    console.log('WebXR hardware not available - activating desktop VR simulation');
+                    console.log('❌ [DEBUG] Fallback session failed:', fallbackError);
+                    console.log('🥽 [DEBUG] Activating desktop VR simulation');
                     return this.createDesktopVRFallback();
                 }
             }
 
         } catch (error) {
-            console.error('Failed to enter VR:', error);
+            console.error('❌ [DEBUG] Failed to enter VR:', error);
             throw error;
         }
     }
@@ -256,107 +273,607 @@ export class WebXRHandler {
         return options;
     }
 
-    async setupXRSession() {
-        if (!this.xrSession) return;
+    async setupXRSession(session = null) {
+        console.log('🔧 [DEBUG] setupXRSession() started');
+        
+        // Use provided session or existing session
+        const xrSession = session || this.xrSession;
+        
+        if (!xrSession) {
+            console.error('❌ [DEBUG] No XR session available');
+            return;
+        }
+        
+        // Store the session reference
+        this.xrSession = xrSession;
 
         try {
+            console.log('🔧 [DEBUG] Setting up reference space...');
             // Set up reference space (prefer local-floor for Meta Quest)
             const referenceSpaceTypes = ['local-floor', 'local', 'viewer'];
             
             for (const spaceType of referenceSpaceTypes) {
                 try {
                     this.referenceSpace = await this.xrSession.requestReferenceSpace(spaceType);
-                    console.log(`Reference space created: ${spaceType}`);
+                    console.log(`✅ [DEBUG] Reference space created: ${spaceType}`);
                     break;
                 } catch (e) {
-                    console.log(`${spaceType} reference space not supported`);
+                    console.log(`❌ [DEBUG] ${spaceType} reference space not supported:`, e);
                 }
             }
 
-            // Configure renderer for XR
-            this.renderer.xr.setReferenceSpaceType('local-floor');
-            this.renderer.xr.setSession(this.xrSession);
-
-            // Set up controllers for Meta Quest
-            this.setupControllers();
-
-            // Set up hand tracking if available
-            if (this.supportsHandTracking) {
-                this.setupHandTracking();
+            // Only configure renderer if session wasn't created by Three.js VRButton
+            if (session) {
+                console.log('🔧 [DEBUG] Session provided by Three.js VRButton - skipping renderer config');
+            } else {
+                console.log('🔧 [DEBUG] Configuring renderer for XR...');
+                // Configure renderer for XR
+                this.renderer.xr.setReferenceSpaceType('local-floor');
+                this.renderer.xr.setSession(this.xrSession);
+                console.log('✅ [DEBUG] Renderer configured for XR');
             }
+
+            console.log('🎮 [DEBUG] Starting controller setup...');
+            // CRITICAL: Set up controllers AFTER session is fully established
+            this.setupVRControllers();
+
+            console.log('👂 [DEBUG] Adding session event listeners...');
+            // Listen for input source changes (when controllers connect/disconnect)
+            this.xrSession.addEventListener('inputsourceschange', (event) => {
+                console.log('🎮 [DEBUG] Input sources changed:', event);
+                console.log('🎮 [DEBUG] Added sources:', event.added);
+                console.log('🎮 [DEBUG] Removed sources:', event.removed);
+                
+                event.added.forEach((inputSource, i) => {
+                    console.log(`🎮 [DEBUG] Controller added:`, inputSource);
+                    console.log(`🎮 [DEBUG] - Target ray mode: ${inputSource.targetRayMode}`);
+                    console.log(`🎮 [DEBUG] - Has gamepad: ${!!inputSource.gamepad}`);
+                    console.log(`🎮 [DEBUG] - Handedness: ${inputSource.handedness}`);
+                });
+                event.removed.forEach((inputSource, i) => {
+                    console.log(`🎮 [DEBUG] Controller removed:`, inputSource);
+                });
+            });
 
             // Session event handlers
             this.xrSession.addEventListener('end', () => {
-                console.log('WebXR session ended');
+                console.log('🔚 [DEBUG] WebXR session ended');
                 this.cleanup();
             });
 
             this.xrSession.addEventListener('visibilitychange', (event) => {
-                console.log('WebXR visibility changed:', event.session.visibilityState);
+                console.log('👁️ [DEBUG] WebXR visibility changed:', event.session.visibilityState);
             });
 
+            console.log('🔄 [DEBUG] Starting render loop...');
             // Start render loop
-            this.renderer.setAnimationLoop(this.render.bind(this));
+            this.renderer.setAnimationLoop(() => {
+                this.handleVRControllerInput();
+                this.render();
+            });
+            
+            console.log('✅ [DEBUG] VR session setup complete with proper controller handling');
+
+            // Log current input sources
+            setTimeout(() => {
+                console.log('🎮 [DEBUG] Current input sources:', this.xrSession.inputSources);
+                this.xrSession.inputSources.forEach((source, i) => {
+                    console.log(`🎮 [DEBUG] Input source ${i}:`, {
+                        targetRayMode: source.targetRayMode,
+                        handedness: source.handedness,
+                        hasGamepad: !!source.gamepad
+                    });
+                });
+            }, 1000);
 
         } catch (error) {
-            console.error('Failed to set up XR session:', error);
+            console.error('❌ [DEBUG] Failed to set up XR session:', error);
             throw error;
         }
     }
 
-    setupControllers() {
+    setupVRControllers() {
+        console.log('🎮 [DEBUG] setupVRControllers() started');
+        console.log('🎮 [DEBUG] Current session:', this.xrSession);
+        console.log('🎮 [DEBUG] Current scene:', this.panoramaPlayer?.scene);
+        
         // Clear existing controllers
-        this.controllers.forEach(controller => {
-            this.panoramaPlayer?.scene?.remove(controller);
+        console.log('🎮 [DEBUG] Clearing existing controllers...');
+        this.controllers.forEach((controller, i) => {
+            console.log(`🎮 [DEBUG] Removing controller ${i} from scene`);
+            if (this.panoramaPlayer?.scene) {
+                this.panoramaPlayer.scene.remove(controller);
+            }
         });
         this.controllers = [];
         this.controllerGrips = [];
 
-        // Create controllers for Meta Quest Touch controllers
+        console.log('🎮 [DEBUG] Setting up 2 VR controllers...');
+        // Set up controllers (Meta Quest supports 2 controllers)
         for (let i = 0; i < 2; i++) {
-            // Controller (pointing ray)
+            console.log(`🎮 [DEBUG] Setting up controller ${i}...`);
+            
+            // Controller ray
             const controller = this.renderer.xr.getController(i);
-            controller.addEventListener('selectstart', this.onSelectStart.bind(this));
-            controller.addEventListener('selectend', this.onSelectEnd.bind(this));
-            controller.addEventListener('connected', (event) => {
-                console.log(`Controller ${i} connected:`, event.data);
-                controller.add(this.createControllerModel(event.data));
+            console.log(`🎮 [DEBUG] Got controller ${i}:`, controller);
+            
+            // Store controller index
+            controller.userData.index = i;
+            
+            // Add event listeners with proper binding
+            controller.addEventListener('selectstart', (event) => {
+                console.log(`🎮 [DEBUG] Controller ${i} SELECT START (trigger pressed)`);
+                console.log(`🎮 [DEBUG] Event:`, event);
+                this.onVRControllerSelect(i, true);
             });
             
+            controller.addEventListener('selectend', (event) => {
+                console.log(`🎮 [DEBUG] Controller ${i} SELECT END (trigger released)`);
+                this.onVRControllerSelect(i, false);
+            });
+            
+            controller.addEventListener('connected', (event) => {
+                console.log(`🎮 [DEBUG] Controller ${i} CONNECTED:`, event.data);
+                const inputSource = event.data;
+                controller.userData.inputSource = inputSource;
+                
+                console.log(`🎮 [DEBUG] Input source details:`, {
+                    targetRayMode: inputSource.targetRayMode,
+                    handedness: inputSource.handedness,
+                    hasGamepad: !!inputSource.gamepad,
+                    gamepadAxes: inputSource.gamepad?.axes?.length,
+                    gamepadButtons: inputSource.gamepad?.buttons?.length
+                });
+                
+                // Add visual ray to controller
+                const ray = this.createVRControllerRay();
+                controller.add(ray);
+                console.log(`🎮 [DEBUG] Added visual ray to controller ${i}`);
+                
+                console.log(`🎮 [DEBUG] Controller ${i} gamepad available:`, !!inputSource.gamepad);
+            });
+
+            controller.addEventListener('disconnected', () => {
+                console.log(`🎮 [DEBUG] Controller ${i} DISCONNECTED`);
+            });
+
+            // Add to scene
             if (this.panoramaPlayer?.scene) {
                 this.panoramaPlayer.scene.add(controller);
+                console.log(`🎮 [DEBUG] Controller ${i} added to scene`);
+            } else {
+                console.error(`❌ [DEBUG] No scene available for controller ${i}`);
             }
             this.controllers.push(controller);
 
-            // Controller grip (for hand position)
+            // Controller grip for hand position
             const controllerGrip = this.renderer.xr.getControllerGrip(i);
-            controllerGrip.addEventListener('connected', (event) => {
-                console.log(`Controller grip ${i} connected`);
-            });
-            
             if (this.panoramaPlayer?.scene) {
                 this.panoramaPlayer.scene.add(controllerGrip);
+                console.log(`🎮 [DEBUG] Controller grip ${i} added to scene`);
             }
             this.controllerGrips.push(controllerGrip);
+        }
+
+        console.log('🎨 [DEBUG] Creating VR menu...');
+        // Create VR menu
+        this.createVRMenu();
+        
+        console.log(`✅ [DEBUG] ${this.controllers.length} VR controllers set up complete`);
+        
+        // Expose debug function globally
+        window.debugVRControllers = () => {
+            console.log('🔍 [DEBUG] VR Controller Status:');
+            console.log('- XR Session:', this.xrSession);
+            console.log('- Controllers count:', this.controllers.length);
+            console.log('- Input sources:', this.xrSession?.inputSources);
+            this.controllers.forEach((controller, i) => {
+                console.log(`- Controller ${i}:`, {
+                    controller: controller,
+                    inputSource: controller.userData.inputSource,
+                    hasGamepad: !!controller.userData.inputSource?.gamepad
+                });
+            });
+        };
+    }
+
+    createVRControllerRay() {
+        const geometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0, -5)
+        ]);
+        
+        const material = new THREE.LineBasicMaterial({ 
+            color: 0x00ff00,
+            linewidth: 2
+        });
+        
+        return new THREE.Line(geometry, material);
+    }
+
+    onVRControllerSelect(controllerIndex, isPressed) {
+        if (isPressed) {
+            console.log(`🎮 VR Controller ${controllerIndex} trigger pressed`);
+            
+            // Toggle VR menu
+            if (this.vrMenuVisible) {
+                this.hideVRMenu();
+            } else {
+                this.showVRMenu();
+            }
+        }
+    }
+
+    handleVRControllerInput() {
+        if (!this.xrSession || !this.panoramaPlayer?.camera) {
+            // Log occasionally why input handling is skipped
+            if (Math.random() < 0.001) {
+                console.log('🎮 [DEBUG] Skipping input - Session:', !!this.xrSession, 'Camera:', !!this.panoramaPlayer?.camera);
+            }
+            return;
+        }
+        
+        let inputProcessed = false;
+        
+        // Process input from each controller
+        this.controllers.forEach((controller, index) => {
+            const inputSource = controller.userData.inputSource;
+            if (!inputSource?.gamepad) {
+                return;
+            }
+            
+            const gamepad = inputSource.gamepad;
+            const camera = this.panoramaPlayer.camera;
+            
+            // Handle thumbstick input for camera rotation
+            if (gamepad.axes && gamepad.axes.length >= 2) {
+                const xAxis = gamepad.axes[0]; // Left/right
+                const yAxis = gamepad.axes[1]; // Up/down
+                
+                // Apply deadzone
+                if (Math.abs(xAxis) > 0.2 || Math.abs(yAxis) > 0.2) {
+                    inputProcessed = true;
+                    const rotationSpeed = 0.02;
+                    
+                    // Rotate camera
+                    camera.rotation.y -= xAxis * rotationSpeed;
+                    camera.rotation.x -= yAxis * rotationSpeed;
+                    
+                    // Clamp vertical rotation
+                    camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                    
+                    // Log occasionally
+                    if (Math.random() < 0.02) {
+                        console.log(`🎮 [DEBUG] Controller ${index} thumbstick input: ${xAxis.toFixed(2)}, ${yAxis.toFixed(2)}`);
+                    }
+                }
+            }
+            
+            // Handle button presses
+            if (gamepad.buttons) {
+                // A button (usually index 0)
+                if (gamepad.buttons[0]?.pressed && !this.aButtonPressed) {
+                    this.aButtonPressed = true;
+                    console.log('🎮 [DEBUG] A button pressed - calling togglePlayPause');
+                    this.togglePlayPause();
+                } else if (!gamepad.buttons[0]?.pressed) {
+                    this.aButtonPressed = false;
+                }
+                
+                // B button (usually index 1)
+                if (gamepad.buttons[1]?.pressed && !this.bButtonPressed) {
+                    this.bButtonPressed = true;
+                    console.log('🎮 [DEBUG] B button pressed - calling toggleMute');
+                    this.toggleMute();
+                } else if (!gamepad.buttons[1]?.pressed) {
+                    this.bButtonPressed = false;
+                }
+            }
+        });
+        
+        // Log when we process input (occasionally to avoid spam)
+        if (inputProcessed && Math.random() < 0.01) {
+            console.log('🎮 [DEBUG] VR controller input processed successfully');
         }
     }
 
     createControllerModel(inputSource) {
-        // Simple controller representation
-        const geometry = new THREE.BoxGeometry(0.05, 0.05, 0.2);
-        const material = new THREE.MeshBasicMaterial({ color: 0x888888 });
-        const mesh = new THREE.Mesh(geometry, material);
-        return mesh;
+        // Create a more visible controller representation
+        const group = new THREE.Group();
+        
+        // Controller body
+        const bodyGeometry = new THREE.BoxGeometry(0.05, 0.05, 0.2);
+        const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
+        const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        group.add(bodyMesh);
+        
+        // Pointer ray visualization
+        const rayGeometry = new THREE.BufferGeometry().setFromPoints([
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector3(0, 0, -5)
+        ]);
+        const rayMaterial = new THREE.LineBasicMaterial({ 
+            color: 0x00ff00,
+            transparent: true,
+            opacity: 0.5
+        });
+        const rayLine = new THREE.Line(rayGeometry, rayMaterial);
+        group.add(rayLine);
+        
+        // Pointer dot at the end
+        const dotGeometry = new THREE.SphereGeometry(0.02);
+        const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial);
+        dotMesh.position.z = -5;
+        group.add(dotMesh);
+        
+        return group;
     }
 
     onSelectStart(event) {
-        console.log('Controller select start');
-        // Handle controller button press
+        console.log('🎮 Controller select start - trigger pressed');
+        
+        // Handle VR menu interactions
+        if (this.vrMenuVisible) {
+            this.handleVRMenuInteraction(event);
+        } else {
+            // Show VR menu when trigger is pressed
+            this.showVRMenu();
+        }
     }
 
     onSelectEnd(event) {
-        console.log('Controller select end');
+        console.log('🎮 Controller select end - trigger released');
         // Handle controller button release
+    }
+
+    // Enhanced 3D VR Menu System
+    createVRMenu() {
+        console.log('🎨 Creating VR menu...');
+        
+        if (this.vrMenuGroup) {
+            this.panoramaPlayer?.scene?.remove(this.vrMenuGroup);
+        }
+
+        this.vrMenuGroup = new THREE.Group();
+        this.vrMenuGroup.position.set(0, 1.6, -2); // Position in front of user
+        this.vrMenuVisible = false;
+
+        // Create menu background panel (larger and more visible)
+        const panelGeometry = new THREE.PlaneGeometry(4, 3);
+        const panelMaterial = new THREE.MeshBasicMaterial({
+            color: 0x111111,
+            opacity: 0.9,
+            transparent: true,
+            side: THREE.DoubleSide
+        });
+        const menuPanel = new THREE.Mesh(panelGeometry, panelMaterial);
+        this.vrMenuGroup.add(menuPanel);
+
+        // Create menu title with bright color
+        this.createVRMenuText('VR CONTROLS', 0, 1.0, 0.3, 0x00ff00);
+
+        // Create menu buttons with better spacing
+        this.vrMenuButtons = [];
+        this.vrMenuButtons.push(this.createVRMenuButton('Play/Pause Video', 0, 0.4, () => this.togglePlayPause()));
+        this.vrMenuButtons.push(this.createVRMenuButton('Mute/Unmute Audio', 0, 0, () => this.toggleMute()));
+        this.vrMenuButtons.push(this.createVRMenuButton('Next Video', 0, -0.4, () => this.nextVideo()));
+        this.vrMenuButtons.push(this.createVRMenuButton('Exit VR Mode', 0, -0.8, () => this.exitVR()));
+
+        // Add border for visibility
+        const borderGeometry = new THREE.EdgesGeometry(panelGeometry);
+        const borderMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        const border = new THREE.LineSegments(borderGeometry, borderMaterial);
+        this.vrMenuGroup.add(border);
+
+        // Add to scene but initially hidden
+        this.vrMenuGroup.visible = false;
+        if (this.panoramaPlayer?.scene) {
+            this.panoramaPlayer.scene.add(this.vrMenuGroup);
+            console.log('✅ VR menu added to scene');
+        } else {
+            console.warn('❌ Scene not available for VR menu');
+        }
+        
+        // Make menu testing function available globally
+        window.testVRMenu = () => {
+            console.log('🧪 Testing VR menu visibility');
+            this.showVRMenu();
+            setTimeout(() => this.hideVRMenu(), 3000);
+        };
+        
+        console.log('🎨 VR menu created. Use window.testVRMenu() to test or press M key in VR');
+    }
+
+    createVRMenuText(text, x, y, size = 0.1, color = 0xffffff) {
+        // Create text using basic geometry (in production, you'd use TextGeometry)
+        const textGeometry = new THREE.PlaneGeometry(1, 0.2);
+        const textMaterial = new THREE.MeshBasicMaterial({
+            color: color,
+            transparent: true
+        });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.set(x, y, 0.01);
+        
+        // Store text for reference
+        textMesh.userData = { text: text, isText: true };
+        this.vrMenuGroup.add(textMesh);
+        return textMesh;
+    }
+
+    createVRMenuButton(text, x, y, action) {
+        // Button background (larger and more visible)
+        const buttonGeometry = new THREE.PlaneGeometry(3, 0.4);
+        const buttonMaterial = new THREE.MeshBasicMaterial({
+            color: 0x333333,
+            transparent: true,
+            opacity: 0.9,
+            side: THREE.DoubleSide
+        });
+        const button = new THREE.Mesh(buttonGeometry, buttonMaterial);
+        button.position.set(x, y, 0.02);
+        
+        // Button hover material (brighter)
+        const hoverMaterial = new THREE.MeshBasicMaterial({
+            color: 0x666666,
+            transparent: true,
+            opacity: 0.9,
+            side: THREE.DoubleSide
+        });
+        
+        // Store button data
+        button.userData = {
+            isButton: true,
+            text: text,
+            action: action,
+            defaultMaterial: buttonMaterial,
+            hoverMaterial: hoverMaterial,
+            isHovered: false
+        };
+        
+        this.vrMenuGroup.add(button);
+
+        // Add text label with better visibility
+        const textLabel = this.createVRMenuText(text, x, y, 0.08, 0xffffff);
+        textLabel.position.z = 0.03;
+        
+        // Add button border for better visibility
+        const borderGeometry = new THREE.EdgesGeometry(buttonGeometry);
+        const borderMaterial = new THREE.LineBasicMaterial({ color: 0x00ff00 });
+        const border = new THREE.LineSegments(borderGeometry, borderMaterial);
+        border.position.set(x, y, 0.021);
+        this.vrMenuGroup.add(border);
+        
+        return button;
+    }
+
+    showVRMenu() {
+        console.log('🎨 Showing VR menu...');
+        
+        if (!this.vrMenuGroup) {
+            console.log('🎨 VR menu not created yet, creating now...');
+            this.createVRMenu();
+        }
+        
+        this.vrMenuGroup.visible = true;
+        this.vrMenuVisible = true;
+        
+        // Position menu in front of user's current position
+        const camera = this.panoramaPlayer?.camera;
+        if (camera) {
+            const direction = new THREE.Vector3();
+            camera.getWorldDirection(direction);
+            direction.multiplyScalar(-3); // Move it further away for better visibility
+            direction.add(camera.position);
+            direction.y = camera.position.y; // Keep at same height as camera
+            this.vrMenuGroup.position.copy(direction);
+            this.vrMenuGroup.lookAt(camera.position);
+            
+            console.log('🎨 VR menu positioned at:', this.vrMenuGroup.position);
+        } else {
+            // Fallback position
+            this.vrMenuGroup.position.set(0, 1.6, -3);
+            console.log('🎨 VR menu at fallback position');
+        }
+        
+        console.log('✅ VR Menu visible:', this.vrMenuGroup.visible);
+        
+        // Auto-hide after 10 seconds for testing
+        setTimeout(() => {
+            if (this.vrMenuVisible) {
+                console.log('🎨 Auto-hiding VR menu after 10 seconds');
+                this.hideVRMenu();
+            }
+        }, 10000);
+    }
+
+    hideVRMenu() {
+        console.log('🎨 Hiding VR menu...');
+        if (this.vrMenuGroup) {
+            this.vrMenuGroup.visible = false;
+            this.vrMenuVisible = false;
+            console.log('✅ VR Menu hidden');
+        }
+    }
+
+    handleVRMenuInteraction(event) {
+        const controller = event.target;
+        const direction = new THREE.Vector3();
+        const raycaster = new THREE.Raycaster();
+        
+        // Get controller direction
+        controller.getWorldDirection(direction);
+        raycaster.set(controller.position, direction);
+        
+        // Check intersections with menu items
+        const intersects = raycaster.intersectObject(this.vrMenuGroup, true);
+        
+        if (intersects.length > 0) {
+            const intersectedObject = intersects[0].object;
+            
+            if (intersectedObject.userData.isButton) {
+                // Execute button action
+                intersectedObject.userData.action();
+                this.hideVRMenu();
+            }
+        }
+    }
+
+    // Update method to handle controller ray casting for hover effects
+    updateControllerInteractions() {
+        if (!this.vrMenuVisible || !this.vrMenuGroup) return;
+        
+        this.controllers.forEach(controller => {
+            const direction = new THREE.Vector3();
+            const raycaster = new THREE.Raycaster();
+            
+            controller.getWorldDirection(direction);
+            raycaster.set(controller.position, direction);
+            
+            // Check intersections with menu items
+            const intersects = raycaster.intersectObject(this.vrMenuGroup, true);
+            
+            // Reset all buttons to default state
+            this.vrMenuGroup.children.forEach(child => {
+                if (child.userData.isButton) {
+                    child.material = child.userData.defaultMaterial;
+                    child.userData.isHovered = false;
+                }
+            });
+            
+            // Highlight hovered button
+            if (intersects.length > 0) {
+                const intersectedObject = intersects[0].object;
+                if (intersectedObject.userData.isButton) {
+                    intersectedObject.material = intersectedObject.userData.hoverMaterial;
+                    intersectedObject.userData.isHovered = true;
+                }
+            }
+        });
+    }
+
+    // VR Menu Actions
+    togglePlayPause() {
+        if (this.panoramaPlayer?.video) {
+            if (this.panoramaPlayer.video.paused) {
+                this.panoramaPlayer.video.play();
+            } else {
+                this.panoramaPlayer.video.pause();
+            }
+        }
+    }
+
+    toggleMute() {
+        if (this.panoramaPlayer?.video) {
+            this.panoramaPlayer.video.muted = !this.panoramaPlayer.video.muted;
+        }
+    }
+
+    nextVideo() {
+        // Call scene manager to load next video
+        if (window.app?.sceneManager) {
+            window.app.sceneManager.nextScene();
+        }
     }
 
     setupHandTracking() {
@@ -370,6 +887,102 @@ export class WebXRHandler {
     render() {
         if (this.panoramaPlayer) {
             this.panoramaPlayer.update();
+        }
+    }
+
+    handleControllerInput() {
+        if (!this.xrSession || !this.panoramaPlayer?.camera) return;
+        
+        let hasInput = false;
+        
+        this.controllers.forEach((controller, index) => {
+            const inputSource = controller.userData.inputSource;
+            if (!inputSource || !inputSource.gamepad) {
+                return;
+            }
+            
+            const gamepad = inputSource.gamepad;
+            const camera = this.panoramaPlayer.camera;
+            
+            // Log gamepad info periodically for debugging
+            if (Math.random() < 0.01) { // Log ~1% of the time to avoid spam
+                console.log(`Controller ${index} gamepad:`, {
+                    axes: gamepad.axes.map(a => a.toFixed(2)),
+                    buttons: gamepad.buttons.map(b => ({ pressed: b.pressed, value: b.value.toFixed(2) }))
+                });
+            }
+            
+            // Get thumbstick values
+            let xAxis = 0;
+            let yAxis = 0;
+            
+            if (gamepad.axes.length >= 2) {
+                // Try different axis mappings for different controllers
+                if (index === 1) { // Right controller
+                    // Try axes 2,3 first (right thumbstick), then 0,1 as fallback
+                    xAxis = gamepad.axes.length > 2 ? gamepad.axes[2] : gamepad.axes[0];
+                    yAxis = gamepad.axes.length > 3 ? gamepad.axes[3] : gamepad.axes[1];
+                } else { // Left controller
+                    xAxis = gamepad.axes[0];
+                    yAxis = gamepad.axes[1];
+                }
+            }
+            
+            // Apply rotation based on thumbstick input
+            if (Math.abs(xAxis) > 0.15 || Math.abs(yAxis) > 0.15) { // Increased deadzone
+                hasInput = true;
+                const rotationSpeed = 0.03; // Slightly faster for better responsiveness
+                
+                // Rotate camera based on thumbstick input
+                camera.rotation.y -= xAxis * rotationSpeed; // Horizontal rotation
+                camera.rotation.x -= yAxis * rotationSpeed; // Vertical rotation
+                
+                // Clamp vertical rotation to prevent flipping
+                camera.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, camera.rotation.x));
+                
+                if (Math.random() < 0.1) { // Log occasionally when there's input
+                    console.log(`🎮 Controller ${index} input: x=${xAxis.toFixed(2)}, y=${yAxis.toFixed(2)}`);
+                }
+            }
+            
+            // Handle button presses
+            if (gamepad.buttons.length > 0) {
+                // A button (index 0) - show/hide menu
+                if (gamepad.buttons[0] && gamepad.buttons[0].pressed) {
+                    if (!this.aButtonPressed) {
+                        this.aButtonPressed = true;
+                        console.log('🎮 A button pressed - toggling VR menu');
+                        if (this.vrMenuVisible) {
+                            this.hideVRMenu();
+                        } else {
+                            this.showVRMenu();
+                        }
+                    }
+                } else {
+                    this.aButtonPressed = false;
+                }
+                
+                // B button (index 1) - play/pause
+                if (gamepad.buttons.length > 1 && gamepad.buttons[1] && gamepad.buttons[1].pressed) {
+                    if (!this.bButtonPressed) {
+                        this.bButtonPressed = true;
+                        console.log('🎮 B button pressed - toggling play/pause');
+                        this.togglePlayPause();
+                    }
+                } else {
+                    this.bButtonPressed = false;
+                }
+                
+                // Trigger button - menu interactions
+                if (gamepad.buttons.length > 4 && gamepad.buttons[4] && gamepad.buttons[4].pressed) {
+                    // This is handled by selectstart/selectend events
+                }
+            }
+        });
+        
+        // Log when we detect controller activity
+        if (hasInput && Math.random() < 0.05) {
+            console.log('🎮 Controller input detected and applied to camera');
         }
     }
 
@@ -388,6 +1001,13 @@ export class WebXRHandler {
         });
         this.controllers = [];
         this.controllerGrips = [];
+        
+        // Clean up VR menu
+        if (this.vrMenuGroup) {
+            this.panoramaPlayer?.scene?.remove(this.vrMenuGroup);
+            this.vrMenuGroup = null;
+            this.vrMenuVisible = false;
+        }
     }
     
     async enterInlineFallback() {
@@ -569,6 +1189,9 @@ export class WebXRHandler {
     setPanoramaPlayer(panoramaPlayer) {
         this.panoramaPlayer = panoramaPlayer;
         console.log('WebXRHandler linked to PanoramaPlayer');
+        
+        // Make debug method available globally for testing
+        window.checkVRControllers = () => this.checkControllerStatus();
     }
 
     // Exit VR session
@@ -590,6 +1213,23 @@ export class WebXRHandler {
     // Check if currently in VR
     isInVR() {
         return this.xrSession !== null;
+    }
+    
+    // Debug method to check controller status
+    checkControllerStatus() {
+        console.log('🎮 Controller Status Check:');
+        console.log(`- XR Session: ${this.xrSession ? 'Active' : 'None'}`);
+        console.log(`- Controllers: ${this.controllers.length}`);
+        
+        this.controllers.forEach((controller, index) => {
+            const inputSource = controller.userData.inputSource;
+            console.log(`- Controller ${index}:`, {
+                connected: !!inputSource,
+                hasGamepad: !!(inputSource?.gamepad),
+                axesCount: inputSource?.gamepad?.axes?.length || 0,
+                buttonCount: inputSource?.gamepad?.buttons?.length || 0
+            });
+        });
     }
     
     exitVR() {

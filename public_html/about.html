@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - EyeTrip VR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%),
+                url('assets/thumbnails/eyetrip-test-video2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-links a.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .about-container {
+            padding: 6rem 2rem 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .content-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 2.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .content-section h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #87CEEB;
+        }
+
+        .content-section h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+            margin-top: 2rem;
+            color: #B0E0E6;
+        }
+
+        .content-section p {
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-card h4 {
+            margin-bottom: 0.5rem;
+            color: #87CEEB;
+        }
+
+        .team-section {
+            text-align: center;
+        }
+
+        .team-member {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 2rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .team-member h4 {
+            color: #87CEEB;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        .team-member .role {
+            color: #B0E0E6;
+            margin-bottom: 1rem;
+            font-weight: 500;
+        }
+
+        .cta-section {
+            text-align: center;
+            margin-top: 3rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(45deg, #ff5252, #ff7777);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(45deg, #45b7aa, #3d8b78);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem;
+            }
+
+            .nav-links {
+                gap: 1rem;
+            }
+
+            .nav-links a {
+                padding: 0.5rem;
+                font-size: 0.9rem;
+            }
+
+            .about-container {
+                padding: 5rem 1rem 2rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .content-section {
+                padding: 2rem;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="logo">EyeTrip VR</a>
+        <div class="nav-links">
+            <a href="gallery.html">Gallery</a>
+            <a href="about.html" class="active">About</a>
+            <a href="contact.html">Contact</a>
+            <a href="index2.html">Launch VR</a>
+        </div>
+    </div>
+
+    <div class="about-container">
+        <h1 class="page-title">About EyeTrip VR</h1>
+        
+        <div class="content-section">
+            <h2>🌐 Our Vision</h2>
+            <p>
+                EyeTrip VR is pioneering the future of immersive 360° virtual reality experiences. 
+                We believe that virtual reality has the power to transport people to extraordinary places, 
+                create empathy, and provide experiences that would otherwise be impossible.
+            </p>
+            <p>
+                Our mission is to make high-quality, accessible VR content that works seamlessly across 
+                all devices and platforms, from desktop browsers to the latest VR headsets like Meta Quest.
+            </p>
+        </div>
+
+        <div class="content-section">
+            <h2>🎬 What We Do</h2>
+            <p>
+                We create stunning 360° video experiences that leverage cutting-edge WebXR technology 
+                to deliver immersive content directly through your web browser. No downloads, no installations - 
+                just pure, accessible virtual reality.
+            </p>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎥</div>
+                    <h4>360° Video Production</h4>
+                    <p>Professional-grade 360° video capture and post-production</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🥽</div>
+                    <h4>WebXR Technology</h4>
+                    <p>Browser-based VR experiences with full headset support</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h4>Cross-Platform</h4>
+                    <p>Works on desktop, mobile, and VR headsets</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h4>Optimized Streaming</h4>
+                    <p>Adaptive quality and efficient video delivery</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🛠️ Technology</h2>
+            <p>
+                Our platform is built on modern web technologies that ensure compatibility, 
+                performance, and accessibility:
+            </p>
+            
+            <h3>WebXR & Three.js</h3>
+            <p>
+                We use WebXR API for native VR headset support and Three.js for 3D rendering, 
+                ensuring smooth performance and immersive experiences across all devices.
+            </p>
+            
+            <h3>Adaptive Video Streaming</h3>
+            <p>
+                Our videos are processed in multiple resolutions and delivered using adaptive 
+                streaming technology (HLS) to provide the best quality for your connection speed.
+            </p>
+            
+            <h3>Progressive Web App</h3>
+            <p>
+                EyeTrip VR works as a Progressive Web App (PWA), providing app-like functionality 
+                with offline support and fast loading times.
+            </p>
+        </div>
+
+        <div class="content-section team-section">
+            <h2>👥 Our Team</h2>
+            <div class="team-member">
+                <h4>David Aughenbaugh</h4>
+                <div class="role">Founder & Creative Director</div>
+                <p>
+                    Visionary artist and photographer behind EyeTrip VR. David brings years of 
+                    experience in immersive media and cutting-edge visual storytelling to create 
+                    breathtaking 360° experiences.
+                </p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <h2>🎯 Our Commitment</h2>
+            <p>
+                We are committed to pushing the boundaries of what's possible in web-based virtual reality. 
+                Our focus on accessibility means that anyone with a web browser can experience our content, 
+                whether they're using a smartphone, computer, or VR headset.
+            </p>
+            <p>
+                Every EyeTrip VR experience is carefully crafted to provide maximum immersion while 
+                maintaining broad compatibility and excellent performance across all devices.
+            </p>
+        </div>
+
+        <div class="cta-section">
+            <h2>Ready to Experience VR?</h2>
+            <p>Explore our gallery of immersive 360° videos or jump straight into the VR experience.</p>
+            <div class="cta-buttons">
+                <a href="gallery.html" class="btn btn-primary">🎬 Browse Gallery</a>
+                <a href="index2.html" class="btn btn-secondary">🥽 Launch VR Experience</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
