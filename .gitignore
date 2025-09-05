@@ -1,0 +1,6 @@
+# Video files - too large for git
+public_html/assets/videos/*.mp4
+public_html/assets/videos/*.mov
+public_html/assets/videos/*.avi
+public_html/assets/videos/*.mkv
+public_html/assets/videos/*.webm
