@@ -39,7 +39,7 @@ export class PanoramaPlayer {
         if (!this.container) throw new Error('Container element is required');
         // Video playlist (up to 4 videos)
         this.videosList = [
-            'assets/videos/eyetrip-test-video2.mp4',
+            '/assets/videos/stumpy_rect_2_1_4ktest_isVR.mp4',
             // Add more video paths here as needed
         ];
         this.currentVideoIndex = 0;

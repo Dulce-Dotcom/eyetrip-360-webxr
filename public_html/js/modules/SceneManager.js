@@ -7,10 +7,10 @@ export class SceneManager {
         // Scene configuration - UPDATE THIS
         this.scenes = [
             {
-                basename: 'eyetrip-test-video2',  // Your new video name
+                basename: 'stumpy_rect_2_1_4ktest_isVR',  // Updated to match your video file
                 title: 'EyeTrip Test Scene',
                 duration: '2:15',  // Update with actual duration
-                thumbnail: 'assets/thumbnails/stumpy_thumbnail1.jpg',
+                thumbnail: 'assets/thumbnails/eyetrip-test-video1.png',
                 hasProcessed: false  // Set to false since this is the direct file
             }
         ];
