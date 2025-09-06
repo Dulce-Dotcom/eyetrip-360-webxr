@@ -32,6 +32,10 @@ export class PanoramaPlayer {
     this.controllerGrips = [];
     this.controllerModels = [];
     this.controllerRays = [];
+    // VR Menu properties
+    this.vrMenu = null;
+    this.vrMenuVisible = false;
+    this.vrMenuButtons = [];
     window.panoramaPlayer = this; // Ensure global access
     this.init();
     }
@@ -41,8 +45,9 @@ export class PanoramaPlayer {
         if (!this.container) throw new Error('Container element is required');
         // Video playlist (up to 4 videos)
         this.videosList = [
-            '/assets/videos/stumpy_rect_2_1_4ktest_isVR.mp4',
-            // Add more video paths here as needed
+            'assets/videos/stumpy_rect_16_9_4ktest.mp4',  // Try this one - might have audio
+            'assets/videos/stumpy_sphereMap_4ktest1.mp4', // Or this one
+            'assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4'
         ];
         this.currentVideoIndex = 0;
         this.setupScene();
@@ -123,17 +128,14 @@ export class PanoramaPlayer {
             this.video.crossOrigin = 'anonymous';
             this.video.loop = false;
             this.video.muted = false; // Ensure audio is not muted by default
+            this.video.volume = 1.0; // Ensure full volume
             this.video.setAttribute('playsinline', '');
             this.video.style.display = 'none';
             console.log('[DEBUG] loadVideo called with:', url);
             this.video.src = url;
             this.video.load();
-            // Force play after load
-            this.video.play().then(() => {
-                console.log('[DEBUG] video.play() succeeded');
-            }).catch((err) => {
-                console.warn('[DEBUG] video.play() failed:', err);
-            });
+            // Don't auto-play - wait for user interaction
+            console.log('[DEBUG] Video loaded, waiting for user interaction to play');
             // Show progress bar
             const progressBar = document.getElementById('videoProgressBar');
             const progressFill = document.getElementById('videoProgress');
@@ -251,18 +253,24 @@ export class PanoramaPlayer {
     handleVRTransition(isVRMode) {
         console.log('🔄 [VR] Handling transition to:', isVRMode ? 'VR' : 'Desktop');
         
+        // Show VR menu when entering VR mode
+        if (isVRMode) {
+            setTimeout(() => {
+                this.showVRMenu();
+            }, 1000); // Small delay to let VR session stabilize
+        } else {
+            // Hide VR menu when exiting VR
+            this.hideVRMenu();
+        }
+        
         // Hide/show UI elements
         const controlsUI = document.querySelector('.md-ui-layer');
         if (controlsUI) {
             controlsUI.style.display = isVRMode ? 'none' : 'block';
-            console.log('� [VR] UI controls:', isVRMode ? 'hidden' : 'visible');
+            console.log('🎮 [VR] UI controls:', isVRMode ? 'hidden' : 'visible');
         }
         
-        // Ensure video continues playing
-        if (this.video && this.video.paused) {
-            console.log('🎬 [VR] Resuming video playback...');
-            this.video.play().catch(err => console.warn('🎬 [VR] Video play failed:', err));
-        }
+        // DON'T auto-resume video - let user control with trigger
         
         // Force texture update
         if (this.texture) {
@@ -363,11 +371,13 @@ export class PanoramaPlayer {
         
         const controllerModelFactory = new XRControllerModelFactory();
         
-        // Basic controller setup for triggers only
+        // Basic controller setup for triggers and squeeze buttons
         for (let i = 0; i < 2; i++) {
             const controller = this.renderer.xr.getController(i);
             controller.addEventListener('selectstart', (event) => this.onSelectStart(event, i));
             controller.addEventListener('selectend', (event) => this.onSelectEnd(event, i));
+            controller.addEventListener('squeezestart', (event) => this.onSqueezeStart(event, i));
+            controller.addEventListener('squeezeend', (event) => this.onSqueezeEnd(event, i));
             this.scene.add(controller);
             
             const controllerGrip = this.renderer.xr.getControllerGrip(i);
@@ -378,26 +388,44 @@ export class PanoramaPlayer {
 
     // Event handlers for select/squeeze
     onSelectStart(event, i) {
-        console.log('🎮 [VR] Select start on controller', i);
-        // Safety check before accessing ray
+        console.log('🎮 [VR] Trigger pressed on controller', i);
+        
+        // Trigger button - play/pause video
+        if (this.renderer.xr.isPresenting) {
+            this.togglePlay();
+            this.updateVRMenuButtons();
+        }
+        
+        // Visual feedback
         if (this.controllers[i]) {
             const ray = this.controllers[i].getObjectByName('ray');
             if (ray) ray.material.color.setHex(0xff0000);
         }
     }
+    
     onSelectEnd(event, i) {
-        console.log('🎮 [VR] Select end on controller', i);
-        // Safety check before accessing ray
+        console.log('🎮 [VR] Trigger released on controller', i);
+        // Visual feedback
         if (this.controllers[i]) {
             const ray = this.controllers[i].getObjectByName('ray');
             if (ray) ray.material.color.setHex(0x00ff00);
         }
     }
+    
     onSqueezeStart(event, i) {
-        // Custom logic for grip button
+        console.log('🔥 [VR] SQUEEZE DETECTED on controller', i);
+        console.log('🔥 [VR] Current menu visible state:', this.vrMenuVisible);
+        // A button equivalent - toggle VR menu
+        if (this.renderer.xr.isPresenting) {
+            console.log('🔥 [VR] In VR mode, toggling menu...');
+            this.toggleVRMenu();
+        } else {
+            console.log('🔥 [VR] Not in VR mode');
+        }
     }
+    
     onSqueezeEnd(event, i) {
-        // Custom logic for grip button release
+        console.log('🎮 [VR] Squeeze (A button) released on controller', i);
     }
 
     // Setup window resize and pointer controls (future extensibility)
@@ -461,6 +489,9 @@ export class PanoramaPlayer {
     togglePlay() {
         if (this.video) {
             if (this.video.paused) {
+                // FORCE AUDIO ON
+                this.video.muted = false;
+                this.video.volume = 1.0;
                 this.video.play();
             } else {
                 this.video.pause();
@@ -480,6 +511,221 @@ export class PanoramaPlayer {
         if (this.video) {
             this.video.volume = val;
         }
+    }
+
+    // VR Menu Methods
+    createVRMenu() {
+        console.log('🎮 [VR] Creating realistic VR control menu...');
+        
+        // Create menu group
+        this.vrMenu = new THREE.Group();
+        this.vrMenu.position.set(0, 1, -2.5); // Closer and at eye level
+        
+        // Create main control panel (like desktop UI)
+        const panelWidth = 3;
+        const panelHeight = 2;
+        
+        // Background panel with rounded appearance
+        const panelGeometry = new THREE.BoxGeometry(panelWidth, panelHeight, 0.1);
+        const panelMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x1e1e1e,
+            transparent: true, 
+            opacity: 0.95 
+        });
+        const panel = new THREE.Mesh(panelGeometry, panelMaterial);
+        this.vrMenu.add(panel);
+        
+        // Add decorative border
+        const borderGeometry = new THREE.BoxGeometry(panelWidth + 0.05, panelHeight + 0.05, 0.05);
+        const borderMaterial = new THREE.MeshBasicMaterial({ color: 0x333333 });
+        const border = new THREE.Mesh(borderGeometry, borderMaterial);
+        border.position.z = -0.06;
+        this.vrMenu.add(border);
+        
+        // Clear previous buttons
+        this.vrMenuButtons = [];
+        
+        // Title bar
+        this.createVRControlButton('EyeTrip VR Controls', 0, 0.7, 2.5, 0.3, null, 0x444444, 0xffffff);
+        
+        // Main control buttons row
+        const playText = this.video && !this.video.paused ? '⏸️ PAUSE' : '▶️ PLAY';
+        this.createVRControlButton(playText, -0.8, 0.2, 0.7, 0.25, () => {
+            this.togglePlay();
+            this.updateVRMenuButtons();
+        }, 0x00aa44, 0xffffff);
+        
+        this.createVRControlButton('🔇 MUTE', 0, 0.2, 0.7, 0.25, () => {
+            this.toggleMute();
+            this.updateVRMenuButtons();
+        }, 0xaa4400, 0xffffff);
+        
+        this.createVRControlButton('⚙️ MENU', 0.8, 0.2, 0.7, 0.25, () => {
+            console.log('🎮 [VR] Settings menu pressed');
+        }, 0x4444aa, 0xffffff);
+        
+        // Volume controls
+        this.createVRControlButton('VOL -', -0.5, -0.2, 0.4, 0.2, () => {
+            this.adjustVolume(-0.1);
+        }, 0x666666, 0xffffff);
+        
+        this.createVRControlButton('VOL +', 0.5, -0.2, 0.4, 0.2, () => {
+            this.adjustVolume(0.1);
+        }, 0x666666, 0xffffff);
+        
+        // Volume display
+        const volumePercent = this.video ? Math.round(this.video.volume * 100) : 100;
+        this.createVRControlButton(`Vol: ${volumePercent}%`, 0, -0.45, 1, 0.15, null, 0x333333, 0xaaaaaa);
+        
+        // Info text
+        this.createVRControlButton('Grip = Toggle Menu', 0, -0.7, 2, 0.2, null, 0x222222, 0x888888);
+        
+        this.scene.add(this.vrMenu);
+        this.vrMenuVisible = true;
+        console.log('🎮 [VR] Realistic control menu created');
+    }
+    
+    createVRControlButton(text, x, y, width, height, onClick = null, bgColor = 0x333333, textColor = 0xffffff) {
+        // Create button background
+        const buttonGeometry = new THREE.BoxGeometry(width, height, 0.08);
+        const buttonMaterial = new THREE.MeshBasicMaterial({ 
+            color: bgColor,
+            transparent: false
+        });
+        const button = new THREE.Mesh(buttonGeometry, buttonMaterial);
+        button.position.set(x, y, 0.1);
+        
+        // Add button highlight for interactive buttons
+        if (onClick) {
+            const highlightGeometry = new THREE.BoxGeometry(width + 0.02, height + 0.02, 0.06);
+            const highlightMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.2
+            });
+            const highlight = new THREE.Mesh(highlightGeometry, highlightMaterial);
+            highlight.position.set(x, y, 0.08);
+            this.vrMenu.add(highlight);
+            
+            // Add press effect (slight inset)
+            const pressGeometry = new THREE.BoxGeometry(width - 0.02, height - 0.02, 0.04);
+            const pressMaterial = new THREE.MeshBasicMaterial({ 
+                color: this.lightenColor(bgColor, 0.3),
+                transparent: true,
+                opacity: 0.8
+            });
+            const pressEffect = new THREE.Mesh(pressGeometry, pressMaterial);
+            pressEffect.position.set(x, y, 0.12);
+            this.vrMenu.add(pressEffect);
+        }
+        
+        // Create text representation (using colored planes for now)
+        this.createButtonText(text, x, y, 0.15, textColor, width);
+        
+        if (onClick) {
+            button.userData = { onClick: onClick, text: text };
+            this.vrMenuButtons.push(button);
+        }
+        
+        this.vrMenu.add(button);
+        return button;
+    }
+    
+    createButtonText(text, x, y, z, color, maxWidth) {
+        // Create canvas for text rendering
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 512;
+        canvas.height = 128;
+        
+        // Clear canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Set font and style
+        context.font = 'bold 32px Arial, sans-serif';
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.fillStyle = `#${color.toString(16).padStart(6, '0')}`;
+        
+        // Draw text on canvas
+        context.fillText(text, canvas.width / 2, canvas.height / 2);
+        
+        // Create texture from canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        
+        // Create text plane geometry
+        const textGeometry = new THREE.PlaneGeometry(maxWidth * 0.9, 0.15);
+        const textMaterial = new THREE.MeshBasicMaterial({ 
+            map: texture,
+            transparent: true,
+            alphaTest: 0.1
+        });
+        
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        textMesh.position.set(x, y, z);
+        
+        this.vrMenu.add(textMesh);
+        console.log(`📝 [VR] Created canvas text: ${text}`);
+    }
+    
+    lightenColor(color, amount) {
+        // Simple color lightening function
+        const r = (color >> 16) & 0xff;
+        const g = (color >> 8) & 0xff;
+        const b = color & 0xff;
+        
+        const newR = Math.min(255, Math.floor(r + (255 - r) * amount));
+        const newG = Math.min(255, Math.floor(g + (255 - g) * amount));
+        const newB = Math.min(255, Math.floor(b + (255 - b) * amount));
+        
+        return (newR << 16) | (newG << 8) | newB;
+    }
+    
+    adjustVolume(delta) {
+        if (this.video) {
+            const newVolume = Math.max(0, Math.min(1, this.video.volume + delta));
+            this.video.volume = newVolume;
+            console.log(`🔊 [VR] Volume adjusted to ${Math.round(newVolume * 100)}%`);
+        }
+    }
+    
+    updateVRMenuButtons() {
+        // Recreate menu with updated button states
+        if (this.vrMenu && this.vrMenuVisible) {
+            this.scene.remove(this.vrMenu);
+            this.createVRMenu();
+        }
+    }
+    
+    showVRMenu() {
+        if (!this.vrMenu) {
+            this.createVRMenu();
+        } else {
+            this.vrMenu.visible = true;
+            this.vrMenuVisible = true;
+        }
+        console.log('🎮 [VR] 3D Menu shown');
+    }
+    
+    hideVRMenu() {
+        if (this.vrMenu) {
+            this.vrMenu.visible = false;
+            this.vrMenuVisible = false;
+        }
+        console.log('🎮 [VR] 3D Menu hidden');
+    }
+    
+    toggleVRMenu() {
+        console.log('🔥 [VR] toggleVRMenu called, current state:', this.vrMenuVisible);
+        if (this.vrMenuVisible) {
+            console.log('🔥 [VR] Hiding menu...');
+            this.hideVRMenu();
+        } else {
+            console.log('🔥 [VR] Showing menu...');
+            this.showVRMenu();
+        }
+        console.log('🔥 [VR] Menu toggled - now', this.vrMenuVisible ? 'visible' : 'hidden');
     }
 
     dispose() {

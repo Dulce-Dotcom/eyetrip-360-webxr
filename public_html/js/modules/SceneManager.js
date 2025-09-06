@@ -4,9 +4,16 @@ export class SceneManager {
         this.currentScene = 0;
         this.currentQuality = 'direct'; // For non-processed videos
         
+        // FORCE CLEAR session storage to prevent stale data
+        sessionStorage.removeItem('selectedVideo');
+        sessionStorage.removeItem('selectedTitle');
+        
         // Check for selected video from gallery
         const selectedVideo = sessionStorage.getItem('selectedVideo');
         const selectedTitle = sessionStorage.getItem('selectedTitle');
+        
+        console.log('🎬 [SceneManager] Debug - selectedVideo:', selectedVideo);
+        console.log('🎬 [SceneManager] Debug - selectedTitle:', selectedTitle);
         
         // Scene configuration - dynamically set based on gallery selection
         if (selectedVideo && selectedTitle) {
@@ -25,12 +32,12 @@ export class SceneManager {
             sessionStorage.removeItem('selectedVideo');
             sessionStorage.removeItem('selectedTitle');
         } else {
-            // Default scene configuration
+            // Default scene configuration - USE VIDEO WITH AUDIO
             this.scenes = [
                 {
                     basename: 'stumpy_sphereMap_4ktest1',
-                    videoPath: 'stumpy_rect_16_9_4ktest_isVR.mp4',
-                    title: 'EyeTrip Default Experience',
+                    videoPath: 'stumpy_rect_16_9_4ktest.mp4',
+                    title: 'EyeTrip Default Experience (with Audio)',
                     duration: '4:18',
                     thumbnail: 'assets/thumbnails/eyetrip-test-video2.jpg',
                     hasProcessed: false
@@ -38,21 +45,27 @@ export class SceneManager {
             ];
         }
         
+        console.log('🎬 [SceneManager] Final scenes config:', this.scenes);
         this.initSceneSelector();
     }
     
     // Updated getVideoUrl to handle full paths
     getVideoUrl(scene) {
+        let videoUrl;
         if (scene.videoPath) {
             // Use the full video path if provided
-            return `assets/videos/${scene.videoPath}`;
+            videoUrl = `assets/videos/${scene.videoPath}`;
         } else if (scene.hasProcessed) {
             // Use processed versions if available
-            return `assets/videos/processed/${scene.basename}/${scene.basename}_preview.mp4`;
+            videoUrl = `assets/videos/processed/${scene.basename}/${scene.basename}_${this.currentQuality}.mp4`;
         } else {
             // Use direct video file
-            return `assets/videos/${scene.basename}.mp4`;
+            videoUrl = `assets/videos/${scene.basename}.mp4`;
         }
+        
+        console.log('🎬 [SceneManager] getVideoUrl result:', videoUrl);
+        console.log('🎬 [SceneManager] Scene object:', scene);
+        return videoUrl;
     }
     
     initSceneSelector() {
