@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1976d2">
+    <title>EyeTrip VR - Immersive 360° Experience</title>
+    <meta name="description" content="Immersive 360° Virtual Reality Experience with WebXR support for Meta Quest">
+    <meta name="keywords" content="VR, 360, WebXR, Meta Quest, Virtual Reality, Immersive Experience">
+    <link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: 
+                linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%),
+                url('assets/thumbnails/eyetrip-test-video2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .landing-container {
+            text-align: center;
+            max-width: 800px;
+            padding: 40px 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        .logo {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
+            background-size: 200% 200%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            opacity: 0.8;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            justify-content: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(45deg, #1976d2, #42a5f5);
+            color: white;
+            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.6);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+        
+        .feature {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature h3 {
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+        
+        .feature p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 3rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .cta-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <h1 class="logo">EyeTrip VR</h1>
+        <p class="tagline">Immersive 360° Virtual Reality Experience</p>
+        
+        <p class="description">
+            Step into breathtaking 360° worlds and explore immersive virtual reality content. 
+            Experience stunning panoramic videos with full WebXR support for Meta Quest and other VR headsets. 
+            Navigate with intuitive controls and discover new perspectives in virtual reality.
+        </p>
+        
+        <div class="cta-buttons">
+            <a href="gallery.html" class="btn btn-primary">
+                🎬 Enter Gallery
+            </a>
+            <a href="index2.html" class="btn btn-secondary">
+                🥽 Launch VR Experience
+            </a>
+        </div>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <h3>360° Content</h3>
+                <p>Immersive panoramic videos and environments</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🥽</div>
+                <h3>VR Ready</h3>
+                <p>Full WebXR support for Meta Quest headsets</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎮</div>
+                <h3>Interactive</h3>
+                <p>Intuitive VR controllers and hand tracking</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <h3>Immersive Art</h3>
+                <p>Visual storytelling through artistic 360° experiences</p>
+            </div>
+        </div>
+    </div>
+			</body>
+</html>
