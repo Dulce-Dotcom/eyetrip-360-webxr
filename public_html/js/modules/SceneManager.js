@@ -4,11 +4,7 @@ export class SceneManager {
         this.currentScene = 0;
         this.currentQuality = 'direct'; // For non-processed videos
         
-        // FORCE CLEAR session storage to prevent stale data
-        sessionStorage.removeItem('selectedVideo');
-        sessionStorage.removeItem('selectedTitle');
-        
-        // Check for selected video from gallery
+        // Check for selected video from gallery FIRST (before clearing)
         const selectedVideo = sessionStorage.getItem('selectedVideo');
         const selectedTitle = sessionStorage.getItem('selectedTitle');
         
@@ -28,7 +24,7 @@ export class SceneManager {
                 }
             ];
             
-            // Clear session storage after use
+            // Clear session storage after use to prevent stale data
             sessionStorage.removeItem('selectedVideo');
             sessionStorage.removeItem('selectedTitle');
         } else {
@@ -53,8 +49,13 @@ export class SceneManager {
     getVideoUrl(scene) {
         let videoUrl;
         if (scene.videoPath) {
-            // Use the full video path if provided
-            videoUrl = `assets/videos/${scene.videoPath}`;
+            // If videoPath starts with 'assets/', use it as-is (full path already provided)
+            // Otherwise, prepend 'assets/videos/'
+            if (scene.videoPath.startsWith('assets/')) {
+                videoUrl = scene.videoPath;
+            } else {
+                videoUrl = `assets/videos/${scene.videoPath}`;
+            }
         } else if (scene.hasProcessed) {
             // Use processed versions if available
             videoUrl = `assets/videos/processed/${scene.basename}/${scene.basename}_${this.currentQuality}.mp4`;

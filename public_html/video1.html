@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1976d2">
+    <title>4K Latlong - Overture | EyeTrip VR</title>
+    <link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
+    <link rel="manifest" href="manifest.json">
+    <!-- WebXR Polyfill for broader support - load first -->
+    <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
+    <script>
+        // Initialize WebXR polyfill immediately
+        if (window.WebXRPolyfill) {
+            console.log('WebXR Polyfill loaded and initialized');
+        }
+        // Set single video configuration
+        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_1080p.mp4');
+        sessionStorage.setItem('selectedTitle', '4K Latlong - Overture');
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="css/material-ui.css">
+    <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+    <!-- Hamburger menu for video switching is now a child of the header -->
+        <script>
+        // Hamburger menu toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuButton = document.getElementById('menuButton');
+            const videoList = document.getElementById('videoList');
+            if (menuButton && videoList) {
+                menuButton.addEventListener('click', function() {
+                    videoList.style.display = videoList.style.display === 'block' ? 'none' : 'block';
+                });
+            }
+            // Video switch buttons
+            const videoButtons = document.querySelectorAll('.video-switch');
+            videoButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const idx = parseInt(btn.getAttribute('data-index'));
+                    if (window.panoramaPlayer && typeof window.panoramaPlayer.playVideoByIndex === 'function') {
+                        window.panoramaPlayer.playVideoByIndex(idx);
+                    }
+                    videoList.style.display = 'none';
+                });
+            });
+        });
+        </script>
+    <div id="container">
+    <!-- Start Experience Overlay -->
+        <!-- Removed Start Experience Overlay and logic -->
+        <script>
+        // Play button logic (ensure video/audio starts on play)
+                document.addEventListener('DOMContentLoaded', function() {
+                    const playBtn = document.getElementById('playBtn');
+                            if (playBtn) {
+                                playBtn.addEventListener('click', () => {
+                                    if (window.sceneManager && typeof window.sceneManager.loadScene === 'function') {
+                                        window.sceneManager.loadScene(0).then(() => {
+                                            const video = window.panoramaPlayer && window.panoramaPlayer.video;
+                                            if (video) {
+                                                video.play().then(() => {
+                                                    document.getElementById('audioMuteBtn').disabled = false;
+                                                    document.getElementById('mainVolume').disabled = false;
+                                                    console.log('[AUDIO] controls enabled after play');
+                                                }).catch((err) => {
+                                                    console.warn('[AUDIO] video play failed:', err);
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+
+                });
+        // Audio controls (mute/unmute, volume) remain unchanged and work in desktop mode
+        </script>
+    <div id="videoProgressBar" style="position:fixed;top:0;left:0;width:100vw;height:6px;background:#eee;z-index:100000;display:none;">
+            <div id="videoProgress" style="height:100%;width:0;background:#1976d2;transition:width 0.2s;"></div>
+        </div>
+        <div id="canvas-container"></div>
+        
+        <div class="md-ui-layer">
+            <div class="md-top-bar" id="topBar">
+                <button class="md-button" onclick="window.location.href='gallery.html'" style="margin-right: 8px;" title="Back to Gallery">
+                    <span class="material-icons">arrow_back</span>
+                </button>
+                <div class="md-title" style="display: inline-block; vertical-align: middle;">4K Latlong - Overture</div>
+                    <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
+                        <ul style="list-style: none; margin: 0; padding: 0;">
+                            <li id="galleryMenu" class="main-menu-item">Gallery</li>
+                            <li id="aboutMenu" class="main-menu-item">About</li>
+                            <li id="contactMenu" class="main-menu-item" style="border-bottom:none;">Contact</li>
+                        </ul>
+                        <style>
+                        #mainMenu {
+                            background: #23272f;
+                            color: #fff;
+                            border-radius: 12px;
+                            margin-top: 12px;
+                            box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+                            padding: 8px 0;
+                            min-width: 200px;
+                            font-family: 'Roboto', sans-serif;
+                        }
+                        #mainMenu ul {
+                            padding: 0;
+                            margin: 0;
+                        }
+                        .main-menu-item {
+                            padding: 16px 32px;
+                            border-bottom: 1px solid #353a45;
+                            cursor: pointer;
+                            font-size: 1.08em;
+                            transition: background 0.18s, color 0.18s;
+                            border-radius: 8px;
+                            margin: 0 8px;
+                        }
+                        .main-menu-item:last-child {
+                            border-bottom: none;
+                        }
+                        .main-menu-item:hover {
+                            background: #1976d2;
+                            color: #fff;
+                            box-shadow: 0 2px 8px rgba(25,118,210,0.12);
+                        }
+                        </style>
+                    </div>
+                </div>
+                <div class="md-title" style="display: inline-block; vertical-align: middle;">EyeTrip Images - 360° Experience</div>
+                <button class="md-button" id="settingsBtn">
+                    <span class="material-icons">settings</span>
+                </button>
+                <style>
+                    #settingsBtn { display: none !important; }
+                </style>
+            </div>
+
+            <div class="md-scene-selector hidden" id="sceneSelector">
+                <!-- Scene items will be generated dynamically -->
+            </div>
+
+            <div class="md-controls" id="controls">
+                <button class="md-button" id="prevBtn" style="visibility: hidden;">
+                    <span class="material-icons">skip_previous</span>
+                </button>
+                <button class="md-button md-primary" id="playBtn">
+                    <span class="material-icons">play_arrow</span>
+                </button>
+                <button class="md-button" id="nextBtn" style="visibility: hidden;">
+                    <span class="material-icons">skip_next</span>
+                </button>
+                <!-- Audio controls start -->
+                <button class="md-button" id="audioMuteBtn" title="Mute/Unmute" style="margin-left:16px;">
+                    <span class="material-icons" id="audioMuteIcon">volume_up</span>
+                </button>
+                <input id="mainVolume" type="range" min="0" max="1" step="0.01" value="1" style="width:100px; vertical-align:middle; margin:0 8px;">
+                <!-- Audio controls end -->
+                <button class="md-button" id="fullscreenBtn">
+    <!-- Debug overlay for sphere/texture status -->
+    <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
+                    <span class="material-icons">fullscreen</span>
+                </button>
+                <!-- VRButton from Three.js will be injected by PanoramaPlayer.js -->
+            </div>
+
+            <div class="md-vr-indicator" id="vrIndicator">
+                VR Mode Active
+            </div>
+
+            <div class="md-loading" id="loadingOverlay">
+                <div class="md-spinner"></div>
+                <div>Loading 360° Experience...</div>
+            </div>
+
+            <div class="webxr-badge" id="webxrBadge"></div>
+
+            <button class="md-fab" id="fabBtn">
+                <span class="material-icons">360</span>
+            </button>
+            <style>
+                #fabBtn { display: none !important; }
+            </style>
+        </div>
+            <!-- Gallery Modal -->
+            <div class="modal" id="galleryModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
+                <div style="background:#222; color:#fff; border-radius:16px; padding:32px; max-width:1000px; width:96vw; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.35); overflow-y:auto; max-height:90vh;">
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <h2 style="margin-top:0; margin-bottom:24px; font-size:2em; font-weight:500; letter-spacing:0.02em;">Gallery</h2>
+                    <div class="gallery-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin-bottom:24px;">
+                        <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
+                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video1.png" data-video="assets/videos/stumpy_rect_2_1_4ktest_isVR.mp4" data-index="0" alt="Video 1" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                            <button class="play-experience-btn" data-index="0" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
+                        </div>
+                        <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
+                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video2.png" data-video="assets/videos/stumpy_rect_2_1_4ktest.mp4" data-index="1" alt="Video 2" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                            <button class="play-experience-btn" data-index="1" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
+                        </div>
+                        <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
+                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video3.png" data-video="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" data-index="2" alt="Video 3" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                            <button class="play-experience-btn" data-index="2" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
+                        </div>
+                        <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
+                            <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video4.png" data-video="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" data-index="3" alt="Video 4" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
+                            <button class="play-experience-btn" data-index="3" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
+                        </div>
+                    </div>
+                    <video id="galleryVideoPlayer" controls style="width:100%; border-radius:6px; display:none; background:#000;"></video>
+                </div>
+            </div>
+
+            <!-- About Modal -->
+            <div class="modal" id="aboutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
+                <div style="background:#222; color:#fff; border-radius:8px; padding:32px; max-width:500px; width:90vw; position:relative;">
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <h2 style="margin-top:0;">About</h2>
+                    <p style="font-size:1.1em; line-height:1.6;">Welcome to EyeTrip Images 360° Experience. Immerse yourself in a curated selection of panoramic videos and explore new perspectives. This is a placeholder for more information about the project, the creators, and the vision behind EyeTrip Images. Stay tuned for updates!</p>
+                </div>
+            </div>
+
+            <!-- Contact Modal -->
+            <div class="modal" id="contactModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
+                <div style="background:#222; color:#fff; border-radius:8px; padding:32px; max-width:400px; width:90vw; position:relative;">
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <h2 style="margin-top:0;">Contact</h2>
+                    <form id="contactForm" style="display:flex; flex-direction:column; gap:16px;">
+                        <input type="email" name="email" placeholder="Your email" required style="padding:10px; border-radius:4px; border:none; font-size:1em;">
+                        <textarea name="message" placeholder="Your message" required style="padding:10px; border-radius:4px; border:none; font-size:1em; min-height:80px;"></textarea>
+                        <button type="submit" style="background:#1976d2; color:#fff; border:none; border-radius:4px; padding:10px; font-size:1em; cursor:pointer;">Send</button>
+                    </form>
+                    <div id="contactSuccess" style="display:none; color:#4caf50; margin-top:12px;">Thank you! Your message has been sent.</div>
+                </div>
+            </div>
+            <script>
+            // Hamburger menu toggle and modal logic
+            document.addEventListener('DOMContentLoaded', function() {
+                const menuButton = document.getElementById('menuButton');
+                const mainMenu = document.getElementById('mainMenu');
+                menuButton.addEventListener('click', function() {
+                    mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
+                });
+                // Modal triggers
+                document.getElementById('galleryMenu').onclick = function() {
+                    mainMenu.style.display = 'none';
+                    document.getElementById('galleryModal').style.display = 'flex';
+                };
+                document.getElementById('aboutMenu').onclick = function() {
+                    mainMenu.style.display = 'none';
+                    document.getElementById('aboutModal').style.display = 'flex';
+                };
+                document.getElementById('contactMenu').onclick = function() {
+                    mainMenu.style.display = 'none';
+                    document.getElementById('contactModal').style.display = 'flex';
+                };
+                // Modal close logic
+                document.querySelectorAll('.modal-close').forEach(btn => {
+                    btn.onclick = function() {
+                        btn.closest('.modal').style.display = 'none';
+                        if (btn.closest('.modal').id === 'galleryModal') {
+                            document.getElementById('galleryVideoPlayer').pause();
+                            document.getElementById('galleryVideoPlayer').style.display = 'none';
+                        }
+                    };
+                });
+                // Gallery video click
+                document.querySelectorAll('.gallery-thumb').forEach(thumb => {
+                    thumb.onclick = function() {
+                        const videoSrc = thumb.getAttribute('data-video');
+                        const player = document.getElementById('galleryVideoPlayer');
+                        player.pause();
+                        player.currentTime = 0;
+                        player.src = videoSrc;
+                        player.style.display = 'block';
+                        player.muted = false;
+                        player.volume = 1;
+                        player.play();
+                    };
+                });
+                // Play in Experience buttons
+                document.querySelectorAll('.play-experience-btn').forEach(btn => {
+                    btn.onclick = function(e) {
+                        const idx = parseInt(btn.getAttribute('data-index'));
+                        // Reset gallery preview
+                        const galleryPlayer = document.getElementById('galleryVideoPlayer');
+                        galleryPlayer.pause();
+                        galleryPlayer.currentTime = 0;
+                        galleryPlayer.src = '';
+                        galleryPlayer.style.display = 'none';
+                        // Play video on sphere
+                        if (window.panoramaPlayer && typeof window.panoramaPlayer.playVideoByIndex === 'function') {
+                            window.panoramaPlayer.playVideoByIndex(idx);
+                        }
+                        document.getElementById('galleryModal').style.display = 'none';
+                    };
+                });
+                // Gallery audio controls
+                const galleryPlayer = document.getElementById('galleryVideoPlayer');
+                const galleryMuteBtn = document.getElementById('galleryMuteBtn');
+                const galleryVolume = document.getElementById('galleryVolume');
+                if (galleryMuteBtn && galleryPlayer) {
+                    galleryMuteBtn.onclick = function() {
+                        galleryPlayer.muted = !galleryPlayer.muted;
+                        galleryMuteBtn.textContent = galleryPlayer.muted ? 'Unmute' : 'Mute';
+                    };
+                }
+                if (galleryVolume && galleryPlayer) {
+                    galleryVolume.oninput = function() {
+                        galleryPlayer.volume = parseFloat(galleryVolume.value);
+                    };
+                }
+            });
+            // Contact form submission (demo, no backend)
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('contactForm');
+                if (form) {
+                    form.onsubmit = function(e) {
+                        e.preventDefault();
+                        form.style.display = 'none';
+                        document.getElementById('contactSuccess').style.display = 'block';
+                    };
+                }
+            });
+            // Main controls audio mute/unmute and volume
+            // --- Main Experience Audio Controls ---
+            const audioMuteBtn = document.getElementById('audioMuteBtn');
+            const mainVolume = document.getElementById('mainVolume');
+            const audioMuteIcon = document.getElementById('audioMuteIcon');
+
+            function getCurrentVideo() {
+                return window.panoramaPlayer && window.panoramaPlayer.video instanceof HTMLVideoElement ? window.panoramaPlayer.video : null;
+            }
+
+            function updateAudioControls() {
+                const video = getCurrentVideo();
+                if (video) {
+                    mainVolume.disabled = false;
+                    audioMuteBtn.disabled = false;
+                    mainVolume.value = video.volume;
+                    audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+                } else {
+                    mainVolume.disabled = true;
+                    audioMuteBtn.disabled = true;
+                }
+            }
+
+            function attachAudioEvents(video) {
+                if (!video) return;
+                video.onvolumechange = updateAudioControls;
+                video.onplay = updateAudioControls;
+                video.onloadeddata = updateAudioControls;
+            }
+
+            function setAudioEventListeners() {
+                // Remove previous listeners by re-assigning
+                if (audioMuteBtn) {
+                    audioMuteBtn.onclick = function() {
+                        const video = getCurrentVideo();
+                        if (video && !audioMuteBtn.disabled) {
+                            video.muted = !video.muted;
+                            audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+                            updateAudioControls();
+                            console.log('[AUDIO] mute toggled:', video.muted);
+                        } else {
+                            console.warn('[AUDIO] mute button: no video element or control disabled');
+                        }
+                    };
+                }
+                if (mainVolume) {
+                    mainVolume.oninput = function() {
+                        const video = getCurrentVideo();
+                        if (video && !mainVolume.disabled) {
+                            video.volume = parseFloat(mainVolume.value);
+                            updateAudioControls();
+                            console.log('[AUDIO] volume set:', video.volume);
+                        } else {
+                            console.warn('[AUDIO] volume slider: no video element or control disabled');
+                        }
+                    };
+                }
+            }
+
+            // Patch panoramaPlayer.loadVideo to always re-sync controls
+            if (window.panoramaPlayer) {
+                const origLoadVideo = window.panoramaPlayer.loadVideo;
+                window.panoramaPlayer.loadVideo = function(url) {
+                    const result = origLoadVideo.call(this, url);
+                    setTimeout(function() {
+                        const video = getCurrentVideo();
+                        if (video) {
+                            // Attach listeners and update controls immediately after loadeddata
+                            video.addEventListener('loadeddata', function loadedHandler() {
+                                attachAudioEvents(video);
+                                setAudioEventListeners();
+                                updateAudioControls();
+                                video.removeEventListener('loadeddata', loadedHandler);
+                                console.log('[AUDIO] controls enabled and synced after loadeddata');
+                            });
+                        } else {
+                            mainVolume.disabled = true;
+                            audioMuteBtn.disabled = true;
+                        }
+                        // Also run once in case loadeddata already fired
+                        setAudioEventListeners();
+                        updateAudioControls();
+                        console.log('[AUDIO] controls updated after video load, video:', video);
+                    }, 500);
+                    return result;
+                };
+            }
+
+            // Initial sync
+            // Listen for custom event when main video is ready
+            window.addEventListener('mainVideoReady', function() {
+                const video = getCurrentVideo();
+                console.log('[DEBUG] mainVideoReady event fired, getCurrentVideo:', video);
+                attachAudioEvents(video);
+                setAudioEventListeners();
+                updateAudioControls();
+                console.log('[AUDIO] controls enabled and synced after mainVideoReady event, video:', video);
+                if (video) {
+                    console.log('[DEBUG] video.muted:', video.muted, 'video.volume:', video.volume);
+                } else {
+                    console.warn('[DEBUG] No video element found in getCurrentVideo after mainVideoReady');
+                }
+            });
+            </script>
+    </div>
+
+    <!-- Webpack will inject the correct bundled script automatically. -->
+     <script type="module" src="js/app.js"></script>
+</body>
+</html>

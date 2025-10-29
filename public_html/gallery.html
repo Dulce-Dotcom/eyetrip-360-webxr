@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Gallery - EyeTrip VR</title>
     <style>
         * {
@@ -13,12 +16,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.7) 0%, rgba(0, 0, 0, 0.5) 100%),
-                url('assets/thumbnails/eyetrip-test-video2.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
             color: white;
         }
@@ -77,8 +75,8 @@
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
             margin-bottom: 3rem;
         }
 
@@ -198,32 +196,10 @@
             }
         }
 
-        /* Loading overlay */
-        .loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
-
-        .loading.active {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        .loading-text {
-            color: white;
-            font-size: 1.2rem;
-            text-align: center;
+        @media (min-width: 769px) and (max-width: 1200px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
@@ -234,7 +210,6 @@
             <a href="gallery.html">Gallery</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
-            <a href="index2.html">Launch VR</a>
         </div>
     </div>
 
@@ -242,110 +217,82 @@
         <h1 class="page-title">VR Video Gallery</h1>
         
         <div class="gallery-grid">
-            <div class="video-card" data-video="eyetrip-test-video.mp4" data-title="EyeTrip Test Video">
-                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="EyeTrip Test Video" class="video-thumbnail">
+            <!-- Video 1: 4K Latlong Overture -->
+            <div class="video-card" onclick="window.location.href='video1.html'">
+                <img src="assets/videos/processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_thumb.jpg?v=2" alt="4K Latlong - Overture" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">EyeTrip Test Experience</h3>
-                    <div class="video-duration">🕐 2:15</div>
+                    <h3 class="video-title">4K Latlong - Overture</h3>
+                    <div class="video-duration">🕐 5:35</div>
                     <p class="video-description">
-                        Immerse yourself in this stunning 360° test experience featuring 
-                        beautiful landscapes and smooth camera movements.
+                        Experience breathtaking 360° visuals in stunning 4K quality. 
+                        Immerse yourself in this high-resolution equirectangular journey 
+                        with exceptional clarity and detail.
                     </p>
-                    <button class="play-button" onclick="playVideo('eyetrip-test-video.mp4', 'EyeTrip Test Experience')">
+                    <button class="play-button">
                         🎬 Play in VR
                     </button>
                 </div>
             </div>
 
-            <div class="video-card" data-video="eyetrip-test-video2.mp4" data-title="EyeTrip Test Video 2">
-                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="EyeTrip Test Video 2" class="video-thumbnail">
+            <!-- Video 2: Scraptangle -->
+            <div class="video-card" onclick="window.location.href='video2.html'">
+                <img src="assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_thumb.jpg?v=2" alt="Scraptangle" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">EyeTrip Extended Experience</h3>
-                    <div class="video-duration">🕐 3:42</div>
+                    <h3 class="video-title">Scraptangle</h3>
+                    <div class="video-duration">🕐 5:36</div>
                     <p class="video-description">
-                        Extended journey through immersive environments with enhanced 
-                        visual effects and ambient soundscape.
+                        Dive into an artistic 360° vision that blends experimental visuals 
+                        with immersive storytelling. A unique VR experience that pushes 
+                        creative boundaries.
                     </p>
-                    <button class="play-button" onclick="playVideo('eyetrip-test-video2.mp4', 'EyeTrip Extended Experience')">
+                    <button class="play-button">
                         🎬 Play in VR
                     </button>
                 </div>
             </div>
 
-            <div class="video-card" data-video="stumpy_rect_16_9_4ktest_isVR.mp4" data-title="Stumpy Sphere 4K">
-                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="Stumpy Sphere 4K" class="video-thumbnail">
+            <!-- Video 3: Shroom Zoom -->
+            <div class="video-card" onclick="window.location.href='video3.html'">
+                <img src="assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_thumb.jpg?v=2" alt="Shroom Zoom" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">Stumpy Sphere 4K Experience</h3>
-                    <div class="video-duration">🕐 4:18</div>
+                    <h3 class="video-title">Shroom Zoom</h3>
+                    <div class="video-duration">🕐 5:23</div>
                     <p class="video-description">
-                        Ultra high-definition 4K 360° video showcasing incredible detail 
-                        and clarity in virtual reality environments.
+                        Journey through an immersive nature experience like never before. 
+                        Explore intricate details and textures in this captivating 360° 
+                        exploration of the natural world.
                     </p>
-                    <button class="play-button" onclick="playVideo('stumpy_rect_16_9_4ktest_isVR.mp4', 'Stumpy Sphere 4K Experience')">
+                    <button class="play-button">
                         🎬 Play in VR
                     </button>
                 </div>
             </div>
 
-            <div class="video-card" data-video="processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_4k.mp4" data-title="Overture Experience">
-                <img src="assets/thumbnails/eyetrip-test-video2.jpg" alt="Overture 4K Experience" class="video-thumbnail">
+            <!-- Video 4: Stumpy Waves -->
+            <div class="video-card" onclick="window.location.href='video4.html'">
+                <img src="assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_thumb.jpg?v=2" alt="Stumpy Waves" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">Overture 4K Experience</h3>
-                    <div class="video-duration">🕐 5:33</div>
+                    <h3 class="video-title">Stumpy Waves</h3>
+                    <div class="video-duration">🕐 5:25</div>
                     <p class="video-description">
-                        Premium 4K 360° experience with advanced processing and 
-                        optimized streaming for the ultimate VR journey.
+                        Relax with this serene coastal 360° experience. Feel the rhythm 
+                        of the waves and immerse yourself in the tranquil beauty of 
+                        nature's coastal landscapes.
                     </p>
-                    <button class="play-button" onclick="playVideo('processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_4k.mp4', 'Overture 4K Experience')">
+                    <button class="play-button">
                         🎬 Play in VR
                     </button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="loading" id="loading">
-        <div class="loading-text">
-            <div>🎬 Loading VR Experience...</div>
-            <div style="margin-top: 1rem; font-size: 1rem; opacity: 0.8;">
-                Preparing immersive 360° video
             </div>
         </div>
     </div>
 
     <script>
-        function playVideo(videoPath, title) {
-            // Show loading overlay
-            const loading = document.getElementById('loading');
-            loading.classList.add('active');
-            
-            // Store the selected video and title for the main VR experience
-            sessionStorage.setItem('selectedVideo', videoPath);
-            sessionStorage.setItem('selectedTitle', title);
-            
-            // Add a small delay for better UX, then redirect
-            setTimeout(() => {
-                window.location.href = 'index2.html';
-            }, 1500);
-        }
-
-        // Add click handlers to video cards for play functionality
-        document.querySelectorAll('.video-card').forEach(card => {
-            card.addEventListener('click', function(e) {
-                // Don't trigger if clicking the button directly
-                if (e.target.tagName !== 'BUTTON') {
-                    const video = this.dataset.video;
-                    const title = this.dataset.title;
-                    playVideo(video, title);
-                }
-            });
-        });
-
-        // Add hover effects
+        // Simple hover effects for video cards
         document.querySelectorAll('.video-card').forEach(card => {
             card.addEventListener('mouseenter', function() {
                 this.style.transform = 'translateY(-10px) scale(1.02)';

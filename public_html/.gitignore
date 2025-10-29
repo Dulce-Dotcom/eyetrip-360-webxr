@@ -32,9 +32,12 @@ keystore.properties
 build/
 .idea/
 *.iml
-# Video files - too large for git
+# Video files and streaming segments - too large for git
 *.mp4
 *.mov
 *.avi
 *.mkv
 *.webm
+*.ts
+assets/videos/processed/
+original-videos/

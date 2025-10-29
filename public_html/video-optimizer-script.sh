@@ -28,7 +28,7 @@ fi
 
 # Get filename without extension
 BASENAME=$(basename "$INPUT_VIDEO" .mp4)
-OUTPUT_DIR="assets/videos/processed"
+OUTPUT_DIR="public_html/assets/videos/processed"
 
 echo "📁 Creating output directory..."
 mkdir -p "$OUTPUT_DIR"
