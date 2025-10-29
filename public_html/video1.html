@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1976d2">
     <title>4K Latlong - Overture | EyeTrip VR</title>
-    <link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
+    <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/eyetrip-style.css">
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>
@@ -87,7 +88,10 @@
                 <button class="md-button" onclick="window.location.href='gallery.html'" style="margin-right: 8px;" title="Back to Gallery">
                     <span class="material-icons">arrow_back</span>
                 </button>
-                <div class="md-title" style="display: inline-block; vertical-align: middle;">4K Latlong - Overture</div>
+                <div class="md-title" style="display: inline-flex; align-items: center; vertical-align: middle;">
+                    <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
+                    <span>4K Latlong - Overture</span>
+                </div>
                     <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
                         <ul style="list-style: none; margin: 0; padding: 0;">
                             <li id="galleryMenu" class="main-menu-item">Gallery</li>

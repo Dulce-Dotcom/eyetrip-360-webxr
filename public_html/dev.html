@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#1976d2">
     <title>EyeTrip Images - 360° Experience</title>
-    <link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
+    <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
     <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="css/eyetrip-style.css">
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>
@@ -124,7 +125,10 @@
                         </style>
                     </div>
                 </div>
-                <div class="md-title" style="display: inline-block; vertical-align: middle;">EyeTrip Images - 360° Experience</div>
+                <div class="md-title" style="display: inline-flex; align-items: center; vertical-align: middle;">
+                    <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
+                    <span>360° Experience</span>
+                </div>
                 <button class="md-button" id="settingsBtn">
                     <span class="material-icons">settings</span>
                 </button>

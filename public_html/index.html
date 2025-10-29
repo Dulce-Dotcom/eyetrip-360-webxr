@@ -8,8 +8,8 @@
     <title>EyeTrip VR - Immersive 360° Experience</title>
     <meta name="description" content="Immersive 360° Virtual Reality Experience with WebXR support for Meta Quest">
     <meta name="keywords" content="VR, 360, WebXR, Meta Quest, Virtual Reality, Immersive Experience">
-    <link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
+    <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
             margin: 0;
@@ -18,46 +18,40 @@
         }
         
         body {
-            font-family: 'Roboto', sans-serif;
             background: 
-                linear-gradient(135deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.4) 100%),
+                linear-gradient(to bottom, #01019b, #1b2a41),
                 url('assets/thumbnails/eyetrip-test-video2.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            background-blend-mode: overlay;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
         }
         
         .landing-container {
             text-align: center;
             max-width: 800px;
             padding: 40px 20px;
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(27, 42, 65, 0.6);
             border-radius: 20px;
             backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 8px 32px rgba(205, 0, 255, 0.3);
+            border: 1px solid rgba(240, 248, 255, 0.2);
         }
         
         .logo {
-            font-size: 4rem;
-            font-weight: 700;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1);
-            background-size: 200% 200%;
-            background-clip: text;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: gradient 3s ease infinite;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: center;
         }
         
-        @keyframes gradient {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .logo img {
+            height: 100px;
+            width: auto;
+            filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.8));
         }
         
         .tagline {
@@ -102,24 +96,25 @@
         }
         
         .btn-primary {
-            background: linear-gradient(45deg, #1976d2, #42a5f5);
-            color: white;
-            box-shadow: 0 4px 15px rgba(25, 118, 210, 0.4);
+            background: linear-gradient(45deg, #cd00ff, #00eeff);
+            color: #f0f8ff;
+            box-shadow: 0 4px 15px rgba(205, 0, 255, 0.4);
         }
         
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(25, 118, 210, 0.6);
+            box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
         }
         
         .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(240, 248, 255, 0.1);
+            color: #f0f8ff;
+            border: 2px solid rgba(240, 248, 255, 0.3);
         }
         
         .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(240, 248, 255, 0.2);
+            border-color: #cd00ff;
             transform: translateY(-2px);
         }
         
@@ -132,9 +127,17 @@
         
         .feature {
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(240, 248, 255, 0.1);
             border-radius: 15px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(240, 248, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .feature:hover {
+            border-color: rgba(205, 0, 255, 0.5);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(205, 0, 255, 0.3);
         }
         
         .feature-icon {
@@ -153,8 +156,8 @@
         }
         
         @media (max-width: 768px) {
-            .logo {
-                font-size: 3rem;
+            .logo img {
+                height: 70px;
             }
             
             .tagline {
@@ -175,7 +178,9 @@
 </head>
 <body>
     <div class="landing-container">
-        <h1 class="logo">EyeTrip VR</h1>
+        <div class="logo">
+            <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR">
+        </div>
         <p class="tagline">Immersive 360° Virtual Reality Experience</p>
         
         <p class="description">
@@ -187,9 +192,6 @@
         <div class="cta-buttons">
             <a href="gallery.html" class="btn btn-primary">
                 🎬 Enter Gallery
-            </a>
-            <a href="index2.html" class="btn btn-secondary">
-                🥽 Launch VR Experience
             </a>
         </div>
         

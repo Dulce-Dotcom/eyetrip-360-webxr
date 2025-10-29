@@ -8,7 +8,13 @@
 		<meta name="KEYWORDS" content="David Aughenbaugh, foggybog, EyeTrip, VR, ">
 		<meta name="note" content="Radiation will frizz your heirs.">
 	<link href="style1.css" rel="stylesheet" type="text/css" media="all">
-	<link rel="icon" href="assets/icons/icon-144x144.png" type="image/png">
+	<link rel="stylesheet" href="css/eyetrip-style.css">
+	<link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
+	<style>
+		body {
+			background: #01019b;
+		}
+	</style>
 	</head>
 			<body style="margin:0; padding:0; min-height:100vh; background:#111;">
 				<!-- Parallax background with cycling images -->
@@ -17,19 +23,21 @@
 					<img id="bg-img2" src="" alt="Gallery Art" style="width:110vw; height:110vh; object-fit:cover; filter:brightness(0.6) blur(2px); position:absolute; left:0; top:0; transition:opacity 1.5s, transform 0.5s; opacity:0;">
 				</div>
 				<div style="position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh;">
-					<h1 style="color:#fff; font-size:3rem; font-weight:700; margin-bottom:1.5rem; text-shadow:0 2px 16px #000;">EyeTrip 360&#176; Experience</h1>
-					<h2 style="color:#fff; font-size:2rem; font-weight:400; margin-bottom:1.5rem; text-shadow:0 2px 12px #000;">Coming Soon</h2>
-					<p style="color:#fff; font-size:1.25rem; margin-bottom:2rem; text-shadow:0 1px 8px #000; text-align:center;">A new immersive art experience is launching soon.<br>Sign up to be notified!</p>
-					<form id="notify-form" action="https://formspree.io/f/xgvzbgvq" method="POST" style="background:rgba(0,0,0,0.7); padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px #000; display:flex; flex-direction:column; align-items:center; gap:1rem; max-width:340px; width:100%;">
+					<div style="margin-bottom:1.5rem;">
+						<img src="images/eyetripvr-logo.svg" alt="EyeTrip VR" style="height:120px; width:auto; filter:brightness(0) invert(1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.8));">
+					</div>
+					<h2 style="color:#f0f8ff; font-size:2rem; font-weight:400; margin-bottom:1.5rem; text-shadow:0 2px 12px #000;">Coming Soon</h2>
+					<p style="color:#f0f8ff; font-size:1.25rem; margin-bottom:2rem; text-shadow:0 1px 8px #000; text-align:center;">A new immersive art experience is launching soon.<br>Sign up to be notified!</p>
+					<form id="notify-form" action="https://formspree.io/f/xgvzbgvq" method="POST" style="background:rgba(27, 42, 65, 0.8); padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px rgba(205, 0, 255, 0.4); display:flex; flex-direction:column; align-items:center; gap:1rem; max-width:340px; width:100%; border:1px solid rgba(240, 248, 255, 0.2);">
 						<input type="email" name="email" placeholder="Your email address" required style="width:100%; padding:0.75rem 1rem; border-radius:6px; border:none; font-size:1rem; margin-bottom:1rem;">
-						<button type="submit" style="width:100%; background:#1976d2; color:#fff; font-size:1.1rem; font-weight:500; border:none; border-radius:6px; padding:0.75rem 1rem; cursor:pointer; box-shadow:0 2px 8px #1976d2;">Notify Me</button>
+						<button type="submit" style="width:100%; background:linear-gradient(45deg, #cd00ff, #00eeff); color:#f0f8ff; font-size:1.1rem; font-weight:500; border:none; border-radius:6px; padding:0.75rem 1rem; cursor:pointer; box-shadow:0 4px 15px rgba(205, 0, 255, 0.4);">Notify Me</button>
 					</form>
-					<div id="form-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#222; color:#fff; padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px #000; z-index:1000; font-size:1.2rem; text-align:center;">
+					<div id="form-popup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#1b2a41; color:#f0f8ff; padding:2rem 2.5rem; border-radius:12px; box-shadow:0 4px 24px rgba(205, 0, 255, 0.6); z-index:1000; font-size:1.2rem; text-align:center; border:1px solid rgba(240, 248, 255, 0.2);">
     Thank you! You'll be notified when EyeTrip 360&#176; launches.
     <br><br>
-    <button onclick="document.getElementById('form-popup').style.display='none'" style="margin-top:1rem; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.2rem; font-size:1rem; cursor:pointer;">Close</button>
+    <button onclick="document.getElementById('form-popup').style.display='none'" style="margin-top:1rem; background:#cd00ff; color:#f0f8ff; border:none; border-radius:6px; padding:0.5rem 1.2rem; font-size:1rem; cursor:pointer;">Close</button>
 </div>
-					<div style="margin-top:2rem; color:#fff; font-size:0.95rem; opacity:0.7;">Art by David Aughenbaugh &bull; <a href='https://eyetripimages.com/' style='color:#fff;text-decoration:underline;' target='_blank'>eyetripimages.com</a></div>
+					<div style="margin-top:2rem; color:#f0f8ff; font-size:0.95rem; opacity:0.7;">Art by David Aughenbaugh &bull; <a href='https://eyetripimages.com/' style='color:#f0f8ff;text-decoration:underline;' target='_blank'>eyetripimages.com</a></div>
 				</div>
 				<script>
 				// Smooth parallax and crossfade slideshow
