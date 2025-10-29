@@ -1,0 +1,313 @@
+html, body {
+    height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-wrapper {
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.site-footer {
+    flex-shrink: 0;
+}
+/* Footer Styles */
+.site-footer {
+    width: 100%;
+    text-align: center;
+    padding: 1.2rem 0 1.2rem 0;
+    color: var(--hypnotic-white);
+    background: rgba(27, 42, 65, 0.85);
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+    border-top: 1px solid rgba(240, 248, 255, 0.08);
+    margin-top: 2rem;
+    position: relative;
+    z-index: 10;
+    box-shadow: 0 -2px 16px rgba(1,1,155,0.08);
+}
+/*
+ * EyeTrip VR - Shared Design System
+ * Based on EyeTripImages.com v2 styling
+ */
+
+/* Import Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700&display=swap');
+
+/* CSS Variables - Color Palette */
+:root {
+    /* Primary Colors */
+    --deep-blue: #01019b;
+    --dark-grey: #1b2a41;
+    --hypnotic-white: #f0f8ff;
+    --black: #000000;
+    
+    /* Accent Colors */
+    --magenta: #cd00ff;
+    --electric-blue: #00eeff;
+    --neon-green: #00ff88;
+    --vibrant-purple: #a855f7;
+    --hypnotic-pink: #ff1493;
+    
+    /* Typography */
+    --font-body: 'Noto Sans', system-ui, -apple-system, sans-serif;
+    --font-heading: 'Noto Sans', system-ui, -apple-system, sans-serif;
+    
+    /* Spacing */
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 1rem;
+    --spacing-md: 1.5rem;
+    --spacing-lg: 2rem;
+    --spacing-xl: 3rem;
+}
+
+/* Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-body);
+    background: linear-gradient(to bottom, var(--deep-blue), var(--dark-grey));
+    color: var(--hypnotic-white);
+    line-height: 1.6;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: var(--spacing-sm);
+}
+
+h1 {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+}
+
+h2 {
+    font-size: clamp(2rem, 4vw, 3.5rem);
+}
+
+h3 {
+    font-size: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+/* Gradient Text Effect */
+.gradient-text {
+    background: linear-gradient(to right, var(--magenta), var(--hypnotic-white));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Logo Styling */
+.eyetrip-logo {
+    height: 60px;
+    width: auto;
+    filter: brightness(0) invert(1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+    transition: all 0.3s ease;
+}
+
+.eyetrip-logo:hover {
+    filter: brightness(0) invert(1) drop-shadow(0 6px 12px rgba(205, 0, 255, 0.6));
+    transform: translateY(-2px);
+}
+
+.eyetrip-logo-small {
+    height: 40px;
+    width: auto;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: 50px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, var(--magenta), var(--electric-blue));
+    color: var(--hypnotic-white);
+    box-shadow: 0 4px 15px rgba(205, 0, 255, 0.4);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
+}
+
+.btn-secondary {
+    background: rgba(240, 248, 255, 0.1);
+    color: var(--hypnotic-white);
+    border-color: rgba(240, 248, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+    background: rgba(240, 248, 255, 0.2);
+    border-color: var(--magenta);
+    transform: translateY(-2px);
+}
+
+/* Cards */
+.card {
+    background: rgba(240, 248, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 1rem;
+    padding: var(--spacing-lg);
+    border: 1px solid rgba(240, 248, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    border-color: rgba(205, 0, 255, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(205, 0, 255, 0.3);
+}
+
+/* Header Styles */
+header {
+    background: rgba(27, 42, 65, 0.9);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(240, 248, 255, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+header nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header nav a {
+    color: var(--hypnotic-white);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+header nav a:hover {
+    background: rgba(205, 0, 255, 0.2);
+    color: var(--magenta);
+}
+
+/* Navigation Menu */
+.nav-menu {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    list-style: none;
+}
+
+/* Backgrounds and Overlays */
+.bg-overlay {
+    position: relative;
+    overflow: hidden;
+}
+
+.bg-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(205, 0, 255, 0.1), transparent 70%);
+    pointer-events: none;
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.8s ease-out forwards;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--electric-blue), var(--neon-green));
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, var(--neon-green), var(--electric-blue));
+}
+
+/* Utility Classes */
+.text-shadow {
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    :root {
+        --spacing-lg: 1rem;
+        --spacing-xl: 2rem;
+    }
+    
+    .eyetrip-logo {
+        height: 40px;
+    }
+    
+    header nav {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .nav-menu {
+        flex-direction: column;
+        width: 100%;
+    }
+}
