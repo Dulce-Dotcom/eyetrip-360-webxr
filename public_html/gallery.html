@@ -7,6 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Gallery - EyeTrip VR</title>
+    <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
             margin: 0;
@@ -15,14 +16,18 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: 
+                linear-gradient(to bottom, #01019b, #1b2a41),
+                url('assets/thumbnails/eyetrip-test-video2.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-blend-mode: overlay;
             min-height: 100vh;
-            color: white;
         }
 
         .header {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(27, 42, 65, 0.9);
             backdrop-filter: blur(10px);
             padding: 1rem 2rem;
             position: fixed;
@@ -33,13 +38,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(240, 248, 255, 0.1);
         }
 
-        .logo {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-decoration: none;
-            color: white;
+        .logo img {
+            height: 50px;
+            width: auto;
+            filter: brightness(0) invert(1) drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+            transition: all 0.3s ease;
+        }
+        
+        .logo img:hover {
+            filter: brightness(0) invert(1) drop-shadow(0 6px 12px rgba(205, 0, 255, 0.6));
+            transform: translateY(-2px);
         }
 
         .nav-links {
@@ -49,7 +60,7 @@
         }
 
         .nav-links a {
-            color: white;
+            color: #f0f8ff;
             text-decoration: none;
             padding: 0.5rem 1rem;
             border-radius: 25px;
@@ -57,7 +68,8 @@
         }
 
         .nav-links a:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(205, 0, 255, 0.2);
+            color: #cd00ff;
         }
 
         .gallery-container {
@@ -81,18 +93,20 @@
         }
 
         .video-card {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(240, 248, 255, 0.1);
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
             cursor: pointer;
             position: relative;
+            border: 1px solid rgba(240, 248, 255, 0.2);
         }
 
         .video-card:hover {
             transform: translateY(-10px);
-            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 15px 45px rgba(205, 0, 255, 0.4);
+            border-color: rgba(205, 0, 255, 0.5);
         }
 
         .video-thumbnail {
@@ -205,7 +219,9 @@
 </head>
 <body>
     <div class="header">
-        <a href="index.html" class="logo">EyeTrip VR</a>
+        <a href="index.html" class="logo">
+            <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR">
+        </a>
         <div class="nav-links">
             <a href="gallery.html">Gallery</a>
             <a href="about.html">About</a>
