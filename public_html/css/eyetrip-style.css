@@ -1,11 +1,16 @@
-html, body {
+html {
     height: 100%;
+    background: #1b2a41;
 }
 
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    background-attachment: fixed !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
 }
 
 .page-wrapper {
@@ -21,17 +26,81 @@ body {
 /* Footer Styles */
 .site-footer {
     width: 100%;
-    text-align: center;
-    padding: 1.2rem 0 1.2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 3rem;
     color: var(--hypnotic-white);
-    background: rgba(27, 42, 65, 0.85);
-    font-size: 1rem;
-    letter-spacing: 0.03em;
-    border-top: 1px solid rgba(240, 248, 255, 0.08);
+    background: linear-gradient(135deg, rgba(27, 42, 65, 0.95), rgba(1, 1, 155, 0.9));
+    font-size: 0.9rem;
+    letter-spacing: 0.05em;
+    border-top: 2px solid rgba(205, 0, 255, 0.3);
     margin-top: 2rem;
     position: relative;
     z-index: 10;
-    box-shadow: 0 -2px 16px rgba(1,1,155,0.08);
+    box-shadow: 0 -4px 20px rgba(205, 0, 255, 0.15);
+    backdrop-filter: blur(15px);
+}
+
+.site-footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--electric-blue), var(--magenta), transparent);
+    opacity: 0.6;
+}
+
+.site-footer div {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.site-footer a {
+    color: var(--electric-blue);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+}
+
+.site-footer a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--magenta), var(--electric-blue));
+    transition: width 0.3s ease;
+}
+
+.site-footer a:hover {
+    color: var(--magenta);
+    background: rgba(205, 0, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.site-footer a:hover::after {
+    width: 100%;
+}
+
+@media (max-width: 768px) {
+    .site-footer {
+        flex-direction: column;
+        gap: 0.75rem;
+        text-align: center;
+        padding: 1.5rem 1rem;
+    }
+    
+    .site-footer div {
+        justify-content: center;
+    }
 }
 /*
  * EyeTrip VR - Shared Design System

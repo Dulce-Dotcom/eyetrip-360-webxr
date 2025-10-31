@@ -7,6 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Gallery - EyeTrip VR</title>
+    <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
@@ -15,13 +16,18 @@
             box-sizing: border-box;
         }
 
+        html {
+            background: #1b2a41;
+        }
+
         body {
             background: 
-                linear-gradient(to bottom, #01019b, #1b2a41),
+                linear-gradient(to bottom, rgba(1, 1, 155, 0.7), rgba(27, 42, 65, 0.8)),
                 url('assets/thumbnails/eyetrip-test-video2-optimized.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
+            background-repeat: no-repeat;
             background-blend-mode: overlay;
             min-height: 100vh;
         }
@@ -90,6 +96,10 @@
             grid-template-columns: repeat(4, 1fr);
             gap: 1.5rem;
             margin-bottom: 3rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+            justify-items: center;
         }
 
         .video-card {
@@ -234,17 +244,17 @@
         <h1 class="page-title">VR Video Gallery</h1>
         
         <div class="gallery-grid">
-            <!-- Video 1: 4K Latlong Overture -->
+            <!-- Video 1: Matrix Caracas Sphere -->
             <div class="video-card" onclick="window.location.href='video1.html'">
-                <img src="assets/videos/processed/4klatlong_05b_offsetOverture1/4klatlong_05b_offsetOverture1_thumb.jpg?v=2" alt="4K Latlong - Overture" class="video-thumbnail">
+                <img src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_thumb.jpg?v=2" alt="Matrix Caracas Sphere" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">4K Latlong - Overture</h3>
-                    <div class="video-duration">🕐 5:35</div>
+                    <h3 class="video-title">Matrix Caracas Sphere</h3>
+                    <div class="video-duration">🕐 4:17</div>
                     <p class="video-description">
-                        Experience breathtaking 360° visuals in stunning 4K quality. 
-                        Immerse yourself in this high-resolution equirectangular journey 
-                        with exceptional clarity and detail.
+                        Step into a digital dreamscape where urban energy meets virtual reality. 
+                        Experience the pulsating rhythms of Caracas transformed into an immersive 
+                        spherical matrix of light, color, and motion.
                     </p>
                     <button class="play-button">
                         🎬 Play in VR
@@ -321,7 +331,8 @@
         });
     </script>
     <footer class="site-footer">
-        &copy; 2025 EyeTrip VR. All rights reserved.
+        <div>&copy; 2025 David Aughenbaugh - EyeTripVR. All rights reserved.</div>
+        <div>Powered by <a href="https://dulce.com" target="_blank">Dulce Dotcom</a></div>
     </footer>
     </div> <!-- end .page-wrapper -->
 </body>
