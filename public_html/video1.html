@@ -8,6 +8,17 @@
     <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/eyetrip-style.css">
+    
+    <!-- Import map to resolve bare module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+            "three/": "https://unpkg.com/three@0.153.0/"
+        }
+    }
+    </script>
+    
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>
@@ -242,22 +253,41 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const menuButton = document.getElementById('menuButton');
                 const mainMenu = document.getElementById('mainMenu');
-                menuButton.addEventListener('click', function() {
-                    mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
-                });
+                
+                if (menuButton && mainMenu) {
+                    menuButton.addEventListener('click', function() {
+                        mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
+                    });
+                }
+                
                 // Modal triggers
-                document.getElementById('galleryMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('galleryModal').style.display = 'flex';
-                };
-                document.getElementById('aboutMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('aboutModal').style.display = 'flex';
-                };
-                document.getElementById('contactMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('contactModal').style.display = 'flex';
-                };
+                const galleryMenu = document.getElementById('galleryMenu');
+                const aboutMenu = document.getElementById('aboutMenu');
+                const contactMenu = document.getElementById('contactMenu');
+                
+                if (galleryMenu) {
+                    galleryMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('galleryModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (aboutMenu) {
+                    aboutMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('aboutModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (contactMenu) {
+                    contactMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('contactModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
                 // Modal close logic
                 document.querySelectorAll('.modal-close').forEach(btn => {
                     btn.onclick = function() {

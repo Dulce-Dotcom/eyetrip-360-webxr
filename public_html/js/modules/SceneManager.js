@@ -24,9 +24,14 @@ export class SceneManager {
                 }
             ];
             
-            // Clear session storage after use to prevent stale data
-            sessionStorage.removeItem('selectedVideo');
-            sessionStorage.removeItem('selectedTitle');
+            // Only clear session storage if we came from gallery (not on dedicated video pages)
+            // Check if we're on a dedicated video page (video1.html, video2.html, etc.)
+            const isDedicatedVideoPage = window.location.pathname.match(/\/video\d+\.html$/);
+            if (!isDedicatedVideoPage) {
+                // Clear session storage after use to prevent stale data
+                sessionStorage.removeItem('selectedVideo');
+                sessionStorage.removeItem('selectedTitle');
+            }
         } else {
             // Default scene configuration - USE VIDEO WITH AUDIO
             this.scenes = [
@@ -95,19 +100,31 @@ export class SceneManager {
     }
     
     async loadScene(index) {
-        if (index < 0 || index >= this.scenes.length) return;
+        console.log('🎬 [SceneManager] loadScene called with index:', index);
+        if (index < 0 || index >= this.scenes.length) {
+            console.warn('🎬 [SceneManager] Invalid scene index:', index);
+            return;
+        }
         const scene = this.scenes[index];
+        console.log('🎬 [SceneManager] Loading scene:', scene);
+        
         const loadingOverlay = document.getElementById('loadingOverlay');
         const progressBar = document.getElementById('videoProgressBar');
         const progressFill = document.getElementById('videoProgress');
+        
+        console.log('🎬 [SceneManager] DOM elements:', { loadingOverlay, progressBar, progressFill });
+        
         try {
-            if (loadingOverlay) loadingOverlay.style.display = 'block';
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'block';
+                console.log('🎬 [SceneManager] Loading overlay shown');
+            }
             if (progressBar && progressFill) {
                 progressBar.style.display = 'block';
                 progressFill.style.width = '0';
             }
             const videoUrl = this.getVideoUrl(scene);
-            console.log(`Loading video: ${videoUrl}`);
+            console.log('🎬 [SceneManager] Video URL:', videoUrl);
 
             // Listen for video progress during initial load
             if (this.player && this.player.video) {
@@ -120,7 +137,9 @@ export class SceneManager {
                 });
             }
 
+            console.log('🎬 [SceneManager] Calling player.loadVideo...');
             await this.player.loadVideo(videoUrl);
+            console.log('🎬 [SceneManager] player.loadVideo completed successfully');
             
             // Update duration when video metadata is loaded
             if (this.player.video && this.player.video.duration) {
@@ -133,10 +152,14 @@ export class SceneManager {
             if (window.app && window.app.ui) window.app.ui.updatePlayButton();
 
         } catch (error) {
-            console.error('Failed to load scene:', error);
+            console.error('❌ [SceneManager] Failed to load scene:', error);
             alert(`Failed to load video: ${this.getVideoUrl(scene)}`);
         } finally {
-            if (loadingOverlay) loadingOverlay.style.display = 'none';
+            console.log('🎬 [SceneManager] Finally block - hiding loading overlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+                console.log('🎬 [SceneManager] Loading overlay hidden');
+            }
             if (progressBar) progressBar.style.display = 'none';
         }
     }

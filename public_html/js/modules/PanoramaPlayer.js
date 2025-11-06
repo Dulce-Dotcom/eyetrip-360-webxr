@@ -4,6 +4,7 @@ import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
 import { VRButton } from '../vendor/VRButton.js';
 import { XRControllerModelFactory } from '../vendor/XRControllerModelFactory.js';
 import VRMenu from './VRMenu.js';
+import { ParticleTrailSystem } from './ParticleTrailSystem.js';
 
 export class PanoramaPlayer {
     // Play video by index (always reloads, even if same)
@@ -38,12 +39,18 @@ export class PanoramaPlayer {
     this.vrMenuVisible = false;
     this.vrMenuButtons = [];
     this.hoveredButton = null;
+    // Particle trail system
+    this.particleTrailSystem = null;
+    this.mouseWorldPosition = new THREE.Vector3();
+    this.raycaster = new THREE.Raycaster();
+    this.mouse = new THREE.Vector2();
     window.panoramaPlayer = this; // Ensure global access
     this.init();
     }
 
     // Initialize Three.js scene, camera, renderer, and VRButton
     init() {
+        console.log('🎥 [PanoramaPlayer] init() called');
         if (!this.container) throw new Error('Container element is required');
         // Video playlist (up to 4 videos)
         this.videosList = [
@@ -52,6 +59,7 @@ export class PanoramaPlayer {
             'assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4'
         ];
         this.currentVideoIndex = 0;
+        console.log('🎥 [PanoramaPlayer] Setting up scene, camera, renderer...');
         this.setupScene();
         this.setupCamera();
         this.setupRenderer();
@@ -79,6 +87,21 @@ export class PanoramaPlayer {
     setupScene() {
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x000000);
+        
+        // Add ambient light for controller models
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+        this.scene.add(ambientLight);
+        
+        // Add directional light for better depth perception
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.set(0, 1, 0);
+        this.scene.add(directionalLight);
+        
+        // Initialize particle trail system
+        this.particleTrailSystem = new ParticleTrailSystem(this.scene, this.camera);
+        this.particleTrailSystem.initialize().then(() => {
+            console.log('🌈 Particle trail system ready');
+        });
     }
 
     // Create camera at sphere center
@@ -212,6 +235,31 @@ export class PanoramaPlayer {
         if (isVRMode) {
             renderLon = -this.lon; // Invert for VR mode
             this.handleVRControllers();
+            
+            // Update particle trails with VR controller positions
+            if (this.particleTrailSystem && this.controllerGrips) {
+                this.controllerGrips.forEach((grip, index) => {
+                    if (grip && grip.visible) {
+                        // Get controller world position
+                        const worldPos = new THREE.Vector3();
+                        grip.getWorldPosition(worldPos);
+                        this.particleTrailSystem.updateTrail(worldPos);
+                    }
+                });
+            }
+            
+            // Debug: Log controller positions every 60 frames (once per second at 60fps)
+            if (!this.debugFrameCounter) this.debugFrameCounter = 0;
+            this.debugFrameCounter++;
+            if (this.debugFrameCounter % 60 === 0) {
+                this.controllerGrips.forEach((grip, index) => {
+                    if (grip && grip.visible) {
+                        const pos = grip.position;
+                        const rot = grip.rotation;
+                        console.log(`🎮 Controller ${index}: pos(${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}) rot(${(rot.x * 180/Math.PI).toFixed(0)}°, ${(rot.y * 180/Math.PI).toFixed(0)}°, ${(rot.z * 180/Math.PI).toFixed(0)}°)`);
+                    }
+                });
+            }
         }
         // Debug: log lon/lat before lookAt calculation
         if (isVRMode && (this.lon !== 0 || this.lat !== 0)) {
@@ -271,6 +319,11 @@ export class PanoramaPlayer {
                     }
                 }
             });
+        }
+        
+        // Animate particle trails
+        if (this.particleTrailSystem) {
+            this.particleTrailSystem.animate();
         }
         
         this.renderer.render(this.scene, this.camera);
@@ -369,11 +422,33 @@ export class PanoramaPlayer {
 
             // Get controller grip (for model)
             const controllerGrip = this.renderer.xr.getControllerGrip(i);
-            const controllerModel = controllerModelFactory.createControllerModel(controllerGrip);
+            
+            // Add debug helper - colored sphere to show grip position
+            const debugGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+            const debugMaterial = new THREE.MeshBasicMaterial({ 
+                color: i === 0 ? 0x00ff00 : 0xff0000, // Green for left, red for right
+                transparent: true,
+                opacity: 0.7
+            });
+            const debugSphere = new THREE.Mesh(debugGeometry, debugMaterial);
+            debugSphere.name = 'debugGripMarker';
+            controllerGrip.add(debugSphere);
+            
+            // Add debug axes helper to show orientation
+            const axesHelper = new THREE.AxesHelper(0.1);
+            axesHelper.name = 'debugAxes';
+            controllerGrip.add(axesHelper);
+            
+            // Determine handedness (0 = right, 1 = left in WebXR)
+            const handedness = i === 0 ? 'right' : 'left';
+            const controllerModel = controllerModelFactory.createControllerModel(controllerGrip, handedness);
+            
             controllerGrip.add(controllerModel);
             this.scene.add(controllerGrip);
             this.controllerGrips[i] = controllerGrip;
             this.controllerModels[i] = controllerModel;
+            
+            console.log(`🎮 Controller ${i} (${handedness}) setup with debug markers`);
         }
     }
 
@@ -389,28 +464,6 @@ export class PanoramaPlayer {
         line.scale.z = 5;
         controller.add(line);
         this.controllerRays.push(line);
-    }
-
-        // Three.js best practice: setup controllers and models
-    setupControllers() {
-        console.log('🎮 [VR] Setting up basic VR controllers...');
-        // Simplified controller setup - let Three.js handle the heavy lifting
-        
-        const controllerModelFactory = new XRControllerModelFactory();
-        
-        // Basic controller setup for triggers and squeeze buttons
-        for (let i = 0; i < 2; i++) {
-            const controller = this.renderer.xr.getController(i);
-            controller.addEventListener('selectstart', (event) => this.onSelectStart(event, i));
-            controller.addEventListener('selectend', (event) => this.onSelectEnd(event, i));
-            controller.addEventListener('squeezestart', (event) => this.onSqueezeStart(event, i));
-            controller.addEventListener('squeezeend', (event) => this.onSqueezeEnd(event, i));
-            this.scene.add(controller);
-            
-            const controllerGrip = this.renderer.xr.getControllerGrip(i);
-            controllerGrip.add(controllerModelFactory.createControllerModel(controllerGrip));
-            this.scene.add(controllerGrip);
-        }
     }
 
     // Event handlers for select/squeeze
@@ -487,6 +540,22 @@ export class PanoramaPlayer {
             if (isUserInteracting) {
                 this.lon = (onPointerDownMouseX - event.clientX) * 0.1 + onPointerDownLon;
                 this.lat = (event.clientY - onPointerDownMouseY) * 0.1 + onPointerDownLat;
+            }
+            
+            // Update particle trails based on mouse movement in desktop mode
+            if (!this.renderer.xr.isPresenting && this.particleTrailSystem) {
+                // Convert mouse position to normalized device coordinates
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                // Raycast to get 3D position on sphere
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const intersects = this.raycaster.intersectObject(this.sphere);
+                
+                if (intersects.length > 0) {
+                    this.mouseWorldPosition.copy(intersects[0].point);
+                    this.particleTrailSystem.updateTrail(this.mouseWorldPosition);
+                }
             }
         });
 

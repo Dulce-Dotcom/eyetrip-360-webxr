@@ -58,6 +58,7 @@ class App {
             }
             
             this.player = new PanoramaPlayer(container);
+            console.log('📹 PanoramaPlayer created and initialized');
             
             // Step 2: Initialize WebXR handler
             console.log('🥽 Checking WebXR support...');

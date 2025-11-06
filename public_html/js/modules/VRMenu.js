@@ -1,5 +1,5 @@
-import * as THREE from 'three';
-import ThreeMeshUI from 'three-mesh-ui';
+import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import ThreeMeshUI from 'https://unpkg.com/three-mesh-ui@6.5.4/build/three-mesh-ui.module.js';
 
 /**
  * Modern VR Menu inspired by Meta Quest OS and Shapes XR
@@ -34,11 +34,11 @@ export default class VRMenu {
     createMenu() {
         console.log('🎨 Creating modern VR menu with three-mesh-ui...');
         
-        // Main container - floating panel
+        // Main container - floating panel (optimized height for content)
         this.container = new ThreeMeshUI.Block({
             width: 1.4,
-            height: 1.0,
-            padding: 0.06,
+            height: 1.35,
+            padding: 0.04,
             justifyContent: 'start',
             contentDirection: 'column',
             backgroundOpacity: 0.92,
@@ -49,11 +49,11 @@ export default class VRMenu {
         });
         
         // Position menu in front of user
-        this.container.position.set(0, 1.5, -2.2);
+        this.container.position.set(0, 1.55, -2.2);
         this.container.rotation.x = -0.15; // Slight tilt for better viewing angle
         
         // Add subtle glow effect
-        const glowGeometry = new THREE.BoxGeometry(1.46, 1.06, 0.02);
+        const glowGeometry = new THREE.BoxGeometry(1.46, 1.41, 0.02);
         const glowMaterial = new THREE.MeshBasicMaterial({
             color: this.colors.primary,
             transparent: true,
@@ -67,19 +67,19 @@ export default class VRMenu {
         this.createHeader();
         
         // Spacer
-        this.createSpacer(0.04);
+        this.createSpacer(0.02);
         
         // Video controls section
         this.createVideoControls();
         
         // Spacer
-        this.createSpacer(0.04);
+        this.createSpacer(0.02);
         
         // Navigation section
         this.createNavigationControls();
         
         // Spacer
-        this.createSpacer(0.04);
+        this.createSpacer(0.02);
         
         // Footer hint
         this.createFooter();
@@ -100,7 +100,7 @@ export default class VRMenu {
         });
         
         const title = new ThreeMeshUI.Text({
-            content: '🎮 EyeTrip VR',
+            content: 'EyeTrip VR',
             fontSize: 0.07,
             fontColor: this.colors.primary,
         });
@@ -136,7 +136,7 @@ export default class VRMenu {
         });
         
         // Play/Pause button
-        const playText = this.video && !this.video.paused ? '⏸️ Pause' : '▶️ Play';
+        const playText = this.video && !this.video.paused ? 'Pause' : 'Play';
         const playButton = this.createButton(playText, 0.38, () => {
             this.onPlayPauseClick();
         }, this.colors.primary);
@@ -144,7 +144,7 @@ export default class VRMenu {
         this.buttons.push({ button: playButton, action: 'playPause' });
         
         // Mute button
-        const muteText = this.video && this.video.muted ? '🔊 Unmute' : '🔇 Mute';
+        const muteText = this.video && this.video.muted ? 'Unmute' : 'Mute';
         const muteButton = this.createButton(muteText, 0.38, () => {
             this.onMuteClick();
         }, this.colors.secondary);
@@ -152,7 +152,7 @@ export default class VRMenu {
         this.buttons.push({ button: muteButton, action: 'mute' });
         
         // Restart button
-        const restartButton = this.createButton('🔄 Restart', 0.38, () => {
+        const restartButton = this.createButton('Restart', 0.38, () => {
             this.onRestartClick();
         }, this.colors.hover);
         buttonRow.add(restartButton);
@@ -222,19 +222,19 @@ export default class VRMenu {
             margin: 0.01
         });
         
-        const galleryButton = this.createButton('🎬 Gallery', 0.38, () => {
+        const galleryButton = this.createButton('Gallery', 0.38, () => {
             this.onGalleryClick();
         }, this.colors.primary);
         navRow.add(galleryButton);
         this.buttons.push({ button: galleryButton, action: 'gallery' });
         
-        const aboutButton = this.createButton('ℹ️ About', 0.38, () => {
+        const aboutButton = this.createButton('About', 0.38, () => {
             this.onAboutClick();
         }, this.colors.hover);
         navRow.add(aboutButton);
         this.buttons.push({ button: aboutButton, action: 'about' });
         
-        const exitButton = this.createButton('🚪 Exit VR', 0.38, () => {
+        const exitButton = this.createButton('Exit VR', 0.38, () => {
             this.onExitVRClick();
         }, this.colors.secondary);
         navRow.add(exitButton);
@@ -266,15 +266,15 @@ export default class VRMenu {
     createFooter() {
         const footer = new ThreeMeshUI.Block({
             width: 1.28,
-            height: 0.08,
+            height: 0.06,
             justifyContent: 'center',
             backgroundOpacity: 0,
-            margin: 0.01
+            margin: 0.005
         });
         
         const hint = new ThreeMeshUI.Text({
             content: 'Squeeze Grip to Toggle Menu',
-            fontSize: 0.035,
+            fontSize: 0.03,
             fontColor: this.colors.textDim
         });
         
@@ -383,15 +383,23 @@ export default class VRMenu {
     
     updateButtonStates() {
         this.buttons.forEach(({ button, action }) => {
-            let newContent = button.children[0].content;
+            const textChild = button.children.find(child => child.isUI && child.content !== undefined);
+            
+            if (!textChild) return;
+            
+            let newContent = textChild.content;
             
             if (action === 'playPause') {
-                newContent = this.video && !this.video.paused ? '⏸️ Pause' : '▶️ Play';
+                newContent = this.video && !this.video.paused ? 'Pause' : 'Play';
             } else if (action === 'mute') {
-                newContent = this.video && this.video.muted ? '🔊 Unmute' : '🔇 Mute';
+                newContent = this.video && this.video.muted ? 'Unmute' : 'Mute';
             }
             
-            button.children[0].set({ content: newContent });
+            // Update content property directly
+            if (textChild.content !== newContent) {
+                textChild.content = newContent;
+                button.userData.textContent = newContent;
+            }
         });
         
         // Update volume display
