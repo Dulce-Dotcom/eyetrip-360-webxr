@@ -12,11 +12,16 @@ export class ParticleTrailSystem {
         // Particle systems for different icons
         this.particleSystems = [];
         this.trailHistory = []; // Store positions for trail effect
-        this.maxTrailLength = 50; // Number of particles in trail
+        this.maxTrailLength = 100; // Even longer trail - 100 particles
         
         // Animation properties
         this.time = 0;
         this.isActive = false;
+        
+        // Drag overlay logo
+        this.dragOverlay = null;
+        this.isDragging = false;
+        this.pulseTime = 0;
         
         // SVG icon paths
         this.iconPaths = [
@@ -44,51 +49,152 @@ export class ParticleTrailSystem {
     async initialize() {
         // Initialize THREE.js objects here after import is complete
         this.psychedelicColors = [
-            new THREE.Color(0xffff00), // Electric yellow
-            new THREE.Color(0xff00ff), // Magenta
-            new THREE.Color(0x00ffff), // Cyan
-            new THREE.Color(0xff0088), // Hot pink
-            new THREE.Color(0x00ff88), // Mint green
-            new THREE.Color(0x8800ff)  // Purple
+            new THREE.Color(0xFFFF00), // Electric Yellow
+            new THREE.Color(0xFF00FF), // Magenta
+            new THREE.Color(0x00FFFF), // Cyan
+            new THREE.Color(0xFF1493), // Hot Pink
+            new THREE.Color(0x00FF7F), // Mint Green
+            new THREE.Color(0x9400D3)  // Purple
         ];
         
+        // Initialize position tracking
         this.lastPosition = new THREE.Vector3();
         this.currentPosition = new THREE.Vector3();
-        const textureLoader = new THREE.TextureLoader();
         
-        try {
-            // Load all SVG textures
-            const texturePromises = this.iconPaths.map(path => 
-                new Promise((resolve, reject) => {
-                    textureLoader.load(
-                        path,
-                        (texture) => {
-                            console.log(`✅ Loaded particle texture: ${path}`);
-                            resolve(texture);
-                        },
-                        undefined,
-                        (error) => {
-                            console.warn(`⚠️ Could not load ${path}, using fallback`);
-                            resolve(null);
-                        }
-                    );
-                })
-            );
-            
-            const textures = await Promise.all(texturePromises);
-            
-            // Create particle system for each texture
-            textures.forEach((texture, index) => {
-                const particleSystem = this.createParticleSystem(texture, index);
-                this.particleSystems.push(particleSystem);
-                this.scene.add(particleSystem);
+        const loader = new THREE.TextureLoader();
+        
+        // Load all textures
+        const texturePromises = this.iconPaths.map(path => {
+            return new Promise((resolve, reject) => {
+                loader.load(path, resolve, undefined, reject);
             });
+        });
+        
+        const textures = await Promise.all(texturePromises);
+        
+        // Create particle system for each texture
+        textures.forEach((texture, index) => {
+            const system = this.createParticleSystem(texture, index);
+            this.particleSystems.push(system);
+        });
+        
+        // Load specific image for drag overlay (white logo with transparent background)
+        const overlayTexture = await new Promise((resolve, reject) => {
+            loader.load('images/eyetripvr-icony.png', resolve, undefined, reject);
+        });
+        this.createDragOverlay(overlayTexture);
+        
+        console.log('✨ Particle systems created:', this.particleSystems.length);
+    }
+    
+    /**
+     * Create the drag overlay logo sprite
+     */
+    createDragOverlay(texture) {
+        // Create canvas to process the texture and remove white background
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to match texture
+        canvas.width = texture.image.width;
+        canvas.height = texture.image.height;
+        
+        // Draw the original texture
+        ctx.drawImage(texture.image, 0, 0);
+        
+        // Get image data to process pixels
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        
+        // Process each pixel to remove white background (keep natural colors)
+        for (let i = 0; i < data.length; i += 4) {
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
             
-            console.log(`🎨 Created ${this.particleSystems.length} particle systems`);
-            
-        } catch (error) {
-            console.error('❌ Error loading particle textures:', error);
+            // Check if pixel is very white (background)
+            if (r > 230 && g > 230 && b > 230) {
+                // Make completely transparent
+                data[i + 3] = 0;
+            }
+            // Keep the natural yellow/colored logo as-is
         }
+        
+        // Put the processed image data back
+        ctx.putImageData(imageData, 0, 0);
+        
+        // Create new texture from processed canvas
+        const processedTexture = new THREE.CanvasTexture(canvas);
+        processedTexture.needsUpdate = true;
+        
+        // Use ShaderMaterial to add white glow effect
+        const planeMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                map: { value: processedTexture },
+                opacity: { value: 0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D map;
+                uniform float opacity;
+                varying vec2 vUv;
+                
+                void main() {
+                    // Flip horizontally
+                    vec2 uv = vec2(1.0 - vUv.x, vUv.y);
+                    vec4 texColor = texture2D(map, uv);
+                    
+                    // Calculate distance from center for glow effect
+                    vec2 center = vec2(0.5, 0.5);
+                    float dist = distance(uv, center);
+                    
+                    // If transparent, check if we should draw glow
+                    if (texColor.a < 0.1) {
+                        // Create white glow around the logo
+                        float glowRadius = 0.5;
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        
+                        if (glowIntensity > 0.0) {
+                            // Draw white glow
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * opacity * 0.5);
+                            return;
+                        }
+                        discard;
+                    }
+                    
+                    // Keep natural color of the logo
+                    vec3 finalColor = texColor.rgb;
+                    
+                    // Add white glow at the edges
+                    float glowRadius = 0.5;
+                    float glowIntensity = smoothstep(glowRadius * 0.6, glowRadius, dist);
+                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.6);
+                    
+                    gl_FragColor = vec4(finalColor, texColor.a * opacity);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            side: THREE.DoubleSide
+        });
+        
+        // Create a plane mesh instead of sprite (billboarded manually)
+        const planeGeometry = new THREE.PlaneGeometry(1.5, 1.5); // Larger for VR visibility
+        this.dragOverlay = new THREE.Mesh(planeGeometry, planeMaterial);
+        this.dragOverlay.visible = false;
+        this.dragOverlay.renderOrder = 999; // Render last (on top)
+        this.scene.add(this.dragOverlay);
+        
+        console.log('🖱️ Drag overlay created with natural yellow color and white glow');
     }
     
     /**
@@ -116,8 +222,8 @@ export class ParticleTrailSystem {
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
             
-            // Much larger size to show full logo
-            sizes[i] = 3.0 * (1 - i / particleCount);
+            // Larger size to show more of the image (increased for VR)
+            sizes[i] = 5.0 * (1 - i / particleCount);
             
             // Alpha decreases along trail (fade out)
             alphas[i] = 1 - (i / particleCount);
@@ -156,8 +262,8 @@ export class ParticleTrailSystem {
                     pos.y += cos(time * 15.0 + position.x * 5.0) * glitchAmount * 0.02;
                     
                     vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                    float pointSize = size * 5000.0 / -mvPosition.z;
-                    gl_PointSize = clamp(pointSize, 1.0, 256.0); // Increased max to 256px for larger particles
+                    float pointSize = size * 2000.0 / -mvPosition.z;
+                    gl_PointSize = clamp(pointSize, 10.0, 256.0); // Larger min/max for VR visibility
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
@@ -169,16 +275,41 @@ export class ParticleTrailSystem {
                 varying float vAlpha;
                 
                 void main() {
-                    // Center the texture properly using gl_PointCoord
-                    // gl_PointCoord goes from (0,0) at top-left to (1,1) at bottom-right
-                    vec4 texColor = texture2D(pointTexture, gl_PointCoord);
+                    // Flip the texture vertically by inverting Y coordinate
+                    vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+                    vec4 texColor = texture2D(pointTexture, uv);
                     
-                    // If transparent, discard
-                    if (texColor.a < 0.1) discard;
+                    // Calculate distance from center for glow effect
+                    vec2 center = vec2(0.5, 0.5);
+                    float dist = distance(gl_PointCoord, center);
+                    
+                    // If transparent, check if we should draw glow
+                    if (texColor.a < 0.1) {
+                        // Create white glow around the particle
+                        float glowRadius = 0.5; // Size of glow area
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        
+                        if (glowIntensity > 0.0) {
+                            // Draw white glow
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.4);
+                            return;
+                        }
+                        discard;
+                    }
                     
                     // Remove white background if present
                     float isWhite = step(0.9, texColor.r) * step(0.9, texColor.g) * step(0.9, texColor.b);
-                    if (isWhite > 0.5) discard;
+                    if (isWhite > 0.5) {
+                        // Even on white background, draw the glow
+                        float glowRadius = 0.5;
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        
+                        if (glowIntensity > 0.0) {
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.4);
+                            return;
+                        }
+                        discard;
+                    }
                     
                     // Holographic color shift
                     vec3 rainbowColor = vColor;
@@ -189,6 +320,11 @@ export class ParticleTrailSystem {
                     // Apply psychedelic tint with reduced brightness
                     vec3 finalColor = texColor.rgb * rainbowColor * 0.7;
                     float finalAlpha = texColor.a * vAlpha * 0.7;
+                    
+                    // Add white glow at the edges
+                    float glowRadius = 0.5;
+                    float glowIntensity = smoothstep(glowRadius * 0.6, glowRadius, dist);
+                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.6);
                     
                     gl_FragColor = vec4(finalColor, finalAlpha);
                 }
@@ -202,6 +338,9 @@ export class ParticleTrailSystem {
         particleSystem.userData.index = index;
         particleSystem.visible = false; // Start invisible
         
+        // Add to scene!
+        this.scene.add(particleSystem);
+        
         return particleSystem;
     }
     
@@ -210,7 +349,17 @@ export class ParticleTrailSystem {
      * @param {THREE.Vector3} worldPosition - Current position in world space
      */
     updateTrail(worldPosition) {
-        if (!worldPosition) return;
+        // Safety check - ensure system is initialized
+        if (!this.currentPosition || !this.lastPosition) {
+            console.warn('⚠️ ParticleTrailSystem not fully initialized yet');
+            return;
+        }
+        
+        if (!worldPosition) {
+            // If no position provided, fade out the trail
+            this.fadeOutTrail();
+            return;
+        }
         
         this.currentPosition.copy(worldPosition);
         
@@ -248,8 +397,8 @@ export class ParticleTrailSystem {
                     positions[i * 3 + 1] = trailPos.y + offset.y;
                     positions[i * 3 + 2] = trailPos.z + offset.z;
                     
-                    // Much larger to show full eye logo detail
-                    sizes[i] = 3.5 * (1 - i / this.maxTrailLength) * (0.8 + Math.random() * 0.4);
+                    // Larger size to show more of the image (increased for VR)
+                    sizes[i] = 6.0 * (1 - i / this.maxTrailLength) * (0.8 + Math.random() * 0.4);
                 }
                 
                 system.geometry.attributes.position.needsUpdate = true;
@@ -258,6 +407,60 @@ export class ParticleTrailSystem {
             
             this.lastPosition.copy(this.currentPosition);
             this.isActive = true;
+        } else {
+            // No movement detected, fade out the trail
+            this.fadeOutTrail();
+        }
+    }
+    
+    /**
+     * Fade out trail when movement stops
+     */
+    fadeOutTrail() {
+        if (this.trailHistory.length === 0) return;
+        
+        // Remove particles from the end of the trail (fade inward)
+        this.trailHistory.pop();
+        
+        // Update all particle systems
+        this.particleSystems.forEach((system, systemIndex) => {
+            const positions = system.geometry.attributes.position.array;
+            const sizes = system.geometry.attributes.size.array;
+            const alphas = system.geometry.attributes.alpha.array;
+            
+            // Update remaining particles
+            for (let i = 0; i < this.trailHistory.length; i++) {
+                const trailPos = this.trailHistory[i];
+                
+                positions[i * 3] = trailPos.x;
+                positions[i * 3 + 1] = trailPos.y;
+                positions[i * 3 + 2] = trailPos.z;
+                
+                // Larger size to show more of the image (increased for VR)
+                sizes[i] = 6.0 * (1 - i / this.maxTrailLength) * 0.9;
+                
+                // Slower fade - higher alpha values
+                alphas[i] = (1 - i / this.maxTrailLength) * 0.95;
+            }
+            
+            // Hide unused particles
+            for (let i = this.trailHistory.length; i < this.maxTrailLength; i++) {
+                sizes[i] = 0;
+                alphas[i] = 0;
+            }
+            
+            system.geometry.attributes.position.needsUpdate = true;
+            system.geometry.attributes.size.needsUpdate = true;
+            system.geometry.attributes.alpha.needsUpdate = true;
+            
+            // Hide system when trail is empty
+            if (this.trailHistory.length === 0) {
+                system.visible = false;
+            }
+        });
+        
+        if (this.trailHistory.length === 0) {
+            this.isActive = false;
         }
     }
     
@@ -313,5 +516,67 @@ export class ParticleTrailSystem {
         this.particleSystems.forEach(system => {
             system.material.uniforms.glitchAmount.value = intensity;
         });
+    }
+    
+    /**
+     * Start drag overlay (when mouse down)
+     */
+    startDragOverlay() {
+        console.log('🎨 Starting drag overlay, dragOverlay exists:', !!this.dragOverlay);
+        this.isDragging = true;
+        if (this.dragOverlay) {
+            this.dragOverlay.visible = true;
+            console.log('🎨 Drag overlay set to visible');
+        }
+    }
+    
+    /**
+     * Stop drag overlay (when mouse up)
+     */
+    stopDragOverlay() {
+        this.isDragging = false;
+        if (this.dragOverlay) {
+            this.dragOverlay.visible = false;
+            this.dragOverlay.material.uniforms.opacity.value = 0;
+        }
+    }
+    
+    /**
+     * Update drag overlay position and pulse
+     */
+    updateDragOverlay(worldPosition) {
+        if (!this.dragOverlay || !this.isDragging) return;
+        
+        // Safety check - ensure dragOverlay is fully initialized
+        if (!this.dragOverlay.material || !this.dragOverlay.material.uniforms) {
+            console.warn('⚠️ Drag overlay material not ready');
+            return;
+        }
+        
+        // Position overlay at cursor (if position provided)
+        if (worldPosition) {
+            this.dragOverlay.position.copy(worldPosition);
+            console.log('🎨 Drag overlay position:', worldPosition.x.toFixed(2), worldPosition.y.toFixed(2), worldPosition.z.toFixed(2));
+        }
+        
+        // Billboard effect - make plane face camera
+        if (this.camera) {
+            this.dragOverlay.quaternion.copy(this.camera.quaternion);
+        }
+        
+        // Pulse effect - continues even when not moving
+        this.pulseTime += 0.05; // Slow pulse
+        const pulse = Math.sin(this.pulseTime) * 0.5 + 0.5; // 0 to 1
+        
+        // Fade in to full opacity
+        const targetOpacity = 1.0;
+        this.dragOverlay.material.uniforms.opacity.value += (targetOpacity - this.dragOverlay.material.uniforms.opacity.value) * 0.1;
+        
+        console.log('🎨 Drag overlay opacity:', this.dragOverlay.material.uniforms.opacity.value.toFixed(2));
+        
+        // Pulse scale
+        const baseScale = 1.0;
+        const scale = baseScale * (0.9 + pulse * 0.2); // 90% to 110%
+        this.dragOverlay.scale.set(scale, scale, 1);
     }
 }

@@ -44,6 +44,7 @@ export class PanoramaPlayer {
     this.mouseWorldPosition = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
+    this.lastMouseMoveTime = 0; // Track when mouse last moved
     window.panoramaPlayer = this; // Ensure global access
     this.init();
     }
@@ -86,7 +87,8 @@ export class PanoramaPlayer {
     // Create Three.js scene
     setupScene() {
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x000000);
+        // Iridescent gradient background (matches CSS)
+        this.scene.background = new THREE.Color(0x667eea);
         
         // Add ambient light for controller models
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
@@ -126,7 +128,8 @@ export class PanoramaPlayer {
         if (this.texture) {
             material = new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.BackSide });
         } else {
-            material = new THREE.MeshBasicMaterial({ color: 0x0000ff, side: THREE.BackSide });
+            // Iridescent purple instead of blue
+            material = new THREE.MeshBasicMaterial({ color: 0x667eea, side: THREE.BackSide });
         }
         this.sphere = new THREE.Mesh(geometry, material);
         this.scene.add(this.sphere);
@@ -244,6 +247,11 @@ export class PanoramaPlayer {
                         const worldPos = new THREE.Vector3();
                         grip.getWorldPosition(worldPos);
                         this.particleTrailSystem.updateTrail(worldPos);
+                        
+                        // Update drag overlay if dragging (use first visible controller)
+                        if (this.particleTrailSystem.isDragging && index === 0) {
+                            this.particleTrailSystem.updateDragOverlay(worldPos);
+                        }
                     }
                 });
             }
@@ -324,6 +332,19 @@ export class PanoramaPlayer {
         // Animate particle trails
         if (this.particleTrailSystem) {
             this.particleTrailSystem.animate();
+            
+            // Update drag overlay pulse (even when not moving)
+            if (this.particleTrailSystem.isDragging) {
+                this.particleTrailSystem.updateDragOverlay(this.mouseWorldPosition);
+            }
+            
+            // Fade out trail if no movement for 200ms - slower fade (desktop mode)
+            if (!this.renderer.xr.isPresenting) {
+                const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
+                if (timeSinceLastMove > 200 && this.particleTrailSystem.isActive) {
+                    this.particleTrailSystem.fadeOutTrail();
+                }
+            }
         }
         
         this.renderer.render(this.scene, this.camera);
@@ -471,6 +492,11 @@ export class PanoramaPlayer {
         console.log('🎮 [VR] Trigger pressed on controller', i);
         
         if (this.renderer.xr.isPresenting) {
+            // Start drag overlay on trigger press
+            if (this.particleTrailSystem) {
+                this.particleTrailSystem.startDragOverlay();
+            }
+            
             // If menu is visible and we're hovering a button, click it
             if (this.vrMenuVisible && this.hoveredButton) {
                 console.log('🎯 [VR] Clicking menu button');
@@ -493,6 +519,12 @@ export class PanoramaPlayer {
     
     onSelectEnd(event, i) {
         console.log('🎮 [VR] Trigger released on controller', i);
+        
+        // Stop drag overlay on trigger release
+        if (this.particleTrailSystem) {
+            this.particleTrailSystem.stopDragOverlay();
+        }
+        
         // Visual feedback
         if (this.controllers[i]) {
             const ray = this.controllers[i].getObjectByName('ray');
@@ -534,6 +566,11 @@ export class PanoramaPlayer {
             onPointerDownMouseY = event.clientY;
             onPointerDownLon = this.lon;
             onPointerDownLat = this.lat;
+            
+            // Start drag overlay logo
+            if (this.particleTrailSystem) {
+                this.particleTrailSystem.startDragOverlay();
+            }
         });
 
         dom.addEventListener('mousemove', (event) => {
@@ -554,17 +591,35 @@ export class PanoramaPlayer {
                 
                 if (intersects.length > 0) {
                     this.mouseWorldPosition.copy(intersects[0].point);
+                    
+                    // Always update trail on mouse move
                     this.particleTrailSystem.updateTrail(this.mouseWorldPosition);
+                    this.lastMouseMoveTime = Date.now();
+                    
+                    // Update drag overlay position if dragging
+                    if (isUserInteracting) {
+                        this.particleTrailSystem.updateDragOverlay(this.mouseWorldPosition);
+                    }
                 }
             }
         });
 
         dom.addEventListener('mouseup', () => {
             isUserInteracting = false;
+            
+            // Stop drag overlay
+            if (this.particleTrailSystem) {
+                this.particleTrailSystem.stopDragOverlay();
+            }
         });
 
         dom.addEventListener('mouseleave', () => {
             isUserInteracting = false;
+            
+            // Stop drag overlay
+            if (this.particleTrailSystem) {
+                this.particleTrailSystem.stopDragOverlay();
+            }
         });
 
         // Touch events for mobile
