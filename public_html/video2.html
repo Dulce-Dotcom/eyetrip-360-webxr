@@ -8,6 +8,17 @@
     <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="css/eyetrip-style.css">
+    
+    <!-- Import map to resolve bare module specifiers -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+            "three/": "https://unpkg.com/three@0.153.0/"
+        }
+    }
+    </script>
+    
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>

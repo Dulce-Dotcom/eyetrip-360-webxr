@@ -23,6 +23,14 @@ export class ParticleTrailSystem {
         this.isDragging = false;
         this.pulseTime = 0;
         
+        // Audio system
+        this.audioListener = null;
+        this.positionalAudio = null;
+        this.audioLoader = null;
+        this.lastSoundPlayTime = 0;
+        this.soundCooldown = 50; // ms between sound triggers (reduced for more frequent sounds)
+        this.audioContextResumed = false; // Track if AudioContext has been resumed
+        
         // SVG icon paths
         this.iconPaths = [
             'images/eyetripvr-icony.png', // Yellow
@@ -44,6 +52,71 @@ export class ParticleTrailSystem {
     }
     
     /**
+     * Setup regular audio system for swoosh sounds
+     */
+    setupAudio() {
+        try {
+            console.log('🔊 Setting up regular audio system...');
+            
+            // Create regular HTML5 Audio element
+            this.regularAudio = new Audio('assets/sound/swoosh.mp3');
+            this.regularAudio.volume = 0.9; // 90% volume
+            this.regularAudio.preload = 'auto';
+            
+            console.log('✅ Regular audio system ready at 90% volume!');
+            
+        } catch (error) {
+            console.error('❌ Failed to setup regular audio:', error);
+        }
+    }
+    
+    /**
+     * Play swoosh sound at specific position
+     */
+    async playSwooshSound(worldPosition, velocity) {
+        // Debug: Check if we have audio
+        if (!this.regularAudio) {
+            console.warn('⚠️ No regularAudio object');
+            return;
+        }
+        
+        // Resume AudioContext on first interaction (browser autoplay policy)
+        if (!this.audioContextResumed) {
+            this.audioContextResumed = true;
+            console.log('🔊 Regular audio enabled at 90% volume!');
+        }
+        
+        // Cooldown to prevent overlapping sounds
+        const now = Date.now();
+        const timeSinceLastSound = now - this.lastSoundPlayTime;
+        if (timeSinceLastSound < this.soundCooldown) {
+            return; // Skip without logging
+        }
+        
+        // Stop and reset current sound if playing
+        if (!this.regularAudio.paused) {
+            this.regularAudio.pause();
+            this.regularAudio.currentTime = 0;
+        }
+        
+        // Calculate playback rate based on velocity for Doppler effect
+        let playbackRate = 1.0;
+        if (velocity) {
+            const speed = velocity.length();
+            // Map speed to playback rate (0.8 to 1.5)
+            playbackRate = THREE.MathUtils.clamp(1.0 + speed * 2.0, 0.8, 1.5);
+            this.regularAudio.playbackRate = playbackRate;
+        }
+        
+        // Play the sound
+        console.log(`🔊 SWOOSH! Rate: ${playbackRate.toFixed(2)}x`);
+        this.regularAudio.play().catch(err => {
+            console.error('❌ Failed to play sound:', err);
+        });
+        this.lastSoundPlayTime = now;
+    }
+    
+    /**
      * Load SVG icons as textures and create particle systems
      */
     async initialize() {
@@ -60,6 +133,8 @@ export class ParticleTrailSystem {
         // Initialize position tracking
         this.lastPosition = new THREE.Vector3();
         this.currentPosition = new THREE.Vector3();
+        
+        // Note: setupAudio() will be called later after camera is ready
         
         const loader = new THREE.TextureLoader();
         
@@ -148,8 +223,8 @@ export class ParticleTrailSystem {
                 varying vec2 vUv;
                 
                 void main() {
-                    // Flip horizontally
-                    vec2 uv = vec2(1.0 - vUv.x, vUv.y);
+                    // Use UV coordinates directly (no flip)
+                    vec2 uv = vUv;
                     vec4 texColor = texture2D(map, uv);
                     
                     // Calculate distance from center for glow effect
@@ -158,13 +233,13 @@ export class ParticleTrailSystem {
                     
                     // If transparent, check if we should draw glow
                     if (texColor.a < 0.1) {
-                        // Create white glow around the logo
+                        // Create subtle white glow around the logo (reduced)
                         float glowRadius = 0.5;
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
                         
                         if (glowIntensity > 0.0) {
-                            // Draw white glow
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * opacity * 0.5);
+                            // Draw subtle white glow (reduced from 0.5 to 0.25)
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * opacity * 0.25);
                             return;
                         }
                         discard;
@@ -173,10 +248,10 @@ export class ParticleTrailSystem {
                     // Keep natural color of the logo
                     vec3 finalColor = texColor.rgb;
                     
-                    // Add white glow at the edges
+                    // Add subtle white glow at the edges (reduced from 0.6 to 0.3)
                     float glowRadius = 0.5;
-                    float glowIntensity = smoothstep(glowRadius * 0.6, glowRadius, dist);
-                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.6);
+                    float glowIntensity = smoothstep(glowRadius * 0.7, glowRadius, dist);
+                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.3);
                     
                     gl_FragColor = vec4(finalColor, texColor.a * opacity);
                 }
@@ -222,8 +297,11 @@ export class ParticleTrailSystem {
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
             
-            // Larger size to show more of the image (increased for VR)
-            sizes[i] = 5.0 * (1 - i / particleCount);
+            // Larger size at start, progressively smaller toward end
+            // Use exponential falloff for more dramatic size reduction
+            const normalizedPosition = i / particleCount;
+            const sizeFalloff = Math.pow(1 - normalizedPosition, 1.5); // Exponential falloff
+            sizes[i] = 8.0 * sizeFalloff; // Start larger to show full logo
             
             // Alpha decreases along trail (fade out)
             alphas[i] = 1 - (i / particleCount);
@@ -285,13 +363,13 @@ export class ParticleTrailSystem {
                     
                     // If transparent, check if we should draw glow
                     if (texColor.a < 0.1) {
-                        // Create white glow around the particle
+                        // Create subtle white glow around the particle (reduced intensity)
                         float glowRadius = 0.5; // Size of glow area
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
                         
                         if (glowIntensity > 0.0) {
-                            // Draw white glow
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.4);
+                            // Draw subtle white glow (reduced from 0.4 to 0.2)
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.2);
                             return;
                         }
                         discard;
@@ -300,12 +378,12 @@ export class ParticleTrailSystem {
                     // Remove white background if present
                     float isWhite = step(0.9, texColor.r) * step(0.9, texColor.g) * step(0.9, texColor.b);
                     if (isWhite > 0.5) {
-                        // Even on white background, draw the glow
+                        // Even on white background, draw the subtle glow
                         float glowRadius = 0.5;
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.6, dist);
+                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
                         
                         if (glowIntensity > 0.0) {
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.4);
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.2);
                             return;
                         }
                         discard;
@@ -321,10 +399,10 @@ export class ParticleTrailSystem {
                     vec3 finalColor = texColor.rgb * rainbowColor * 0.7;
                     float finalAlpha = texColor.a * vAlpha * 0.7;
                     
-                    // Add white glow at the edges
+                    // Add subtle white glow at the edges (reduced from 0.6 to 0.3)
                     float glowRadius = 0.5;
-                    float glowIntensity = smoothstep(glowRadius * 0.6, glowRadius, dist);
-                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.6);
+                    float glowIntensity = smoothstep(glowRadius * 0.7, glowRadius, dist);
+                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.3);
                     
                     gl_FragColor = vec4(finalColor, finalAlpha);
                 }
@@ -366,7 +444,20 @@ export class ParticleTrailSystem {
         // Check if there's significant movement
         const distance = this.currentPosition.distanceTo(this.lastPosition);
         
-        if (distance > 0.01) { // Minimum movement threshold
+        console.log(`📏 isDragging: ${this.isDragging}, distance: ${distance.toFixed(4)}`);
+        
+        if (distance > 0.001) { // Lower threshold for more sensitive sound triggering
+            // Calculate velocity for Doppler effect
+            const velocity = new THREE.Vector3().subVectors(this.currentPosition, this.lastPosition);
+            
+            // Play swoosh sound if dragging
+            if (this.isDragging) {
+                console.log(`🎵 ✅ PLAYING SOUND - distance: ${distance.toFixed(4)}`);
+                this.playSwooshSound(worldPosition, velocity);
+            } else {
+                console.log(`🎵 ❌ NOT dragging, no sound`);
+            }
+            
             // Add new position to trail history
             this.trailHistory.unshift(this.currentPosition.clone());
             
@@ -528,6 +619,16 @@ export class ParticleTrailSystem {
             this.dragOverlay.visible = true;
             console.log('🎨 Drag overlay set to visible');
         }
+        
+        // Reset sound cooldown to allow immediate sound on drag start
+        this.lastSoundPlayTime = 0;
+        
+        // Play initial sound on drag start
+        if (this.currentPosition) {
+            const initialVelocity = new THREE.Vector3(0, 0, 0);
+            console.log('🎵 Playing initial drag sound');
+            this.playSwooshSound(this.currentPosition, initialVelocity);
+        }
     }
     
     /**
@@ -538,6 +639,11 @@ export class ParticleTrailSystem {
         if (this.dragOverlay) {
             this.dragOverlay.visible = false;
             this.dragOverlay.material.uniforms.opacity.value = 0;
+        }
+        
+        // Stop any playing sound
+        if (this.positionalAudio && this.positionalAudio.isPlaying) {
+            this.positionalAudio.stop();
         }
     }
     

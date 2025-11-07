@@ -109,6 +109,12 @@ export class PanoramaPlayer {
     // Create camera at sphere center
     setupCamera() {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.25, 10);
+        
+        // Now that camera is ready, set up spatial audio for particle system
+        if (this.particleTrailSystem) {
+            this.particleTrailSystem.camera = this.camera;
+            this.particleTrailSystem.setupAudio();
+        }
     }
 
     // Create renderer and enable WebXR
