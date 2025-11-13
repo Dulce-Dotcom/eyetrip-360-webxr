@@ -45,8 +45,8 @@ class App {
 
         console.log('🚀 Initializing EyeTrip 360° Experience...');
         
-        // Show loading overlay
-        this.showLoading(true, 'Initializing 360° Experience...');
+        // Loading overlay is already showing "Initializing 360° Experience..." from HTML
+        // No need to call showLoading here
         
         try {
             // Step 1: Initialize the panorama player
@@ -86,6 +86,7 @@ class App {
             
             // Step 5: Load the first scene automatically (restored)
             console.log('📦 Loading initial scene...');
+            this.showLoading(true, 'Loading 360° Experience...');
             await this.sceneManager.loadScene(0);
             
             // Step 6: Register service worker (only in production or non-localhost)

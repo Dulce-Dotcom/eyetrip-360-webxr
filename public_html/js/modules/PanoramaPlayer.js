@@ -1,8 +1,9 @@
 // --- Three.js WebXR VR Panorama Player ---
 // Refactored for official VRButton usage and best practices
 import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import VideoStreamManager from './VideoStreamManager.js';
+import { GLTFLoader } from 'https://unpkg.com/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
 import { VRButton } from '../vendor/VRButton.js';
-import { XRControllerModelFactory } from '../vendor/XRControllerModelFactory.js';
 import VRMenu from './VRMenu.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';
 
@@ -34,13 +35,15 @@ export class PanoramaPlayer {
     this.controllerGrips = [];
     this.controllerModels = [];
     this.controllerRays = [];
+    this.controllerSelecting = [false, false]; // Track if controllers are selecting (clicking)
     // VR Menu properties
     this.vrMenu = null;
     this.vrMenuVisible = false;
     this.vrMenuButtons = [];
     this.hoveredButton = null;
-    // Particle trail system
-    this.particleTrailSystem = null;
+    // Particle trail systems - one for each controller and one for mouse
+    this.particleTrailSystem = null; // Desktop mouse trail
+    this.vrParticleTrailSystems = []; // VR controller trails [left, right]
     this.mouseWorldPosition = new THREE.Vector3();
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
@@ -99,37 +102,57 @@ export class PanoramaPlayer {
         directionalLight.position.set(0, 1, 0);
         this.scene.add(directionalLight);
         
-        // Initialize particle trail system
+        // Initialize particle trail system for desktop
         this.particleTrailSystem = new ParticleTrailSystem(this.scene, this.camera);
         this.particleTrailSystem.initialize().then(() => {
-            console.log('🌈 Particle trail system ready');
+            console.log('🌈 Desktop particle trail system ready');
         });
+        
+        // Initialize VR particle trail systems for both controllers
+        for (let i = 0; i < 2; i++) {
+            const vrParticleSystem = new ParticleTrailSystem(this.scene, this.camera);
+            vrParticleSystem.initialize().then(() => {
+                console.log(`🌈 VR particle trail system ${i} ready`);
+            });
+            this.vrParticleTrailSystems[i] = vrParticleSystem;
+        }
     }
 
     // Create camera at sphere center
     setupCamera() {
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.25, 10);
+        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 20); // Reduced near to 0.01, increased far to 20
         
-        // Now that camera is ready, set up spatial audio for particle system
+        // Now that camera is ready, set up spatial audio for particle systems
         if (this.particleTrailSystem) {
             this.particleTrailSystem.camera = this.camera;
             this.particleTrailSystem.setupAudio();
         }
+        
+        // Set up audio for VR particle systems
+        this.vrParticleTrailSystems.forEach((system, i) => {
+            if (system) {
+                system.camera = this.camera;
+                system.setupAudio();
+            }
+        });
     }
 
     // Create renderer and enable WebXR
     setupRenderer() {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        this.renderer.setClearColor(0x000000, 0); // Transparent background
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
+        this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
+        this.renderer.domElement.style.transition = 'opacity 0.5s ease';
         this.container.appendChild(this.renderer.domElement);
         this.renderer.setAnimationLoop(this.animate.bind(this));
     }
 
     // Create sphere and apply video texture (or fallback)
     createSphere() {
-        const geometry = new THREE.SphereGeometry(5, 60, 40);
+        const geometry = new THREE.SphereGeometry(15, 60, 40); // Increased to 15 for roomier feel (far plane is 20)
         let material;
         if (this.texture) {
             material = new THREE.MeshBasicMaterial({ map: this.texture, side: THREE.BackSide });
@@ -202,6 +225,10 @@ export class PanoramaPlayer {
                     this.sphere.material.color.set(0xffffff);
                     this.sphere.material.needsUpdate = true;
                 }
+                // Show canvas now that video is loaded
+                if (this.renderer && this.renderer.domElement) {
+                    this.renderer.domElement.style.opacity = '1';
+                }
                 // Set initial camera orientation to look at the center
                 this.lon = 0;
                 this.lat = 0;
@@ -245,19 +272,14 @@ export class PanoramaPlayer {
             renderLon = -this.lon; // Invert for VR mode
             this.handleVRControllers();
             
-            // Update particle trails with VR controller positions
-            if (this.particleTrailSystem && this.controllerGrips) {
+            // Update particle trails with VR controller positions - one trail per controller
+            if (this.vrParticleTrailSystems && this.controllerGrips) {
                 this.controllerGrips.forEach((grip, index) => {
-                    if (grip && grip.visible) {
-                        // Get controller world position
+                    if (grip && this.vrParticleTrailSystems[index]) {
                         const worldPos = new THREE.Vector3();
                         grip.getWorldPosition(worldPos);
-                        this.particleTrailSystem.updateTrail(worldPos);
-                        
-                        // Update drag overlay if dragging (use first visible controller)
-                        if (this.particleTrailSystem.isDragging && index === 0) {
-                            this.particleTrailSystem.updateDragOverlay(worldPos);
-                        }
+                        // Always update trail in VR - visibility will be handled by the particle system
+                        this.vrParticleTrailSystems[index].updateTrail(worldPos, true); // Pass true for VR mode
                     }
                 });
             }
@@ -335,17 +357,27 @@ export class PanoramaPlayer {
             });
         }
         
-        // Animate particle trails
-        if (this.particleTrailSystem) {
-            this.particleTrailSystem.animate();
-            
-            // Update drag overlay pulse (even when not moving)
-            if (this.particleTrailSystem.isDragging) {
-                this.particleTrailSystem.updateDragOverlay(this.mouseWorldPosition);
-            }
-            
-            // Fade out trail if no movement for 200ms - slower fade (desktop mode)
-            if (!this.renderer.xr.isPresenting) {
+        // Animate particle trails - both desktop and VR
+        const isInVR = this.renderer.xr.isPresenting;
+        
+        if (isInVR) {
+            // Animate VR particle systems
+            this.vrParticleTrailSystems.forEach((system) => {
+                if (system) {
+                    system.animate();
+                }
+            });
+        } else {
+            // Animate desktop particle system
+            if (this.particleTrailSystem) {
+                this.particleTrailSystem.animate();
+                
+                // Update drag overlay pulse (even when not moving)
+                if (this.particleTrailSystem.isDragging) {
+                    this.particleTrailSystem.updateDragOverlay(this.mouseWorldPosition);
+                }
+                
+                // Fade out trail if no movement for 200ms - slower fade (desktop mode)
                 const timeSinceLastMove = Date.now() - this.lastMouseMoveTime;
                 if (timeSinceLastMove > 200 && this.particleTrailSystem.isActive) {
                     this.particleTrailSystem.fadeOutTrail();
@@ -435,7 +467,8 @@ export class PanoramaPlayer {
 
     // Three.js best practice: setup controllers and models
     setupControllers() {
-        const controllerModelFactory = new XRControllerModelFactory();
+        const gltfLoader = new GLTFLoader();
+        
         for (let i = 0; i < 2; i++) {
             // Get controller (target ray space)
             const controller = this.renderer.xr.getController(i);
@@ -443,49 +476,79 @@ export class PanoramaPlayer {
             controller.addEventListener('selectend', (event) => this.onSelectEnd(event, i));
             controller.addEventListener('squeezestart', (event) => this.onSqueezeStart(event, i));
             controller.addEventListener('squeezeend', (event) => this.onSqueezeEnd(event, i));
-            this.addControllerRay(controller);
+            this.addControllerRay(controller, i);
             this.scene.add(controller);
             this.controllers[i] = controller;
 
             // Get controller grip (for model)
             const controllerGrip = this.renderer.xr.getControllerGrip(i);
             
-            // Add debug helper - colored sphere to show grip position
-            const debugGeometry = new THREE.SphereGeometry(0.02, 16, 16);
-            const debugMaterial = new THREE.MeshBasicMaterial({ 
-                color: i === 0 ? 0x00ff00 : 0xff0000, // Green for left, red for right
-                transparent: true,
-                opacity: 0.7
-            });
-            const debugSphere = new THREE.Mesh(debugGeometry, debugMaterial);
-            debugSphere.name = 'debugGripMarker';
-            controllerGrip.add(debugSphere);
+            // Load GLTF controller models
+            // Controller 0 = LEFT = GREEN dot + CYAN tint (left-controller.glb)
+            // Controller 1 = RIGHT = RED dot + PINK tint (right-controller.glb)
+            const modelPath = i === 0 ? 'assets/models/left-controller.glb' : 'assets/models/right-controller.glb';
+            const tintColor = i === 0 ? 0x00ffff : 0xffb6c1; // Cyan for left, light pink for right
             
-            // Add debug axes helper to show orientation
-            const axesHelper = new THREE.AxesHelper(0.1);
-            axesHelper.name = 'debugAxes';
-            controllerGrip.add(axesHelper);
+            console.log(`🎮 Loading controller ${i} model: ${modelPath}`);
             
-            // Determine handedness (0 = right, 1 = left in WebXR)
-            const handedness = i === 0 ? 'right' : 'left';
-            const controllerModel = controllerModelFactory.createControllerModel(controllerGrip, handedness);
+            gltfLoader.load(
+                modelPath,
+                (gltf) => {
+                    console.log(`✅ Controller ${i} model loaded successfully`);
+                    const model = gltf.scene;
+                    
+                    // Scale down the controller model to 50% of original size
+                    model.scale.set(0.5, 0.5, 0.5);
+                    
+                    // Apply color tint to all meshes in the model
+                    model.traverse((child) => {
+                        if (child.isMesh) {
+                            // Clone material and apply tint
+                            if (child.material) {
+                                child.material = child.material.clone();
+                                child.material.color.set(tintColor);
+                                child.material.emissive = new THREE.Color(tintColor);
+                                child.material.emissiveIntensity = 0.2;
+                            }
+                        }
+                    });
+                    
+                    // Add model to grip - it should be centered at origin
+                    controllerGrip.add(model);
+                    console.log(`🎮 Controller ${i} model added with ${i === 0 ? 'CYAN' : 'PINK'} tint at 50% scale`);
+                },
+                undefined,
+                (error) => {
+                    console.error(`❌ Error loading controller ${i} model:`, error);
+                    // Fallback to simple box if model fails to load
+                    const fallbackGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.08);
+                    const fallbackMaterial = new THREE.MeshBasicMaterial({ 
+                        color: tintColor,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const fallbackMesh = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
+                    controllerGrip.add(fallbackMesh);
+                    console.log(`🎮 Controller ${i} using fallback mesh`);
+                }
+            );
             
-            controllerGrip.add(controllerModel);
             this.scene.add(controllerGrip);
             this.controllerGrips[i] = controllerGrip;
-            this.controllerModels[i] = controllerModel;
             
-            console.log(`🎮 Controller ${i} (${handedness}) setup with debug markers`);
+            console.log(`🎮 Controller ${i} (${i === 0 ? 'LEFT/GREEN/CYAN' : 'RIGHT/RED/PINK'}) initialized`);
         }
     }
 
-    addControllerRay(controller) {
+    addControllerRay(controller, controllerIndex) {
         const geometry = new THREE.BufferGeometry();
         geometry.setFromPoints([
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -1)
         ]);
-        const material = new THREE.LineBasicMaterial({ color: 0x00ff00, transparent: true, opacity: 0.5 });
+        // Controller 0 = LEFT = GREEN, Controller 1 = RIGHT = RED
+        const rayColor = controllerIndex === 0 ? 0x00ff00 : 0xff0000;
+        const material = new THREE.LineBasicMaterial({ color: rayColor, transparent: true, opacity: 0.5 });
         const line = new THREE.Line(geometry, material);
         line.name = 'ray';
         line.scale.z = 5;
@@ -498,10 +561,8 @@ export class PanoramaPlayer {
         console.log('🎮 [VR] Trigger pressed on controller', i);
         
         if (this.renderer.xr.isPresenting) {
-            // Start drag overlay on trigger press
-            if (this.particleTrailSystem) {
-                this.particleTrailSystem.startDragOverlay();
-            }
+            // Don't start drag overlay in VR - we don't want click sounds, only movement sounds
+            // Particles are already being generated by controller movement
             
             // If menu is visible and we're hovering a button, click it
             if (this.vrMenuVisible && this.hoveredButton) {
@@ -681,6 +742,12 @@ export class PanoramaPlayer {
     // VR Menu Methods
     createVRMenu() {
         console.log('🎮 [VR] Creating modern VR menu...');
+    createVRMenu() {
+        // Always create menu in VR mode
+        if (this.vrMenu) {
+            console.log('⚠️ [VR] Menu already exists, not recreating');
+            return;
+        }
         
         // Create new modern VR menu
         this.vrMenu = new VRMenu(this.scene, this.camera, this.video);
@@ -691,6 +758,7 @@ export class PanoramaPlayer {
     }
     
     showVRMenu() {
+        // Always show menu in VR mode
         if (!this.vrMenu) {
             this.createVRMenu();
         } else {
@@ -710,6 +778,8 @@ export class PanoramaPlayer {
     
     toggleVRMenu() {
         console.log('🔥 [VR] toggleVRMenu called, current state:', this.vrMenuVisible);
+        
+        // Always allow toggle in VR mode
         if (this.vrMenuVisible) {
             console.log('🔥 [VR] Hiding menu...');
             this.hideVRMenu();

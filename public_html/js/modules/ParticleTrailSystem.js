@@ -12,7 +12,7 @@ export class ParticleTrailSystem {
         // Particle systems for different icons
         this.particleSystems = [];
         this.trailHistory = []; // Store positions for trail effect
-        this.maxTrailLength = 100; // Even longer trail - 100 particles
+        this.maxTrailLength = 60; // Reduced from 150 to 60 for VR performance
         
         // Animation properties
         this.time = 0;
@@ -55,18 +55,30 @@ export class ParticleTrailSystem {
      * Setup regular audio system for swoosh sounds
      */
     setupAudio() {
+        console.log('🔊 Setting up regular audio system...');
+        
         try {
-            console.log('🔊 Setting up regular audio system...');
-            
-            // Create regular HTML5 Audio element
+            // Safari requires user interaction before playing audio
+            // Create audio element but don't try to play yet
             this.regularAudio = new Audio('assets/sound/swoosh.mp3');
-            this.regularAudio.volume = 0.9; // 90% volume
+            this.regularAudio.volume = 0.9;
             this.regularAudio.preload = 'auto';
             
-            console.log('✅ Regular audio system ready at 90% volume!');
+            // Safari-specific: Load the audio on user interaction
+            const loadAudio = () => {
+                if (this.regularAudio && this.regularAudio.readyState < 2) {
+                    this.regularAudio.load();
+                }
+                document.removeEventListener('click', loadAudio);
+                document.removeEventListener('touchstart', loadAudio);
+            };
             
+            document.addEventListener('click', loadAudio, { once: true });
+            document.addEventListener('touchstart', loadAudio, { once: true });
+            
+            console.log('✅ Regular audio system ready at 90% volume (will load on user interaction for Safari)');
         } catch (error) {
-            console.error('❌ Failed to setup regular audio:', error);
+            console.error('❌ Error setting up audio:', error);
         }
     }
     
@@ -138,28 +150,119 @@ export class ParticleTrailSystem {
         
         const loader = new THREE.TextureLoader();
         
-        // Load all textures
-        const texturePromises = this.iconPaths.map(path => {
-            return new Promise((resolve, reject) => {
-                loader.load(path, resolve, undefined, reject);
+        try {
+            // Load all textures with timeout for Safari
+            const texturePromises = this.iconPaths.map(path => {
+                return new Promise((resolve, reject) => {
+                    const timeout = setTimeout(() => {
+                        reject(new Error(`Texture loading timeout: ${path}`));
+                    }, 10000); // 10 second timeout
+                    
+                    loader.load(
+                        path,
+                        (texture) => {
+                            clearTimeout(timeout);
+                            // Safari-friendly texture settings
+                            texture.minFilter = THREE.LinearFilter;
+                            texture.magFilter = THREE.LinearFilter;
+                            resolve(texture);
+                        },
+                        undefined,
+                        (error) => {
+                            clearTimeout(timeout);
+                            console.error(`Error loading texture ${path}:`, error);
+                            reject(error);
+                        }
+                    );
+                });
             });
+            
+            const textures = await Promise.all(texturePromises);
+            
+            // Create particle system for each texture
+            textures.forEach((texture, index) => {
+                const system = this.createParticleSystem(texture, index);
+                this.particleSystems.push(system);
+            });
+            
+            // Load specific image for drag overlay (white logo with transparent background)
+            const overlayTexture = await new Promise((resolve, reject) => {
+                const timeout = setTimeout(() => {
+                    reject(new Error('Overlay texture loading timeout'));
+                }, 10000);
+                
+                loader.load(
+                    'images/eyetripvr-icony.png',
+                    (texture) => {
+                        clearTimeout(timeout);
+                        texture.minFilter = THREE.LinearFilter;
+                        texture.magFilter = THREE.LinearFilter;
+                        resolve(texture);
+                    },
+                    undefined,
+                    (error) => {
+                        clearTimeout(timeout);
+                        reject(error);
+                    }
+                );
+            });
+            this.createDragOverlay(overlayTexture);
+            
+            console.log('✨ Particle systems created:', this.particleSystems.length);
+            
+        } catch (error) {
+            console.error('❌ Failed to initialize particle trail system:', error);
+            // Create fallback system with solid color particles
+            console.log('⚠️ Creating fallback particle system...');
+            this.createFallbackParticleSystem();
+        }
+    }
+    
+    /**
+     * Create fallback particle system without textures (for Safari compatibility)
+     */
+    createFallbackParticleSystem() {
+        console.log('🔧 Creating fallback particle system (no textures)');
+        // Create a simple solid color particle system as fallback
+        const particleCount = this.maxTrailLength;
+        const geometry = new THREE.BufferGeometry();
+        
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+        const sizes = new Float32Array(particleCount);
+        
+        for (let i = 0; i < particleCount; i++) {
+            positions[i * 3] = 0;
+            positions[i * 3 + 1] = 0;
+            positions[i * 3 + 2] = 0;
+            
+            colors[i * 3] = 1.0;
+            colors[i * 3 + 1] = 1.0;
+            colors[i * 3 + 2] = 0.0;
+            
+            const normalizedPosition = i / particleCount;
+            const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2);
+            sizes[i] = 6.0 * sizeFalloff;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+        geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+        
+        const material = new THREE.PointsMaterial({
+            size: 0.1,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.7,
+            sizeAttenuation: true
         });
         
-        const textures = await Promise.all(texturePromises);
+        const particleSystem = new THREE.Points(geometry, material);
+        particleSystem.visible = false;
+        this.scene.add(particleSystem);
+        this.particleSystems.push(particleSystem);
         
-        // Create particle system for each texture
-        textures.forEach((texture, index) => {
-            const system = this.createParticleSystem(texture, index);
-            this.particleSystems.push(system);
-        });
-        
-        // Load specific image for drag overlay (white logo with transparent background)
-        const overlayTexture = await new Promise((resolve, reject) => {
-            loader.load('images/eyetripvr-icony.png', resolve, undefined, reject);
-        });
-        this.createDragOverlay(overlayTexture);
-        
-        console.log('✨ Particle systems created:', this.particleSystems.length);
+        console.log('✅ Fallback particle system ready');
     }
     
     /**
@@ -203,13 +306,15 @@ export class ParticleTrailSystem {
         const processedTexture = new THREE.CanvasTexture(canvas);
         processedTexture.needsUpdate = true;
         
-        // Use ShaderMaterial to add white glow effect
+        // Optimized shader material with 1-pixel white stroke outline
         const planeMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 map: { value: processedTexture },
                 opacity: { value: 0 }
             },
             vertexShader: `
+                precision highp float;
+                
                 varying vec2 vUv;
                 void main() {
                     vUv = uv;
@@ -218,28 +323,29 @@ export class ParticleTrailSystem {
                 }
             `,
             fragmentShader: `
+                precision highp float;
+                
                 uniform sampler2D map;
                 uniform float opacity;
                 varying vec2 vUv;
                 
                 void main() {
-                    // Use UV coordinates directly (no flip)
                     vec2 uv = vUv;
                     vec4 texColor = texture2D(map, uv);
                     
-                    // Calculate distance from center for glow effect
-                    vec2 center = vec2(0.5, 0.5);
-                    float dist = distance(uv, center);
-                    
-                    // If transparent, check if we should draw glow
-                    if (texColor.a < 0.1) {
-                        // Create subtle white glow around the logo (reduced)
-                        float glowRadius = 0.5;
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
+                    // If fully transparent, check for white stroke outline
+                    if (texColor.a < 0.05) {
+                        // Sample surrounding pixels for edge detection
+                        float strokeWidth = 0.003; // 1 pixel stroke
+                        vec4 n = texture2D(map, uv + vec2(0.0, strokeWidth));
+                        vec4 s = texture2D(map, uv + vec2(0.0, -strokeWidth));
+                        vec4 e = texture2D(map, uv + vec2(strokeWidth, 0.0));
+                        vec4 w = texture2D(map, uv + vec2(-strokeWidth, 0.0));
                         
-                        if (glowIntensity > 0.0) {
-                            // Draw subtle white glow (reduced from 0.5 to 0.25)
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * opacity * 0.25);
+                        // If any neighbor is opaque, draw white stroke
+                        float edge = max(max(n.a, s.a), max(e.a, w.a));
+                        if (edge > 0.3) {
+                            gl_FragColor = vec4(1.0, 1.0, 1.0, edge * opacity * 0.9);
                             return;
                         }
                         discard;
@@ -247,11 +353,6 @@ export class ParticleTrailSystem {
                     
                     // Keep natural color of the logo
                     vec3 finalColor = texColor.rgb;
-                    
-                    // Add subtle white glow at the edges (reduced from 0.6 to 0.3)
-                    float glowRadius = 0.5;
-                    float glowIntensity = smoothstep(glowRadius * 0.7, glowRadius, dist);
-                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.3);
                     
                     gl_FragColor = vec4(finalColor, texColor.a * opacity);
                 }
@@ -297,11 +398,11 @@ export class ParticleTrailSystem {
             colors[i * 3 + 1] = color.g;
             colors[i * 3 + 2] = color.b;
             
-            // Larger size at start, progressively smaller toward end
-            // Use exponential falloff for more dramatic size reduction
+            // Larger size at start, progressively smaller toward end (smooth tapering)
+            // Use exponential falloff for smooth, natural tapering to the tip
             const normalizedPosition = i / particleCount;
-            const sizeFalloff = Math.pow(1 - normalizedPosition, 1.5); // Exponential falloff
-            sizes[i] = 8.0 * sizeFalloff; // Start larger to show full logo
+            const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2); // Stronger exponential for dramatic taper
+            sizes[i] = 3.0 * sizeFalloff; // Reduced from 9.0 to 3.0 for smaller particles
             
             // Alpha decreases along trail (fade out)
             alphas[i] = 1 - (i / particleCount);
@@ -312,14 +413,15 @@ export class ParticleTrailSystem {
         geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
         
-        // Custom shader material for holographic effect
+        // Optimized shader material - no glitch, simple white stroke outline
         const material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
-                pointTexture: { value: texture },
-                glitchAmount: { value: 0.0 }
+                pointTexture: { value: texture }
             },
             vertexShader: `
+                precision highp float;
+                
                 attribute float size;
                 attribute float alpha;
                 attribute vec3 color;
@@ -327,25 +429,20 @@ export class ParticleTrailSystem {
                 varying vec3 vColor;
                 varying float vAlpha;
                 uniform float time;
-                uniform float glitchAmount;
                 
                 void main() {
                     vColor = color;
                     vAlpha = alpha;
                     
-                    vec3 pos = position;
-                    
-                    // Glitchy movement
-                    pos.x += sin(time * 10.0 + position.y * 5.0) * glitchAmount * 0.02;
-                    pos.y += cos(time * 15.0 + position.x * 5.0) * glitchAmount * 0.02;
-                    
-                    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-                    float pointSize = size * 2000.0 / -mvPosition.z;
-                    gl_PointSize = clamp(pointSize, 10.0, 256.0); // Larger min/max for VR visibility
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    float pointSize = size * 1500.0 / -mvPosition.z;
+                    gl_PointSize = clamp(pointSize, 5.0, 64.0);
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
+                precision mediump float;
+                
                 uniform sampler2D pointTexture;
                 uniform float time;
                 
@@ -353,56 +450,22 @@ export class ParticleTrailSystem {
                 varying float vAlpha;
                 
                 void main() {
-                    // Flip the texture vertically by inverting Y coordinate
                     vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
                     vec4 texColor = texture2D(pointTexture, uv);
                     
-                    // Calculate distance from center for glow effect
-                    vec2 center = vec2(0.5, 0.5);
-                    float dist = distance(gl_PointCoord, center);
-                    
-                    // If transparent, check if we should draw glow
+                    // Simple alpha test - much faster than stroke detection
                     if (texColor.a < 0.1) {
-                        // Create subtle white glow around the particle (reduced intensity)
-                        float glowRadius = 0.5; // Size of glow area
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
-                        
-                        if (glowIntensity > 0.0) {
-                            // Draw subtle white glow (reduced from 0.4 to 0.2)
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.2);
-                            return;
-                        }
                         discard;
                     }
                     
                     // Remove white background if present
-                    float isWhite = step(0.9, texColor.r) * step(0.9, texColor.g) * step(0.9, texColor.b);
-                    if (isWhite > 0.5) {
-                        // Even on white background, draw the subtle glow
-                        float glowRadius = 0.5;
-                        float glowIntensity = smoothstep(glowRadius, glowRadius * 0.7, dist);
-                        
-                        if (glowIntensity > 0.0) {
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, glowIntensity * vAlpha * 0.2);
-                            return;
-                        }
+                    if (texColor.r > 0.9 && texColor.g > 0.9 && texColor.b > 0.9) {
                         discard;
                     }
                     
-                    // Holographic color shift
-                    vec3 rainbowColor = vColor;
-                    rainbowColor.r += sin(time * 2.0) * 0.15;
-                    rainbowColor.g += sin(time * 2.0 + 2.0) * 0.15;
-                    rainbowColor.b += sin(time * 2.0 + 4.0) * 0.15;
-                    
-                    // Apply psychedelic tint with reduced brightness
-                    vec3 finalColor = texColor.rgb * rainbowColor * 0.7;
-                    float finalAlpha = texColor.a * vAlpha * 0.7;
-                    
-                    // Add subtle white glow at the edges (reduced from 0.6 to 0.3)
-                    float glowRadius = 0.5;
-                    float glowIntensity = smoothstep(glowRadius * 0.7, glowRadius, dist);
-                    finalColor = mix(finalColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.3);
+                    // Very subtle color shift for performance
+                    vec3 finalColor = texColor.rgb * vColor;
+                    float finalAlpha = texColor.a * vAlpha;
                     
                     gl_FragColor = vec4(finalColor, finalAlpha);
                 }
@@ -425,8 +488,9 @@ export class ParticleTrailSystem {
     /**
      * Update particle positions based on movement
      * @param {THREE.Vector3} worldPosition - Current position in world space
+     * @param {boolean} isVRMode - Whether currently in VR mode
      */
-    updateTrail(worldPosition) {
+    updateTrail(worldPosition, isVRMode = false) {
         // Safety check - ensure system is initialized
         if (!this.currentPosition || !this.lastPosition) {
             console.warn('⚠️ ParticleTrailSystem not fully initialized yet');
@@ -444,18 +508,37 @@ export class ParticleTrailSystem {
         // Check if there's significant movement
         const distance = this.currentPosition.distanceTo(this.lastPosition);
         
-        console.log(`📏 isDragging: ${this.isDragging}, distance: ${distance.toFixed(4)}`);
+        console.log(`📏 movement distance: ${distance.toFixed(4)}, VR: ${isVRMode}, isDragging: ${this.isDragging}`);
         
         if (distance > 0.001) { // Lower threshold for more sensitive sound triggering
             // Calculate velocity for Doppler effect
             const velocity = new THREE.Vector3().subVectors(this.currentPosition, this.lastPosition);
+            const speed = velocity.length();
             
-            // Play swoosh sound if dragging
-            if (this.isDragging) {
-                console.log(`🎵 ✅ PLAYING SOUND - distance: ${distance.toFixed(4)}`);
-                this.playSwooshSound(worldPosition, velocity);
+            // Sound logic: Only play if there's BOTH movement AND an active trail
+            // This prevents sound on initial click before any movement
+            let shouldPlaySound = false;
+            
+            if (isVRMode) {
+                // VR mode: sound based on movement speed AND having an existing trail
+                shouldPlaySound = speed > 0.08 && this.trailHistory.length > 2;
+                if (shouldPlaySound) {
+                    console.log(`🎵 ✅ VR SOUND - speed: ${speed.toFixed(4)}, trail: ${this.trailHistory.length}`);
+                } else {
+                    console.log(`🎵 ⏸️  VR no sound - speed: ${speed.toFixed(4)}, trail: ${this.trailHistory.length}`);
+                }
             } else {
-                console.log(`🎵 ❌ NOT dragging, no sound`);
+                // Desktop mode: sound only when dragging AND trail exists (movement happened)
+                shouldPlaySound = this.isDragging && this.trailHistory.length > 2;
+                if (shouldPlaySound) {
+                    console.log(`🎵 ✅ DESKTOP SOUND - dragging with trail: ${this.trailHistory.length}`);
+                } else {
+                    console.log(`🎵 ❌ Desktop no sound - dragging: ${this.isDragging}, trail: ${this.trailHistory.length}`);
+                }
+            }
+            
+            if (shouldPlaySound) {
+                this.playSwooshSound(worldPosition, velocity);
             }
             
             // Add new position to trail history
@@ -477,19 +560,21 @@ export class ParticleTrailSystem {
                 for (let i = 0; i < this.trailHistory.length; i++) {
                     const trailPos = this.trailHistory[i];
                     
-                    // Add some random offset for variety
+                    // Add subtle random offset for organic feel (reduced for smoother trail)
                     const offset = new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.05,
-                        (Math.random() - 0.5) * 0.05,
-                        (Math.random() - 0.5) * 0.05
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02,
+                        (Math.random() - 0.5) * 0.02
                     );
                     
                     positions[i * 3] = trailPos.x + offset.x;
                     positions[i * 3 + 1] = trailPos.y + offset.y;
                     positions[i * 3 + 2] = trailPos.z + offset.z;
                     
-                    // Larger size to show more of the image (increased for VR)
-                    sizes[i] = 6.0 * (1 - i / this.maxTrailLength) * (0.8 + Math.random() * 0.4);
+                    // Smooth exponential size tapering toward the tip
+                    const normalizedPosition = i / this.maxTrailLength;
+                    const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2);
+                    sizes[i] = 1.5 * sizeFalloff; // Reduced from 4.0 to 1.5 for much smaller particles
                 }
                 
                 system.geometry.attributes.position.needsUpdate = true;
@@ -527,8 +612,8 @@ export class ParticleTrailSystem {
                 positions[i * 3 + 1] = trailPos.y;
                 positions[i * 3 + 2] = trailPos.z;
                 
-                // Larger size to show more of the image (increased for VR)
-                sizes[i] = 6.0 * (1 - i / this.maxTrailLength) * 0.9;
+                // Reduced from 6.0 to 1.0 for much smaller particles during fade
+                sizes[i] = 1.0 * (1 - i / this.maxTrailLength) * 0.9;
                 
                 // Slower fade - higher alpha values
                 alphas[i] = (1 - i / this.maxTrailLength) * 0.95;
@@ -563,28 +648,23 @@ export class ParticleTrailSystem {
         
         this.particleSystems.forEach((system, index) => {
             if (system.visible) {
-                // Update shader uniforms
+                // Update shader uniforms (only time, no glitch)
                 system.material.uniforms.time.value = this.time;
                 
-                // Add glitch effect randomly
-                if (Math.random() < 0.05) { // 5% chance per frame
-                    system.material.uniforms.glitchAmount.value = Math.random();
-                } else {
-                    system.material.uniforms.glitchAmount.value *= 0.9; // Fade out glitch
+                // Rotate colors through psychedelic spectrum (less frequent updates for performance)
+                if (Math.floor(this.time * 10) % 10 === 0) { // Update every 10 frames instead of 5
+                    const colors = system.geometry.attributes.color.array;
+                    const colorShift = Math.sin(this.time + index) * 0.5 + 0.5;
+                    const baseColor = this.psychedelicColors[(index + Math.floor(this.time)) % this.psychedelicColors.length];
+                    
+                    for (let i = 0; i < this.maxTrailLength; i++) {
+                        colors[i * 3] = baseColor.r * (0.7 + colorShift * 0.3);
+                        colors[i * 3 + 1] = baseColor.g * (0.7 + colorShift * 0.3);
+                        colors[i * 3 + 2] = baseColor.b * (0.7 + colorShift * 0.3);
+                    }
+                    
+                    system.geometry.attributes.color.needsUpdate = true;
                 }
-                
-                // Rotate colors through psychedelic spectrum
-                const colors = system.geometry.attributes.color.array;
-                const colorShift = Math.sin(this.time + index) * 0.5 + 0.5;
-                const baseColor = this.psychedelicColors[(index + Math.floor(this.time)) % this.psychedelicColors.length];
-                
-                for (let i = 0; i < this.maxTrailLength; i++) {
-                    colors[i * 3] = baseColor.r * (0.7 + colorShift * 0.3);
-                    colors[i * 3 + 1] = baseColor.g * (0.7 + colorShift * 0.3);
-                    colors[i * 3 + 2] = baseColor.b * (0.7 + colorShift * 0.3);
-                }
-                
-                system.geometry.attributes.color.needsUpdate = true;
             }
         });
     }
@@ -601,12 +681,11 @@ export class ParticleTrailSystem {
     }
     
     /**
-     * Set particle intensity (0-1)
+     * Set particle intensity (0-1) - simplified, no glitch
      */
     setIntensity(intensity) {
-        this.particleSystems.forEach(system => {
-            system.material.uniforms.glitchAmount.value = intensity;
-        });
+        // Intensity control removed - no glitch effect anymore
+        // Keep method for compatibility
     }
     
     /**
@@ -620,15 +699,11 @@ export class ParticleTrailSystem {
             console.log('🎨 Drag overlay set to visible');
         }
         
-        // Reset sound cooldown to allow immediate sound on drag start
+        // Reset sound cooldown to allow sound when movement actually starts
         this.lastSoundPlayTime = 0;
         
-        // Play initial sound on drag start
-        if (this.currentPosition) {
-            const initialVelocity = new THREE.Vector3(0, 0, 0);
-            console.log('🎵 Playing initial drag sound');
-            this.playSwooshSound(this.currentPosition, initialVelocity);
-        }
+        // Don't play initial sound on drag start - only play when there's actual movement
+        // Sound will trigger in updateTrail() when trail history builds up
     }
     
     /**

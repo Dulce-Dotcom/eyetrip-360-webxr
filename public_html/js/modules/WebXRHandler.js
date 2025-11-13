@@ -364,6 +364,19 @@ export class WebXRHandler {
                         hasGamepad: !!source.gamepad
                     });
                 });
+                
+                // Auto-play video and show VR menu when entering VR
+                if (this.panoramaPlayer) {
+                    console.log('🎬 [VR] Auto-playing video on VR entry');
+                    if (this.panoramaPlayer.video && this.panoramaPlayer.video.paused) {
+                        this.panoramaPlayer.video.play().catch(err => {
+                            console.error('Failed to auto-play video:', err);
+                        });
+                    }
+                    
+                    console.log('📋 [VR] Showing VR menu on entry');
+                    this.panoramaPlayer.showVRMenu();
+                }
             }, 1000);
 
         } catch (error) {
@@ -416,8 +429,11 @@ export class WebXRHandler {
                 console.log(`🎮 [DEBUG] Controller ${i} CONNECTED:`, event.data);
                 const inputSource = event.data;
                 controller.userData.inputSource = inputSource;
+                controller.userData.handedness = inputSource.handedness; // Store handedness
+                controller.userData.controllerIndex = i; // Store index
                 
                 console.log(`🎮 [DEBUG] Input source details:`, {
+                    controllerIndex: i,
                     targetRayMode: inputSource.targetRayMode,
                     handedness: inputSource.handedness,
                     hasGamepad: !!inputSource.gamepad,
@@ -425,10 +441,20 @@ export class WebXRHandler {
                     gamepadButtons: inputSource.gamepad?.buttons?.length
                 });
                 
-                // Add visual ray to controller
-                const ray = this.createVRControllerRay();
+                // Determine color based on controller index (not handedness, since WebXR mapping varies)
+                // Controller 0 = LEFT = RED (0xff0000)
+                // Controller 1 = RIGHT = GREEN (0x00ff00)
+                const rayColor = i === 0 ? 0xff0000 : 0x00ff00;
+                
+                // Add visual ray to controller with appropriate color
+                const ray = this.createVRControllerRay(rayColor);
                 controller.add(ray);
-                console.log(`🎮 [DEBUG] Added visual ray to controller ${i}`);
+                console.log(`🎮 [DEBUG] Added controller ${i} ray (${i === 0 ? 'LEFT/RED' : 'RIGHT/GREEN'}) color: ${rayColor.toString(16)}`);
+                
+                // Add controller model with appropriate color
+                const controllerModel = this.createControllerModel(i);
+                controller.add(controllerModel);
+                console.log(`🎮 [DEBUG] Added controller model to controller ${i}`);
                 
                 console.log(`🎮 [DEBUG] Controller ${i} gamepad available:`, !!inputSource.gamepad);
             });
@@ -455,9 +481,9 @@ export class WebXRHandler {
             this.controllerGrips.push(controllerGrip);
         }
 
-        console.log('🎨 [DEBUG] Creating VR menu...');
-        // Create VR menu
-        this.createVRMenu();
+        console.log('🎨 [DEBUG] VR menu creation moved to PanoramaPlayer (using modern VRMenu)');
+        // Old menu system disabled - now using modern VRMenu in PanoramaPlayer
+        // this.createVRMenu();
         
         console.log(`✅ [DEBUG] ${this.controllers.length} VR controllers set up complete`);
         
@@ -477,14 +503,14 @@ export class WebXRHandler {
         };
     }
 
-    createVRControllerRay() {
+    createVRControllerRay(color = 0x00ff00) {
         const geometry = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0, 0),
             new THREE.Vector3(0, 0, -5)
         ]);
         
         const material = new THREE.LineBasicMaterial({ 
-            color: 0x00ff00,
+            color: color,
             linewidth: 2
         });
         
@@ -577,35 +603,33 @@ export class WebXRHandler {
         }
     }
 
-    createControllerModel(inputSource) {
-        // Create a more visible controller representation
+    createControllerModel(controllerIndex) {
+        // Create a visible controller representation
         const group = new THREE.Group();
         
-        // Controller body
-        const bodyGeometry = new THREE.BoxGeometry(0.05, 0.05, 0.2);
-        const bodyMaterial = new THREE.MeshBasicMaterial({ color: 0x888888 });
+        // Determine color based on controller index: 0=LEFT=RED, 1=RIGHT=GREEN
+        const handColor = controllerIndex === 0 ? 0xff0000 : 0x00ff00;
+        
+        // Controller body - visible box at the origin
+        const bodyGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.06);
+        const bodyMaterial = new THREE.MeshBasicMaterial({ 
+            color: handColor,
+            transparent: true,
+            opacity: 0.9
+        });
         const bodyMesh = new THREE.Mesh(bodyGeometry, bodyMaterial);
+        // Position exactly at origin (0, 0, 0) where the raycaster is
+        bodyMesh.position.set(0, 0, 0);
         group.add(bodyMesh);
         
-        // Pointer ray visualization
-        const rayGeometry = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, -5)
-        ]);
-        const rayMaterial = new THREE.LineBasicMaterial({ 
-            color: 0x00ff00,
-            transparent: true,
-            opacity: 0.5
-        });
-        const rayLine = new THREE.Line(rayGeometry, rayMaterial);
-        group.add(rayLine);
-        
-        // Pointer dot at the end
+        // Small pointer dot at the end - matching hand color
         const dotGeometry = new THREE.SphereGeometry(0.02);
-        const dotMaterial = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const dotMaterial = new THREE.MeshBasicMaterial({ color: handColor });
         const dotMesh = new THREE.Mesh(dotGeometry, dotMaterial);
         dotMesh.position.z = -5;
         group.add(dotMesh);
+        
+        console.log(`🎮 Created controller model for index ${controllerIndex} with color ${handColor.toString(16)}`);
         
         return group;
     }
@@ -636,7 +660,7 @@ export class WebXRHandler {
         }
 
         this.vrMenuGroup = new THREE.Group();
-        this.vrMenuGroup.position.set(0, 1.6, -2); // Position in front of user
+        this.vrMenuGroup.position.set(0, 1.3, -2); // Lower to eye level for stationary viewing
         this.vrMenuVisible = false;
 
         // Create menu background panel (larger and more visible)
@@ -724,6 +748,7 @@ export class WebXRHandler {
         // Store button data
         button.userData = {
             isButton: true,
+            label: text,
             text: text,
             action: action,
             defaultMaterial: buttonMaterial,
@@ -765,14 +790,14 @@ export class WebXRHandler {
             camera.getWorldDirection(direction);
             direction.multiplyScalar(-3); // Move it further away for better visibility
             direction.add(camera.position);
-            direction.y = camera.position.y; // Keep at same height as camera
+            direction.y = camera.position.y - 0.2; // Lower slightly below eye level for comfort
             this.vrMenuGroup.position.copy(direction);
             this.vrMenuGroup.lookAt(camera.position);
             
             console.log('🎨 VR menu positioned at:', this.vrMenuGroup.position);
         } else {
-            // Fallback position
-            this.vrMenuGroup.position.set(0, 1.6, -3);
+            // Fallback position - lower for stationary viewing
+            this.vrMenuGroup.position.set(0, 1.3, -3);
             console.log('🎨 VR menu at fallback position');
         }
         
@@ -798,20 +823,29 @@ export class WebXRHandler {
 
     handleVRMenuInteraction(event) {
         const controller = event.target;
-        const direction = new THREE.Vector3();
+        const tempMatrix = new THREE.Matrix4();
         const raycaster = new THREE.Raycaster();
         
-        // Get controller direction
-        controller.getWorldDirection(direction);
-        raycaster.set(controller.position, direction);
+        // Get controller's world matrix
+        tempMatrix.identity().extractRotation(controller.matrixWorld);
+        
+        // Set raycaster from controller's world position and direction
+        raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        
+        console.log('🎮 Raycasting from controller to menu, visible:', this.vrMenuVisible);
         
         // Check intersections with menu items
         const intersects = raycaster.intersectObject(this.vrMenuGroup, true);
         
+        console.log('🎮 Menu intersections found:', intersects.length);
+        
         if (intersects.length > 0) {
             const intersectedObject = intersects[0].object;
+            console.log('🎮 Intersected object:', intersectedObject.userData);
             
             if (intersectedObject.userData.isButton) {
+                console.log('🎮 Button clicked:', intersectedObject.userData.label);
                 // Execute button action
                 intersectedObject.userData.action();
                 this.hideVRMenu();

@@ -15,6 +15,7 @@ export default class VRMenu {
         this.isVisible = false;
         this.buttons = [];
         this.selectedButton = null;
+        this.volumeDisplayText = null; // Store reference to volume display
         
         // Style constants inspired by Meta Quest
         this.colors = {
@@ -196,6 +197,9 @@ export default class VRMenu {
         volumeDisplay.add(volumeText);
         volumeRow.add(volumeDisplay);
         
+        // Store reference for updates
+        this.volumeDisplayText = volumeText;
+        
         const volumeUpButton = this.createButton('Vol +', 0.28, () => {
             this.onVolumeUp();
         }, this.colors.hover);
@@ -212,29 +216,17 @@ export default class VRMenu {
         
         this.createSpacer(0.02);
         
-        // Navigation buttons
+        // Navigation buttons - only Exit VR button, centered
         const navRow = new ThreeMeshUI.Block({
             width: 1.28,
             height: 0.16,
             contentDirection: 'row',
-            justifyContent: 'space-around',
+            justifyContent: 'center',
             backgroundOpacity: 0,
             margin: 0.01
         });
         
-        const galleryButton = this.createButton('Gallery', 0.38, () => {
-            this.onGalleryClick();
-        }, this.colors.primary);
-        navRow.add(galleryButton);
-        this.buttons.push({ button: galleryButton, action: 'gallery' });
-        
-        const aboutButton = this.createButton('About', 0.38, () => {
-            this.onAboutClick();
-        }, this.colors.hover);
-        navRow.add(aboutButton);
-        this.buttons.push({ button: aboutButton, action: 'about' });
-        
-        const exitButton = this.createButton('Exit VR', 0.38, () => {
+        const exitButton = this.createButton('Exit VR', 0.5, () => {
             this.onExitVRClick();
         }, this.colors.secondary);
         navRow.add(exitButton);
@@ -360,14 +352,42 @@ export default class VRMenu {
     }
     
     onGalleryClick() {
-        console.log('🎬 Opening gallery...');
+        console.log('🎬 Opening gallery modal...');
+        // Pause the video
+        if (this.video && !this.video.paused) {
+            this.video.pause();
+            console.log('⏸️ Video paused for gallery');
+        }
+        // TODO: Show VR gallery modal with scrollable content
+        // For now, navigate to gallery page
+        this.showGalleryModal();
+    }
+    
+    onAboutClick() {
+        console.log('ℹ️ Opening about modal...');
+        // Pause the video
+        if (this.video && !this.video.paused) {
+            this.video.pause();
+            console.log('⏸️ Video paused for about');
+        }
+        // TODO: Show VR about modal with scrollable content
+        // For now, navigate to about page
+        this.showAboutModal();
+    }
+    
+    showGalleryModal() {
+        // Placeholder for VR gallery modal
+        console.log('📋 Gallery modal would show here with scrollable experiences');
+        // For now, just navigate
         if (typeof window !== 'undefined') {
             window.location.href = 'gallery.html';
         }
     }
     
-    onAboutClick() {
-        console.log('ℹ️ Opening about page...');
+    showAboutModal() {
+        // Placeholder for VR about modal
+        console.log('📋 About modal would show here with scrollable info');
+        // For now, just navigate
         if (typeof window !== 'undefined') {
             window.location.href = 'about.html';
         }
@@ -375,9 +395,16 @@ export default class VRMenu {
     
     onExitVRClick() {
         console.log('🚪 Exiting VR...');
-        // This will be handled by the WebXR session
-        if (this.scene.renderer && this.scene.renderer.xr) {
-            this.scene.renderer.xr.getSession()?.end();
+        // Get the WebXR session from window.panoramaPlayer
+        if (window.panoramaPlayer && window.panoramaPlayer.renderer && window.panoramaPlayer.renderer.xr) {
+            const session = window.panoramaPlayer.renderer.xr.getSession();
+            if (session) {
+                session.end().then(() => {
+                    console.log('✅ VR session ended');
+                }).catch((err) => {
+                    console.error('❌ Error ending VR session:', err);
+                });
+            }
         }
     }
     
@@ -395,15 +422,22 @@ export default class VRMenu {
                 newContent = this.video && this.video.muted ? 'Unmute' : 'Mute';
             }
             
-            // Update content property directly
+            // Update content using set() method which triggers a refresh
             if (textChild.content !== newContent) {
-                textChild.content = newContent;
+                textChild.set({ content: newContent });
                 button.userData.textContent = newContent;
             }
         });
         
-        // Update volume display
-        // This would require finding the volume display block and updating it
+        // Update volume display - find and update it
+        this.updateVolumeDisplay();
+    }
+    
+    updateVolumeDisplay() {
+        if (this.volumeDisplayText && this.video) {
+            const volumePercent = Math.round(this.video.volume * 100);
+            this.volumeDisplayText.set({ content: `${volumePercent}%` });
+        }
     }
     
     show() {
