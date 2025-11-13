@@ -742,7 +742,6 @@ export class PanoramaPlayer {
     // VR Menu Methods
     createVRMenu() {
         console.log('🎮 [VR] Creating modern VR menu...');
-    createVRMenu() {
         // Always create menu in VR mode
         if (this.vrMenu) {
             console.log('⚠️ [VR] Menu already exists, not recreating');

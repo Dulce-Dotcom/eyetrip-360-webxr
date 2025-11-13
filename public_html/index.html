@@ -22,6 +22,17 @@
     <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
     <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
+    
+    <!-- Three.js for 3D logo control -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/"
+            }
+        }
+    </script>
+    
     <style>
         * {
             margin: 0;
@@ -37,6 +48,59 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+        }
+        
+        /* 3D Logo Strip */
+        .logo-strip {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            max-width: 1400px;
+            width: 90%;
+            height: 100px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            gap: 0;
+            background: rgba(27, 42, 65, 0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(205, 0, 255, 0.3);
+            border-radius: 0 0 20px 20px;
+            padding: 0 20px;
+        }
+        
+        .logo-3d-wrapper {
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+            transition: transform 0.3s ease;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .logo-3d-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .logo-3d-wrapper:hover {
+            transform: scale(1.1);
+        }
+        
+        @media (max-width: 768px) {
+            .logo-strip {
+                height: 80px;
+                padding: 0 15px;
+                gap: 8px;
+            }
+            
+            .logo-3d-wrapper {
+                width: 60px;
+                height: 60px;
+            }
         }
         
         #video-background {
@@ -67,8 +131,15 @@
             align-items: center;
             justify-content: space-between;
             padding: 2rem 0;
+            padding-top: 120px; /* Space for outrun strip */
             position: relative;
             z-index: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .page-wrapper {
+                padding-top: 100px;
+            }
         }
         
         .landing-container {
@@ -255,6 +326,9 @@
     </style>
 </head>
 <body>
+    <!-- 3D Logo Strip -->
+    <div class="logo-strip" id="logoStrip"></div>
+    
     <video id="video-background" autoplay muted loop playsinline>
         <source src="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" type="video/mp4">
     </video>
@@ -324,15 +398,16 @@
         </div> <!-- end .page-wrapper -->
         
         <!-- PWA Service Worker Registration -->
-        <script>
+        <script type="module">
+            import * as THREE from 'three';
+            import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+            
             // Video background autoplay
             const videoBackground = document.getElementById('video-background');
             
-            // Try to play the video
             if (videoBackground) {
                 videoBackground.play().catch(err => {
                     console.log('Video autoplay prevented:', err);
-                    // If autoplay fails, try playing on first user interaction
                     document.addEventListener('click', function playOnClick() {
                         videoBackground.play();
                         document.removeEventListener('click', playOnClick);
@@ -340,6 +415,195 @@
                 });
             }
             
+            // Three.js 3D Logo Strip
+            class Logo3D {
+                constructor(container, modelUrl) {
+                    this.container = container;
+                    this.modelUrl = modelUrl;
+                    this.isHovered = false;
+                    this.rotation = 0;
+                    this.targetRotation = 0;
+                    this.rotationSpeed = 0;
+                    this.mouseX = 0;
+                    this.initialRotation = 0;
+                    
+                    this.init();
+                }
+                
+                init() {
+                    // Create scene
+                    this.scene = new THREE.Scene();
+                    
+                    // Create camera
+                    const aspect = 1; // Square aspect ratio
+                    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+                    this.camera.position.z = 3;
+                    
+                    // Create renderer
+                    this.renderer = new THREE.WebGLRenderer({ 
+                        alpha: true, 
+                        antialias: true 
+                    });
+                    this.renderer.setSize(80, 80);
+                    this.renderer.setClearColor(0x000000, 0);
+                    this.container.appendChild(this.renderer.domElement);
+                    
+                    // Add lights
+                    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                    this.scene.add(ambientLight);
+                    
+                    const directionalLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+                    directionalLight1.position.set(1, 1, 1);
+                    this.scene.add(directionalLight1);
+                    
+                    const directionalLight2 = new THREE.DirectionalLight(0xcd00ff, 0.4);
+                    directionalLight2.position.set(-1, -1, 0.5);
+                    this.scene.add(directionalLight2);
+                    
+                    // Load model
+                    const loader = new GLTFLoader();
+                    loader.load(
+                        this.modelUrl,
+                        (gltf) => {
+                            this.model = gltf.scene;
+                            
+                            // Center and scale model
+                            const box = new THREE.Box3().setFromObject(this.model);
+                            const center = box.getCenter(new THREE.Vector3());
+                            const size = box.getSize(new THREE.Vector3());
+                            const maxDim = Math.max(size.x, size.y, size.z);
+                            const scale = 2 / maxDim;
+                            
+                            this.model.scale.setScalar(scale);
+                            this.model.position.sub(center.multiplyScalar(scale));
+                            
+                            // Rotate to upright and front-facing position
+                            this.model.rotation.x = 0; // No X rotation - keep upright
+                            this.model.rotation.y = 0; // No Y rotation - front-facing
+                            
+                            // Store initial rotation
+                            this.initialRotation = this.model.rotation.y;
+                            
+                            // Apply metallic PBR material
+                            this.model.traverse((child) => {
+                                if (child.isMesh) {
+                                    child.material.metalness = 0.9;
+                                    child.material.roughness = 0.2;
+                                    child.material.envMapIntensity = 1.5;
+                                }
+                            });
+                            
+                            this.scene.add(this.model);
+                            this.animate();
+                        },
+                        // Progress callback
+                        (xhr) => {
+                            console.log(`${this.modelUrl}: ${(xhr.loaded / xhr.total * 100).toFixed(0)}% loaded`);
+                        },
+                        // Error callback
+                        (error) => {
+                            console.error(`Error loading ${this.modelUrl}:`, error);
+                        }
+                    );
+                    
+                    // Mouse events
+                    this.container.addEventListener('mouseenter', () => {
+                        this.isHovered = true;
+                    });
+                    
+                    this.container.addEventListener('mouseleave', () => {
+                        this.isHovered = false;
+                        this.rotationSpeed = 0;
+                    });
+                    
+                    this.container.addEventListener('mousemove', (e) => {
+                        if (!this.isHovered) return;
+                        
+                        const rect = this.container.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        this.mouseX = (x / rect.width) * 2 - 1; // Normalize to -1 to 1
+                    });
+                }
+                
+                animate = () => {
+                    requestAnimationFrame(this.animate);
+                    
+                    if (this.model) {
+                        if (this.isHovered) {
+                            // Mouse hover spinning - speed based on mouse position
+                            const speedMultiplier = Math.abs(this.mouseX) * 3 + 1;
+                            this.rotationSpeed = 0.05 * speedMultiplier;
+                            // Rotate on Y axis for upright spinning
+                            this.model.rotation.y += this.rotationSpeed;
+                        } else {
+                            // Smoothly return to initial rotation
+                            const diff = this.initialRotation - this.model.rotation.y;
+                            
+                            // Normalize the difference to handle wrapping around 2PI
+                            let normalizedDiff = diff % (Math.PI * 2);
+                            if (normalizedDiff > Math.PI) normalizedDiff -= Math.PI * 2;
+                            if (normalizedDiff < -Math.PI) normalizedDiff += Math.PI * 2;
+                            
+                            // Apply easing back to initial position
+                            if (Math.abs(normalizedDiff) > 0.01) {
+                                this.model.rotation.y += normalizedDiff * 0.1;
+                            } else {
+                                this.model.rotation.y = this.initialRotation;
+                            }
+                        }
+                    }
+                    
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
+            
+            // Initialize Logo Strip
+            function initLogoStrip() {
+                const logoStrip = document.getElementById('logoStrip');
+                const models = [
+                    'assets/models/eyetrip3Dblue.glb',
+                    'assets/models/eyetrip3Dgreen.glb',
+                    'assets/models/eyetrip3Dred.glb',
+                    'assets/models/eyetrip3Dyellow.glb'
+                ];
+                
+                logoStrip.innerHTML = '';
+                
+                // Calculate how many logos will fit in the visible strip
+                const stripStyles = window.getComputedStyle(logoStrip);
+                const stripWidth = logoStrip.offsetWidth - (parseFloat(stripStyles.paddingLeft) + parseFloat(stripStyles.paddingRight));
+                const logoWidth = 80; // Width of each logo wrapper
+                const logosToCreate = Math.floor(stripWidth / logoWidth);
+                
+                // Create only the number of logos that will fit
+                for (let i = 0; i < logosToCreate; i++) {
+                    const modelUrl = models[i % models.length];
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'logo-3d-wrapper';
+                    logoStrip.appendChild(wrapper);
+                    
+                    // Create Three.js scene for this logo
+                    new Logo3D(wrapper, modelUrl);
+                }
+            }
+            
+            // Initialize on load
+            window.addEventListener('load', () => {
+                initLogoStrip();
+            });
+            
+            // Reinitialize on window resize
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    initLogoStrip();
+                }, 250);
+            });
+        </script>
+        
+        <script>
+            // PWA Service Worker
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('/sw.js')

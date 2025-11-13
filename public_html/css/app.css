@@ -148,8 +148,35 @@
 
 @media (max-width: 768px) {
     .md-top-bar {
-        height: 56px;
-        padding: 0 16px;
+        height: auto;
+        min-height: 56px;
+        padding: 8px 12px;
+        flex-wrap: wrap;
+    }
+    
+    .md-top-bar .md-title {
+        flex-wrap: wrap;
+        justify-content: center;
+        width: 100%;
+        margin: 8px 0;
+    }
+    
+    .md-top-bar .md-title img {
+        height: 30px !important;
+        margin-right: 8px !important;
+    }
+    
+    .md-top-bar .md-title span {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+    
+    .md-top-bar .md-button {
+        padding: 8px;
+    }
+    
+    .md-top-bar .md-button .material-icons {
+        font-size: 20px;
     }
 
     .md-scene-selector {
@@ -160,5 +187,21 @@
 
     .md-controls {
         bottom: 16px;
+        gap: 8px;
+    }
+    
+    .md-controls .md-button {
+        width: 40px;
+        height: 40px;
+        padding: 8px;
+    }
+    
+    .md-controls .md-button .material-icons {
+        font-size: 20px;
+    }
+    
+    #mainVolume {
+        width: 60px !important;
     }
 }
+
