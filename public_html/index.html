@@ -19,9 +19,8 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512x512.png">
-    <link rel="apple-touch-icon" href="/assets/icons/icon-512x512.png">
+    <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
+    <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
@@ -35,15 +34,30 @@
         }
         
         body {
-            background: 
-                linear-gradient(to bottom, rgba(1, 1, 155, 0.7), rgba(27, 42, 65, 0.8)),
-                url('assets/thumbnails/eyetrip-test-video2-optimized.jpg');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
-            background-blend-mode: overlay;
             min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        #video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            object-fit: cover;
+            z-index: -1;
+        }
+        
+        .video-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, rgba(1, 1, 155, 0.1), rgba(27, 42, 65, 0.2));
+            z-index: 0;
+            pointer-events: none;
         }
         
         .page-wrapper {
@@ -51,14 +65,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             padding: 2rem 0;
+            position: relative;
+            z-index: 1;
         }
         
         .landing-container {
             text-align: center;
-            max-width: 1200px;
-            padding: 40px 20px;
+            max-width: 1400px;
+            width: 90%;
+            padding: 30px 40px;
             background: rgba(27, 42, 65, 0.6);
             border-radius: 20px;
             backdrop-filter: blur(10px);
@@ -71,12 +88,37 @@
             margin-bottom: 30px;
             display: flex;
             justify-content: center;
+            align-items: center;
+            gap: 40px;
         }
         
         .logo img {
-            height: 100px;
+            height: 300px;
             width: auto;
             filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.8));
+        }
+        
+        .logo-button {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            background: linear-gradient(45deg, #cd00ff, #00eeff);
+            color: #f0f8ff;
+            box-shadow: 0 4px 15px rgba(205, 0, 255, 0.4);
+            white-space: nowrap;
+        }
+        
+        .logo-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
         }
         
         .tagline {
@@ -91,7 +133,7 @@
             line-height: 1.6;
             margin-bottom: 40px;
             opacity: 0.8;
-            max-width: 600px;
+            max-width: 900px;
             margin-left: auto;
             margin-right: auto;
         }
@@ -181,8 +223,19 @@
         }
         
         @media (max-width: 768px) {
+            .logo {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
             .logo img {
-                height: 70px;
+                height: 210px;
+            }
+            
+            .logo-button {
+                width: 100%;
+                max-width: 280px;
+                justify-content: center;
             }
             
             .tagline {
@@ -202,10 +255,20 @@
     </style>
 </head>
 <body>
+    <video id="video-background" autoplay muted loop playsinline>
+        <source src="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" type="video/mp4">
+    </video>
+    
     <div class="page-wrapper">
     <div class="landing-container">
         <div class="logo">
-            <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR">
+            <a href="gallery.html" class="logo-button">
+                🎬 Enter Gallery
+            </a>
+            <img src="images/eyetripimagesvr-tall.svg?v=2" alt="EyeTrip VR">
+            <a href="gallery.html" class="logo-button">
+                Enter Gallery 🎬
+            </a>
         </div>
         <p class="tagline">Immersive 360° Virtual Reality Experience</p>
         
@@ -214,12 +277,6 @@
             Experience stunning panoramic videos with full WebXR support for Meta Quest and other VR headsets. 
             Navigate with intuitive controls and discover new perspectives in virtual reality.
         </p>
-        
-        <div class="cta-buttons">
-            <a href="gallery.html" class="btn btn-primary">
-                🎬 Enter Gallery
-            </a>
-        </div>
         
         <div class="features">
             <div class="feature">
@@ -240,21 +297,27 @@
             <div class="feature">
                 <div class="feature-icon">🎨</div>
                 <h3>Immersive Art</h3>
-                <p>Visual storytelling through artistic 360° experiences</p>
+                <p>Dive into 360º experiences with art, music and sound</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">📷</div>
-                <h3>Photography</h3>
-                <p>Stunning 360° photography capturing the world in immersive detail.</p>
+                <div class="feature-icon">✨</div>
+                <h3>Curiosity</h3>
+                <p>Loose yourself in a state of wonder and fascination</p>
             </div>
             <div class="feature">
-                <div class="feature-icon">🔬</div>
-                <h3>Science</h3>
-                <p>Explore scientific wonders and educational content in virtual reality.</p>
+                <div class="feature-icon">🧠</div>
+                <h3>NeuroScience</h3>
+                <p>Feel the effects this experience can have on your mind and nervous system</p>
             </div>
         </div>
         </div>
-        <footer class="site-footer">
+    </div>
+    <footer class="site-footer">
+            <nav class="footer-nav">
+                <a href="gallery.html">Gallery</a>
+                <a href="about.html">About</a>
+                <a href="contact.html">Contact</a>
+            </nav>
             <div>&copy; 2025 David Aughenbaugh - EyeTripVR. All rights reserved.</div>
             <div>Powered by <a href="https://dulce.com" target="_blank">Dulce Dotcom</a></div>
         </footer>
@@ -262,6 +325,21 @@
         
         <!-- PWA Service Worker Registration -->
         <script>
+            // Video background autoplay
+            const videoBackground = document.getElementById('video-background');
+            
+            // Try to play the video
+            if (videoBackground) {
+                videoBackground.play().catch(err => {
+                    console.log('Video autoplay prevented:', err);
+                    // If autoplay fails, try playing on first user interaction
+                    document.addEventListener('click', function playOnClick() {
+                        videoBackground.play();
+                        document.removeEventListener('click', playOnClick);
+                    }, { once: true });
+                });
+            }
+            
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('/sw.js')

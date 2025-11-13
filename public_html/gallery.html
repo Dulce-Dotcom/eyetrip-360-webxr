@@ -20,9 +20,8 @@
     <link rel="manifest" href="/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="192x192" href="/assets/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/assets/icons/icon-512x512.png">
-    <link rel="apple-touch-icon" href="/assets/icons/icon-512x512.png">
+    <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
+    <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
@@ -93,6 +92,10 @@
             color: #cd00ff;
         }
 
+        .mobile-menu-toggle {
+            display: none;
+        }
+
         .gallery-container {
             padding: 6rem 2rem 2rem;
             max-width: 1200px;
@@ -118,7 +121,7 @@
         }
 
         .video-card {
-            background: rgba(240, 248, 255, 0.1);
+            background: rgba(27, 42, 65, 0.85);
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
@@ -126,6 +129,9 @@
             cursor: pointer;
             position: relative;
             border: 1px solid rgba(240, 248, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
 
         .video-card:hover {
@@ -139,10 +145,14 @@
             height: 200px;
             object-fit: cover;
             display: block;
+            flex-shrink: 0;
         }
 
         .video-info {
             padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
         }
 
         .video-title {
@@ -155,6 +165,7 @@
             color: rgba(255, 255, 255, 0.8);
             line-height: 1.5;
             margin-bottom: 1rem;
+            flex-grow: 1;
         }
 
         .video-duration {
@@ -210,15 +221,46 @@
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                background: none;
+                border: none;
+                color: #f0f8ff;
+                font-size: 1.8rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 8px;
+                transition: all 0.3s ease;
             }
 
             .nav-links {
-                gap: 1rem;
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                gap: 0;
+                margin-top: 1rem;
+                background: rgba(27, 42, 65, 0.98);
+                border-radius: 8px;
+                padding: 0.5rem 0;
+            }
+
+            .nav-links.active {
+                display: flex;
             }
 
             .nav-links a {
-                padding: 0.5rem;
+                width: 100%;
+                text-align: center;
+                padding: 1rem;
                 font-size: 0.9rem;
+                border-radius: 0;
+            }
+
+            .logo img {
+                height: 35px;
             }
 
             .gallery-container {
@@ -246,14 +288,41 @@
     <div class="page-wrapper">
     <div class="header">
         <a href="index.html" class="logo">
-            <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR">
+            <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTrip VR">
         </a>
-        <div class="nav-links">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        <div class="nav-links" id="navLinks">
             <a href="gallery.html">Gallery</a>
             <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
         </div>
     </div>
+    
+    <script>
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const header = document.querySelector('.header');
+            const navLinks = document.getElementById('navLinks');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!header.contains(event.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+            }
+        });
+        
+        // Close menu when clicking a nav link
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function() {
+                const navLinks = document.getElementById('navLinks');
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
 
     <div class="gallery-container">
         <h1 class="page-title">VR Video Gallery</h1>
@@ -264,12 +333,10 @@
                 <img src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_thumb.jpg?v=2" alt="Matrix Caracas Sphere" class="video-thumbnail">
                 <div class="play-icon">▶️</div>
                 <div class="video-info">
-                    <h3 class="video-title">Matrix Caracas Sphere</h3>
+                    <h3 class="video-title">Matrix Caracas</h3>
                     <div class="video-duration">🕐 4:17</div>
                     <p class="video-description">
-                        Step into a digital dreamscape where urban energy meets virtual reality. 
-                        Experience the pulsating rhythms of Caracas transformed into an immersive 
-                        spherical matrix of light, color, and motion.
+                        An ultra-high resolution photograph of a water fountain is transformed into a digital dreamscape. With music "Caracas" by Phil Manzanera from the album Primitive Guitars
                     </p>
                     <button class="play-button">
                         🎬 Play in VR
@@ -285,9 +352,7 @@
                     <h3 class="video-title">Scraptangle</h3>
                     <div class="video-duration">🕐 5:36</div>
                     <p class="video-description">
-                        Dive into an artistic 360° vision that blends experimental visuals 
-                        with immersive storytelling. A unique VR experience that pushes 
-                        creative boundaries.
+                        A pile of scrap metal reveals incredible detail hiding in the rust. A unique VR experience that pushes creative boundaries. With music "Overture.All Roads" by Perry Vasquez
                     </p>
                     <button class="play-button">
                         🎬 Play in VR
@@ -303,9 +368,7 @@
                     <h3 class="video-title">Shroom Zoom</h3>
                     <div class="video-duration">🕐 5:23</div>
                     <p class="video-description">
-                        Journey through an immersive nature experience like never before. 
-                        Explore intricate details and textures in this captivating 360° 
-                        exploration of the natural world.
+                        Explore an innocent-looking bunch of mushrooms in this captivating 360º exploration of the natural world. With music by Peter Gabriel from the album Passion: Music for The Last Temptation of Christ
                     </p>
                     <button class="play-button">
                         🎬 Play in VR
@@ -321,9 +384,7 @@
                     <h3 class="video-title">Stumpy Waves</h3>
                     <div class="video-duration">🕐 5:25</div>
                     <p class="video-description">
-                        Relax with this serene coastal 360° experience. Feel the rhythm 
-                        of the waves and immerse yourself in the tranquil beauty of 
-                        nature's coastal landscapes.
+                        Find fascination in an unlikely old tree stump. Perhaps it will give up its secrets! With music "Waves Part I" & "Waves Part II" from the album Waves by Jade Warrior.
                     </p>
                     <button class="play-button">
                         🎬 Play in VR

@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>About - EyeTrip VR</title>
-    <link rel="icon" href="images/eyetripvr-icon.png" type="image/png">
+    <link rel="icon" href="images/eyetripvr-logo.png" type="image/png">
+    <link rel="apple-touch-icon" href="images/eyetripvr-logo.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <style>
         * {
@@ -76,6 +77,10 @@
 
         .nav-links a.active {
             background: rgba(255, 255, 255, 0.2);
+        }
+
+        .mobile-menu-toggle {
+            display: none;
         }
 
         .about-container {
@@ -217,15 +222,46 @@
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
+                flex-wrap: wrap;
+            }
+
+            .mobile-menu-toggle {
+                display: block;
+                background: none;
+                border: none;
+                color: #f0f8ff;
+                font-size: 1.8rem;
+                cursor: pointer;
+                padding: 0.5rem;
+                border-radius: 8px;
+                transition: all 0.3s ease;
             }
 
             .nav-links {
-                gap: 1rem;
+                display: none;
+                width: 100%;
+                flex-direction: column;
+                gap: 0;
+                margin-top: 1rem;
+                background: rgba(27, 42, 65, 0.98);
+                border-radius: 8px;
+                padding: 0.5rem 0;
+            }
+
+            .nav-links.active {
+                display: flex;
             }
 
             .nav-links a {
-                padding: 0.5rem;
+                width: 100%;
+                text-align: center;
+                padding: 1rem;
                 font-size: 0.9rem;
+                border-radius: 0;
+            }
+
+            .logo img {
+                height: 35px;
             }
 
             .about-container {
@@ -256,14 +292,41 @@
     <div class="page-wrapper">
     <div class="header">
         <a href="index.html" class="logo">
-            <img src="images/eyetripvr-logo.svg" alt="EyeTrip VR">
+            <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTrip VR">
         </a>
-        <div class="nav-links">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+        <div class="nav-links" id="navLinks">
             <a href="gallery.html">Gallery</a>
-            <a href="about.html" class="active">About</a>
+            <a href="about.html">About</a>
             <a href="contact.html">Contact</a>
         </div>
     </div>
+    
+    <script>
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.classList.toggle('active');
+        }
+        
+        // Close menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const header = document.querySelector('.header');
+            const navLinks = document.getElementById('navLinks');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            
+            if (!header.contains(event.target) && navLinks.classList.contains('active')) {
+                navLinks.classList.remove('active');
+            }
+        });
+        
+        // Close menu when clicking a nav link
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function() {
+                const navLinks = document.getElementById('navLinks');
+                navLinks.classList.remove('active');
+            });
+        });
+    </script>
 
     <div class="about-container">
         <h1 class="page-title">About EyeTrip VR</h1>

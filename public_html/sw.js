@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eyetrip-vr-v1';
+const CACHE_NAME = 'eyetrip-vr-v2';
 const urlsToCache = [
   '/',
   '/index.html',
