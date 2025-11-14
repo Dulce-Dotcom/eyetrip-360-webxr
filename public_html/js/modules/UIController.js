@@ -78,14 +78,40 @@ export class UIController {
     }
     
     toggleFullscreen() {
-        // Use the main container for fullscreen, not document.documentElement
         const container = document.getElementById('container');
-        if (!document.fullscreenElement) {
-            if (container && container.requestFullscreen) {
-                container.requestFullscreen();
+        
+        // Check if already in fullscreen
+        const isFullscreen = document.fullscreenElement || 
+                            document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || 
+                            document.msFullscreenElement;
+        
+        if (!isFullscreen) {
+            // Enter fullscreen - try different browser prefixes
+            if (container) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen().catch(err => {
+                        console.error('Fullscreen request failed:', err);
+                    });
+                } else if (container.webkitRequestFullscreen) {
+                    container.webkitRequestFullscreen();
+                } else if (container.mozRequestFullScreen) {
+                    container.mozRequestFullScreen();
+                } else if (container.msRequestFullscreen) {
+                    container.msRequestFullscreen();
+                }
             }
         } else {
-            document.exitFullscreen();
+            // Exit fullscreen - try different browser prefixes
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
         }
     }
     

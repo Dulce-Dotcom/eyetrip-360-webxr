@@ -69,43 +69,9 @@ export class PanoramaPlayer {
         this.setupRenderer();
         this.createSphere();
         this.setupEventListeners();
-        // Add VRButton for WebXR entry, place in controls bar
-        const controlsBar = document.getElementById('controls');
-        if (controlsBar) {
-            const vrBtn = VRButton.createButton(this.renderer);
-            vrBtn.style.position = 'static';
-            vrBtn.style.marginLeft = '8px';
-            vrBtn.style.width = 'auto';
-            vrBtn.style.left = '';
-            vrBtn.style.bottom = '';
-            
-            // Add error handling wrapper for VR button clicks
-            vrBtn.addEventListener('click', async (e) => {
-                try {
-                    // VRButton will handle the actual VR entry
-                    console.log('[VR Button] Click detected');
-                } catch (error) {
-                    console.error('[VR Button] Error:', error);
-                    alert('VR not supported on this device. Please use a WebXR-compatible browser on a VR headset.');
-                }
-            });
-            
-            controlsBar.appendChild(vrBtn);
-        } else {
-            const vrBtn = VRButton.createButton(this.renderer);
-            
-            // Add error handling for standalone VR button
-            vrBtn.addEventListener('click', async (e) => {
-                try {
-                    console.log('[VR Button] Click detected');
-                } catch (error) {
-                    console.error('[VR Button] Error:', error);
-                    alert('VR not supported on this device. Please use a WebXR-compatible browser on a VR headset.');
-                }
-            });
-            
-            document.body.appendChild(vrBtn);
-        }
+        
+        // Add VRButton for WebXR entry - only for immersive VR devices (Meta Quest, etc.)
+        this.setupVRButton();
 
         // Setup VR controllers
         this.setupControllers();
@@ -188,6 +154,56 @@ export class PanoramaPlayer {
         this.scene.add(this.sphere);
     }
 
+    // Setup VR Button - only shows for WebXR-capable devices (Meta Quest, etc.)
+    async setupVRButton() {
+        // Check if WebXR is supported
+        if (!navigator.xr) {
+            console.log('[VR Button] WebXR not available - button will not be shown');
+            return;
+        }
+
+        try {
+            // Check if immersive-vr is supported
+            const isSupported = await navigator.xr.isSessionSupported('immersive-vr');
+            
+            if (!isSupported) {
+                console.log('[VR Button] Immersive VR not supported on this device');
+                return;
+            }
+
+            console.log('[VR Button] WebXR immersive-vr supported - creating button');
+            
+            // Create VR button with Three.js VRButton helper
+            const controlsBar = document.getElementById('controls');
+            const vrBtn = VRButton.createButton(this.renderer);
+            
+            // Style the button
+            vrBtn.style.position = 'static';
+            vrBtn.style.marginLeft = '8px';
+            vrBtn.style.width = 'auto';
+            vrBtn.style.left = '';
+            vrBtn.style.bottom = '';
+            
+            // Update button text to clarify it's for immersive VR headsets
+            vrBtn.textContent = 'ENTER VR (Meta Quest)';
+            vrBtn.title = 'Enter immersive VR mode - requires Meta Quest or compatible WebXR headset';
+            
+            // Add click logging
+            vrBtn.addEventListener('click', () => {
+                console.log('[VR Button] Initiating WebXR immersive-vr session');
+            });
+            
+            if (controlsBar) {
+                controlsBar.appendChild(vrBtn);
+            } else {
+                document.body.appendChild(vrBtn);
+            }
+            
+        } catch (error) {
+            console.error('[VR Button] Error checking WebXR support:', error);
+        }
+    }
+
     // Load video and create texture
     async loadVideo(url) {
         return new Promise((resolve, reject) => {
@@ -250,6 +266,34 @@ export class PanoramaPlayer {
                     console.log('[Video Progress Event] percent:', percent);
                 }
             });
+            
+            // Show buffering indicator when video is waiting for data during playback
+            this.video.addEventListener('waiting', () => {
+                console.log('[Video] Buffering...');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'flex';
+                    loadingOverlay.innerHTML = `
+                        <div class="md-spinner"></div>
+                        <div>Buffering...</div>
+                    `;
+                }
+            });
+            
+            // Hide buffering indicator when video can play again
+            this.video.addEventListener('canplay', () => {
+                console.log('[Video] Can play');
+                if (loadingOverlay && this.video.readyState >= 3) {
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+            
+            this.video.addEventListener('playing', () => {
+                console.log('[Video] Playing');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+            });
+            
             // Fallback: if loadeddata fires before any progress, set bar to 100%
             this.video.addEventListener('loadeddata', () => {
                 console.log('[DEBUG] loadeddata fired, video duration:', this.video.duration, 'currentTime:', this.video.currentTime, 'video:', this.video);
@@ -696,6 +740,7 @@ export class PanoramaPlayer {
 
         dom.addEventListener('mousemove', (event) => {
             if (isUserInteracting) {
+                // Desktop sensitivity remains at 0.1 for precise control
                 this.lon = (onPointerDownMouseX - event.clientX) * 0.1 + onPointerDownLon;
                 this.lat = (event.clientY - onPointerDownMouseY) * 0.1 + onPointerDownLat;
             }
@@ -756,8 +801,9 @@ export class PanoramaPlayer {
 
         dom.addEventListener('touchmove', (event) => {
             if (isUserInteracting && event.touches.length === 1) {
-                this.lon = (onPointerDownMouseX - event.touches[0].clientX) * 0.1 + onPointerDownLon;
-                this.lat = (event.touches[0].clientY - onPointerDownMouseY) * 0.1 + onPointerDownLat;
+                // Reduced sensitivity for mobile touch (0.3 instead of 0.1)
+                this.lon = (onPointerDownMouseX - event.touches[0].clientX) * 0.3 + onPointerDownLon;
+                this.lat = (event.touches[0].clientY - onPointerDownMouseY) * 0.3 + onPointerDownLat;
             }
         });
 
