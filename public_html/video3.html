@@ -82,6 +82,23 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link rel="stylesheet" href="css/material-ui.css">
     <link rel="stylesheet" href="css/app.css">
+    <style>
+        /* Gallery thumbnail hover effects */
+        .gallery-thumb {
+            transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease !important;
+        }
+        .gallery-thumb:hover {
+            transform: scale(1.08) !important;
+            box-shadow: 0 8px 24px rgba(25, 118, 210, 0.4), 0 0 20px rgba(205, 0, 255, 0.3) !important;
+            filter: brightness(1.1) !important;
+        }
+        .gallery-item {
+            transition: transform 0.25s ease !important;
+        }
+        .gallery-item:hover {
+            transform: translateY(-4px) !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Hamburger menu for video switching is now a child of the header -->
@@ -153,7 +170,7 @@
                 </div>
                     <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
                         <ul style="list-style: none; margin: 0; padding: 0;">
-                            <li id="galleryMenu" class="main-menu-item">Gallery</li>
+                            <li id="galleryMenu" class="main-menu-item">Change Scene</li>
                             <li id="aboutMenu" class="main-menu-item">About</li>
                             <li id="contactMenu" class="main-menu-item" style="border-bottom:none;">Contact</li>
                         </ul>
@@ -251,7 +268,7 @@
             <div class="modal" id="galleryModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
                 <div style="background:#222; color:#fff; border-radius:16px; padding:32px; max-width:1000px; width:96vw; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.35); overflow-y:auto; max-height:90vh;">
                     <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
-                    <h2 style="margin-top:0; margin-bottom:24px; font-size:2em; font-weight:500; letter-spacing:0.02em;">Gallery</h2>
+                    <h2 style="margin-top:0; margin-bottom:24px; font-size:2em; font-weight:500; letter-spacing:0.02em;">Select Experience</h2>
                     <div class="gallery-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin-bottom:24px;">
                         <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
                             <img class="gallery-thumb" src="assets/thumbnails/eyetrip-test-video1.png" data-video="assets/videos/stumpy_rect_2_1_4ktest_isVR.mp4" data-index="0" alt="Video 1" style="width:100%; max-width:150px; aspect-ratio:16/9; object-fit:cover; border-radius:8px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.10);">
