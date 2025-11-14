@@ -138,6 +138,10 @@ export class PanoramaPlayer {
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.xr.enabled = true;
+        // Fix brightness/gamma for VR headsets (Meta Quest)
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 0.85; // Reduce brightness slightly
+        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
         this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
         this.renderer.domElement.style.transition = 'opacity 0.5s ease';
         this.container.appendChild(this.renderer.domElement);
@@ -284,6 +288,9 @@ export class PanoramaPlayer {
                     this.texture = new THREE.VideoTexture(this.video);
                     this.texture.minFilter = THREE.LinearFilter;
                     this.texture.magFilter = THREE.LinearFilter;
+                    // Fix gamma/brightness for VR headsets - critical for Meta Quest
+                    this.texture.colorSpace = THREE.SRGBColorSpace;
+                    this.texture.encoding = THREE.sRGBEncoding;
                     
                     if (this.sphere && this.sphere.material) {
                         this.sphere.material.map = this.texture;
@@ -499,6 +506,10 @@ export class PanoramaPlayer {
                 this.texture = new THREE.VideoTexture(this.video);
                 this.texture.minFilter = THREE.LinearFilter;
                 this.texture.magFilter = THREE.LinearFilter;
+                // Fix gamma/brightness for VR headsets - critical for Meta Quest
+                this.texture.colorSpace = THREE.SRGBColorSpace;
+                this.texture.encoding = THREE.sRGBEncoding;
+                
                 if (this.sphere && this.sphere.material) {
                     this.sphere.material.map = this.texture;
                     this.sphere.material.color.set(0xffffff);

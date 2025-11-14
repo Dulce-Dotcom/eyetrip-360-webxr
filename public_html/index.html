@@ -538,11 +538,41 @@
                         },
                         // Progress callback
                         (xhr) => {
-                            console.log(`${this.modelUrl}: ${(xhr.loaded / xhr.total * 100).toFixed(0)}% loaded`);
+                            if (xhr.total > 0) {
+                                console.log(`${this.modelUrl}: ${(xhr.loaded / xhr.total * 100).toFixed(0)}% loaded`);
+                            }
                         },
-                        // Error callback
+                        // Error callback - create fallback colored cube
                         (error) => {
                             console.error(`Error loading ${this.modelUrl}:`, error);
+                            console.log('Creating fallback cube for', this.modelUrl);
+                            
+                            // Determine color from model path
+                            const colors = {
+                                'blue': 0x1976d2,
+                                'green': 0x4caf50,
+                                'red': 0xf44336,
+                                'yellow': 0xffeb3b
+                            };
+                            let color = 0x667eea; // Default purple
+                            for (const [name, colorValue] of Object.entries(colors)) {
+                                if (this.modelUrl.toLowerCase().includes(name)) {
+                                    color = colorValue;
+                                    break;
+                                }
+                            }
+                            
+                            // Create fallback geometry
+                            const geometry = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+                            const material = new THREE.MeshStandardMaterial({ 
+                                color: color,
+                                metalness: 0.8,
+                                roughness: 0.3
+                            });
+                            this.model = new THREE.Mesh(geometry, material);
+                            this.initialRotation = 0;
+                            this.scene.add(this.model);
+                            this.animate();
                         }
                     );
                     
@@ -613,7 +643,12 @@
                 const stripStyles = window.getComputedStyle(logoStrip);
                 const stripWidth = logoStrip.offsetWidth - (parseFloat(stripStyles.paddingLeft) + parseFloat(stripStyles.paddingRight));
                 const logoWidth = 80; // Width of each logo wrapper
-                const logosToCreate = Math.floor(stripWidth / logoWidth);
+                const minGap = 10; // Minimum gap between logos for spacing
+                const effectiveLogoWidth = logoWidth + minGap; // Total space per logo including gap
+                
+                // Cap at 16 logos maximum and use conservative calculation
+                const calculatedLogos = Math.floor(stripWidth / effectiveLogoWidth);
+                const logosToCreate = Math.min(calculatedLogos, 16);
                 
                 // Create only the number of logos that will fit
                 for (let i = 0; i < logosToCreate; i++) {
