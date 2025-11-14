@@ -178,8 +178,9 @@
             cursor: pointer;
             text-decoration: none;
             display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 5px;
             transition: all 0.3s ease;
             background: linear-gradient(45deg, #cd00ff, #00eeff);
             color: #f0f8ff;
@@ -190,6 +191,20 @@
         .logo-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
+        }
+        
+        .logo-button-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+        
+        .logo-button-subtext {
+            font-size: 0.75rem;
+            opacity: 0.85;
+            font-weight: 300;
+            white-space: normal;
+            max-width: 200px;
+            line-height: 1.2;
         }
         
         .tagline {
@@ -207,6 +222,24 @@
             max-width: 900px;
             margin-left: auto;
             margin-right: auto;
+        }
+        
+        .user-note {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+            padding: 12px 20px;
+            background: rgba(0, 238, 255, 0.1);
+            border-left: 3px solid #00eeff;
+            border-radius: 8px;
+            opacity: 0.9;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .user-note strong {
+            color: #00eeff;
         }
         
         .cta-buttons {
@@ -337,11 +370,13 @@
     <div class="landing-container">
         <div class="logo">
             <a href="gallery.html" class="logo-button">
-                🎬 Enter Gallery
+                <span class="logo-button-text">🎬 Enter Gallery</span>
+                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
             </a>
             <img src="images/eyetripimagesvr-tall.svg?v=2" alt="EyeTrip VR">
             <a href="gallery.html" class="logo-button">
-                Enter Gallery 🎬
+                <span class="logo-button-text">Enter Gallery 🎬</span>
+                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
             </a>
         </div>
         <p class="tagline">Immersive 360° Virtual Reality Experience</p>
@@ -351,6 +386,11 @@
             Experience stunning panoramic videos with full WebXR support for Meta Quest and other VR headsets. 
             Navigate with intuitive controls and discover new perspectives in virtual reality.
         </p>
+        
+        <div class="user-note">
+            <strong>🥽 Best experienced in a VR headset</strong> (Meta Quest, etc.)<br>
+            Desktop and mobile users can enjoy an interactive 360° panoramic view with mouse/touch controls.
+        </div>
         
         <div class="features">
             <div class="feature">
