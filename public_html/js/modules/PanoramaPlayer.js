@@ -301,16 +301,47 @@ export class PanoramaPlayer {
                     this.lon = initialRotation ? parseFloat(initialRotation) : 0;
                     this.lat = 0;
                     
+                    // Check if auto-play is requested
+                    const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
+                    
                     // Try to play (may require user interaction)
                     this.video.play().then(() => {
                         console.log('[DEBUG] Processed video auto-play succeeded');
+                        if (shouldAutoPlay) {
+                            this.isPlaying = true;
+                        }
                     }).catch((err) => {
                         console.warn('[DEBUG] Processed video auto-play failed:', err);
-                        // Show pulsing play button if auto-play fails
-                        const playBtn = document.getElementById('playBtn');
-                        if (playBtn) {
-                            playBtn.classList.add('pulse-animation');
-                            playBtn.style.display = 'flex';
+                        
+                        if (shouldAutoPlay) {
+                            // For auto-play videos, try one more time after a brief user interaction
+                            const attemptAutoPlay = () => {
+                                this.video.play().then(() => {
+                                    console.log('[DEBUG] Auto-play succeeded after interaction');
+                                    this.isPlaying = true;
+                                    // Hide play button if it's showing
+                                    const playBtn = document.getElementById('playBtn');
+                                    if (playBtn) playBtn.style.display = 'none';
+                                }).catch(() => {
+                                    // If still fails, show play button
+                                    const playBtn = document.getElementById('playBtn');
+                                    if (playBtn) {
+                                        playBtn.classList.add('pulse-animation');
+                                        playBtn.style.display = 'flex';
+                                    }
+                                });
+                                document.removeEventListener('click', attemptAutoPlay);
+                                document.removeEventListener('touchstart', attemptAutoPlay);
+                            };
+                            document.addEventListener('click', attemptAutoPlay, { once: true });
+                            document.addEventListener('touchstart', attemptAutoPlay, { once: true });
+                        } else {
+                            // Show pulsing play button if auto-play fails
+                            const playBtn = document.getElementById('playBtn');
+                            if (playBtn) {
+                                playBtn.classList.add('pulse-animation');
+                                playBtn.style.display = 'flex';
+                            }
                         }
                     });
                     
@@ -481,17 +512,50 @@ export class PanoramaPlayer {
                 const initialRotation = sessionStorage.getItem('initialRotation');
                 this.lon = initialRotation ? parseFloat(initialRotation) : 0;
                 this.lat = 0;
+                
+                // Check if auto-play is requested
+                const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
+                
                 // Try to play again in case autoplay was blocked
                 this.video.play().then(() => {
                     console.log('[DEBUG] video.play() after loadeddata succeeded');
+                    if (shouldAutoPlay) {
+                        this.isPlaying = true;
+                    }
                 }).catch((err) => {
                     console.warn('[DEBUG] video.play() after loadeddata failed:', err);
-                    // Show pulsing play button if auto-play fails
-                    const playBtn = document.getElementById('playBtn');
-                    if (playBtn) {
-                        playBtn.classList.add('pulse-animation');
-                        playBtn.style.display = 'flex';
-                        console.log('[DEBUG] Auto-play failed, user interaction required');
+                    
+                    if (shouldAutoPlay) {
+                        // For auto-play videos, try one more time after a brief user interaction
+                        const attemptAutoPlay = () => {
+                            this.video.play().then(() => {
+                                console.log('[DEBUG] Auto-play succeeded after interaction');
+                                this.isPlaying = true;
+                                // Hide play button if it's showing
+                                const playBtn = document.getElementById('playBtn');
+                                if (playBtn) playBtn.style.display = 'none';
+                            }).catch(() => {
+                                // If still fails, show play button
+                                const playBtn = document.getElementById('playBtn');
+                                if (playBtn) {
+                                    playBtn.classList.add('pulse-animation');
+                                    playBtn.style.display = 'flex';
+                                    console.log('[DEBUG] Auto-play failed, user interaction required');
+                                }
+                            });
+                            document.removeEventListener('click', attemptAutoPlay);
+                            document.removeEventListener('touchstart', attemptAutoPlay);
+                        };
+                        document.addEventListener('click', attemptAutoPlay, { once: true });
+                        document.addEventListener('touchstart', attemptAutoPlay, { once: true });
+                    } else {
+                        // Show pulsing play button if auto-play fails
+                        const playBtn = document.getElementById('playBtn');
+                        if (playBtn) {
+                            playBtn.classList.add('pulse-animation');
+                            playBtn.style.display = 'flex';
+                            console.log('[DEBUG] Auto-play failed, user interaction required');
+                        }
                     }
                 });
                 // Dispatch custom event for main video ready
