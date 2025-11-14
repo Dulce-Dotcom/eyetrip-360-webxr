@@ -296,8 +296,9 @@ export class PanoramaPlayer {
                         this.renderer.domElement.style.opacity = '1';
                     }
                     
-                    // Reset camera orientation
-                    this.lon = 0;
+                    // Reset camera orientation - check for custom initial rotation
+                    const initialRotation = sessionStorage.getItem('initialRotation');
+                    this.lon = initialRotation ? parseFloat(initialRotation) : 0;
                     this.lat = 0;
                     
                     // Try to play (may require user interaction)
@@ -476,8 +477,9 @@ export class PanoramaPlayer {
                 if (this.renderer && this.renderer.domElement) {
                     this.renderer.domElement.style.opacity = '1';
                 }
-                // Set initial camera orientation to look at the center
-                this.lon = 0;
+                // Set initial camera orientation - check for custom initial rotation
+                const initialRotation = sessionStorage.getItem('initialRotation');
+                this.lon = initialRotation ? parseFloat(initialRotation) : 0;
                 this.lat = 0;
                 // Try to play again in case autoplay was blocked
                 this.video.play().then(() => {
