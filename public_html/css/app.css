@@ -123,6 +123,22 @@
     50% { opacity: 0.7; }
 }
 
+/* Pulse animation for play button when auto-play fails */
+.pulse-animation {
+    animation: pulse-scale 1.5s ease-in-out infinite !important;
+}
+
+@keyframes pulse-scale {
+    0%, 100% { 
+        transform: scale(1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    50% { 
+        transform: scale(1.1);
+        box-shadow: 0 8px 16px rgba(205, 0, 255, 0.5);
+    }
+}
+
 .webxr-badge {
     position: absolute;
     bottom: 100px;
@@ -186,22 +202,31 @@
     }
 
     .md-controls {
-        bottom: 16px;
-        gap: 8px;
+        bottom: 30px;
+        padding: 12px 20px;
+        gap: 12px;
     }
     
     .md-controls .md-button {
-        width: 40px;
-        height: 40px;
-        padding: 8px;
+        width: 56px !important;
+        height: 56px !important;
+        padding: 12px;
     }
     
     .md-controls .md-button .material-icons {
-        font-size: 20px;
+        font-size: 24px;
     }
     
     #mainVolume {
-        width: 60px !important;
+        width: 80px !important;
+    }
+    
+    /* Larger touch targets for mobile VR button */
+    #VRButton {
+        min-width: 120px !important;
+        min-height: 56px !important;
+        font-size: 16px !important;
+        padding: 12px 20px !important;
     }
 }
 

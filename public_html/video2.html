@@ -38,6 +38,41 @@
         if (window.WebXRPolyfill) {
             console.log('WebXR Polyfill loaded and initialized');
         }
+        
+        // Browser compatibility check
+        (function checkBrowserCompatibility() {
+            const warnings = [];
+            
+            // Check WebGL support
+            if (!window.WebGLRenderingContext) {
+                warnings.push('WebGL is not supported');
+            } else {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) {
+                    warnings.push('WebGL context could not be created');
+                }
+            }
+            
+            // Check for basic ES6 support
+            try {
+                eval('const test = () => {};');
+            } catch (e) {
+                warnings.push('Modern JavaScript (ES6) is not supported');
+            }
+            
+            if (warnings.length > 0) {
+                console.error('Browser compatibility issues:', warnings);
+                setTimeout(() => {
+                    alert(
+                        'Your browser may not fully support this VR experience.\\n\\n' +
+                        'Issues detected:\\n• ' + warnings.join('\\n• ') + '\\n\\n' +
+                        'Please use Chrome, Firefox, Edge, or Safari on a recent device for best results.'
+                    );
+                }, 1000);
+            }
+        })();
+        
         // Set single video configuration
         sessionStorage.setItem('selectedVideo', 'assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4');
         sessionStorage.setItem('selectedTitle', 'Scraptangle');

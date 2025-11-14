@@ -78,9 +78,33 @@ export class PanoramaPlayer {
             vrBtn.style.width = 'auto';
             vrBtn.style.left = '';
             vrBtn.style.bottom = '';
+            
+            // Add error handling wrapper for VR button clicks
+            vrBtn.addEventListener('click', async (e) => {
+                try {
+                    // VRButton will handle the actual VR entry
+                    console.log('[VR Button] Click detected');
+                } catch (error) {
+                    console.error('[VR Button] Error:', error);
+                    alert('VR not supported on this device. Please use a WebXR-compatible browser on a VR headset.');
+                }
+            });
+            
             controlsBar.appendChild(vrBtn);
         } else {
-            document.body.appendChild(VRButton.createButton(this.renderer));
+            const vrBtn = VRButton.createButton(this.renderer);
+            
+            // Add error handling for standalone VR button
+            vrBtn.addEventListener('click', async (e) => {
+                try {
+                    console.log('[VR Button] Click detected');
+                } catch (error) {
+                    console.error('[VR Button] Error:', error);
+                    alert('VR not supported on this device. Please use a WebXR-compatible browser on a VR headset.');
+                }
+            });
+            
+            document.body.appendChild(vrBtn);
         }
 
         // Setup VR controllers
@@ -193,19 +217,36 @@ export class PanoramaPlayer {
             this.video.load();
             // Don't auto-play - wait for user interaction
             console.log('[DEBUG] Video loaded, waiting for user interaction to play');
-            // Show progress bar
+            // Show progress bar and loading overlay with percentage
             const progressBar = document.getElementById('videoProgressBar');
             const progressFill = document.getElementById('videoProgress');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
             if (progressBar && progressFill) {
                 progressBar.style.display = 'block';
                 progressFill.style.width = '0';
             }
+            
+            // Update loading overlay to show percentage
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'flex';
+                loadingOverlay.innerHTML = `
+                    <div class="md-spinner"></div>
+                    <div>Loading: <span id="loadProgress">0%</span></div>
+                `;
+            }
+            
             // Listen for progress events
             this.video.addEventListener('progress', () => {
                 if (this.video.buffered.length > 0 && this.video.duration > 0) {
                     const bufferedEnd = this.video.buffered.end(this.video.buffered.length - 1);
                     const percent = Math.min(100, Math.round((bufferedEnd / this.video.duration) * 100));
                     if (progressFill) progressFill.style.width = percent + '%';
+                    
+                    // Update loading overlay percentage
+                    const loadProgress = document.getElementById('loadProgress');
+                    if (loadProgress) loadProgress.textContent = `${percent}%`;
+                    
                     console.log('[Video Progress Event] percent:', percent);
                 }
             });
@@ -217,6 +258,12 @@ export class PanoramaPlayer {
                     progressFill.style.width = '100%';
                     setTimeout(() => { progressBar.style.display = 'none'; }, 400);
                 }
+                
+                // Hide loading overlay when video is ready
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'none';
+                }
+                
                 this.texture = new THREE.VideoTexture(this.video);
                 this.texture.minFilter = THREE.LinearFilter;
                 this.texture.magFilter = THREE.LinearFilter;
@@ -237,6 +284,13 @@ export class PanoramaPlayer {
                     console.log('[DEBUG] video.play() after loadeddata succeeded');
                 }).catch((err) => {
                     console.warn('[DEBUG] video.play() after loadeddata failed:', err);
+                    // Show pulsing play button if auto-play fails
+                    const playBtn = document.getElementById('playBtn');
+                    if (playBtn) {
+                        playBtn.classList.add('pulse-animation');
+                        playBtn.style.display = 'flex';
+                        console.log('[DEBUG] Auto-play failed, user interaction required');
+                    }
                 });
                 // Dispatch custom event for main video ready
                 window.dispatchEvent(new Event('mainVideoReady'));
