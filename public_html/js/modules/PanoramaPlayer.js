@@ -48,6 +48,10 @@ export class PanoramaPlayer {
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.lastMouseMoveTime = 0; // Track when mouse last moved
+    
+    // Initialize video stream manager for adaptive quality
+    this.videoManager = new VideoStreamManager();
+    
     window.panoramaPlayer = this; // Ensure global access
     this.init();
     }
@@ -206,6 +210,158 @@ export class PanoramaPlayer {
 
     // Load video and create texture
     async loadVideo(url) {
+        console.log('[DEBUG] loadVideo called with:', url);
+        
+        // Check if this is a processed video path
+        const processedMatch = url.match(/assets\/videos\/processed\/([^\/]+)\//);
+        
+        if (processedMatch) {
+            // Use VideoStreamManager for processed videos
+            const videoName = processedMatch[1];
+            console.log(`🎬 Loading processed video: ${videoName} with adaptive quality`);
+            return this.loadProcessedVideo(videoName);
+        } else {
+            // Fall back to standard loading for non-processed videos
+            console.log('📹 Loading standard video (no quality options)');
+            return this.loadStandardVideo(url);
+        }
+    }
+    
+    // Load processed video using VideoStreamManager for adaptive quality
+    async loadProcessedVideo(videoName) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Remove previous video element if it exists
+                if (this.video && this.video instanceof HTMLVideoElement) {
+                    this.video.pause();
+                    this.video.src = '';
+                    this.video.removeAttribute('src');
+                    this.video.load();
+                    if (this.video.parentNode) {
+                        this.video.parentNode.removeChild(this.video);
+                    }
+                    this.video = null;
+                }
+                
+                // Show loading overlay
+                const loadingOverlay = document.getElementById('loadingOverlay');
+                if (loadingOverlay) {
+                    loadingOverlay.style.display = 'flex';
+                    loadingOverlay.innerHTML = `
+                        <div class="md-spinner"></div>
+                        <div>Loading preview quality...</div>
+                    `;
+                }
+                
+                // Use VideoStreamManager to switch to this video
+                // It will automatically start with preview quality and upgrade
+                this.video = await this.videoManager.switchVideo(videoName);
+                
+                // Append video to DOM and configure for audio
+                document.body.appendChild(this.video);
+                this.video.style.display = 'none';
+                this.video.muted = false; // Enable audio
+                this.video.volume = 1.0;
+                
+                // Update loading overlay
+                if (loadingOverlay) {
+                    loadingOverlay.innerHTML = `
+                        <div class="md-spinner"></div>
+                        <div>Loading HD quality...</div>
+                    `;
+                }
+                
+                // Video element is created and managed by VideoStreamManager
+                // We just need to create the texture and set up event handlers
+                const handleLoaded = () => {
+                    console.log('[DEBUG] Processed video loaded, creating texture');
+                    
+                    // Hide loading overlay
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'none';
+                    }
+                    
+                    this.texture = new THREE.VideoTexture(this.video);
+                    this.texture.minFilter = THREE.LinearFilter;
+                    this.texture.magFilter = THREE.LinearFilter;
+                    
+                    if (this.sphere && this.sphere.material) {
+                        this.sphere.material.map = this.texture;
+                        this.sphere.material.color.set(0xffffff);
+                        this.sphere.material.needsUpdate = true;
+                    }
+                    
+                    // Show canvas
+                    if (this.renderer && this.renderer.domElement) {
+                        this.renderer.domElement.style.opacity = '1';
+                    }
+                    
+                    // Reset camera orientation
+                    this.lon = 0;
+                    this.lat = 0;
+                    
+                    // Try to play (may require user interaction)
+                    this.video.play().then(() => {
+                        console.log('[DEBUG] Processed video auto-play succeeded');
+                    }).catch((err) => {
+                        console.warn('[DEBUG] Processed video auto-play failed:', err);
+                        // Show pulsing play button if auto-play fails
+                        const playBtn = document.getElementById('playBtn');
+                        if (playBtn) {
+                            playBtn.classList.add('pulse-animation');
+                            playBtn.style.display = 'flex';
+                        }
+                    });
+                    
+                    // Dispatch ready event
+                    window.dispatchEvent(new Event('mainVideoReady'));
+                    resolve();
+                };
+                
+                // Check if metadata already loaded (sometimes switchVideo resolves after loadedmetadata)
+                if (this.video.readyState >= 2) { // HAVE_METADATA or higher
+                    handleLoaded();
+                } else {
+                    this.video.addEventListener('loadeddata', handleLoaded, { once: true });
+                }
+                
+                // Add buffering indicators
+                this.video.addEventListener('waiting', () => {
+                    console.log('[Video] Buffering...');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'flex';
+                        loadingOverlay.innerHTML = `
+                            <div class="md-spinner"></div>
+                            <div>Buffering...</div>
+                        `;
+                    }
+                });
+                
+                this.video.addEventListener('playing', () => {
+                    console.log('[Video] Playing');
+                    if (loadingOverlay) {
+                        loadingOverlay.style.display = 'none';
+                    }
+                });
+                
+                this.video.addEventListener('error', (e) => {
+                    console.error('[DEBUG] Processed video error:', e);
+                    if (loadingOverlay) loadingOverlay.style.display = 'none';
+                    reject(e);
+                });
+                
+                // Enable adaptive quality switching based on network conditions
+                this.videoManager.enableAdaptiveQuality();
+                
+            } catch (error) {
+                console.error('Failed to load processed video:', error);
+                reject(error);
+            }
+        });
+    }
+
+    // Load standard video (fallback for non-processed videos)
+    async loadStandardVideo(url) {
         return new Promise((resolve, reject) => {
             // Remove previous video element if it exists
             if (this.video && this.video instanceof HTMLVideoElement) {
