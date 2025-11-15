@@ -44,6 +44,31 @@ export class UIController {
             console.log('360 FAB button clicked');
             this.toggleUIVisibility();
         });
+        
+        // Video time update
+        this.setupTimeDisplay();
+    }
+    
+    setupTimeDisplay() {
+        const videoTimeEl = document.getElementById('videoTime');
+        if (!videoTimeEl || !this.player) return;
+        
+        // Update time display every second
+        setInterval(() => {
+            if (this.player.video) {
+                const current = this.formatTime(this.player.video.currentTime || 0);
+                const duration = this.formatTime(this.player.video.duration || 0);
+                videoTimeEl.textContent = `${current} / ${duration}`;
+            }
+        }, 1000);
+    }
+    
+    formatTime(seconds) {
+        if (!seconds || isNaN(seconds)) return '0:00';
+        
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     }
     
     setupAutoHide() {

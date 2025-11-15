@@ -3,9 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EyeTrip VR - Immersive 360° Experience</title>
-    <meta name="description" content="Immersive 360° Virtual Reality Experience with WebXR support for Meta Quest">
-    <meta name="keywords" content="VR, 360, WebXR, Meta Quest, Virtual Reality, Immersive Experience">
+    <title>EyeTrip VR - Award-Winning 360° Immersive WebXR Experience</title>
+    
+    <!-- Essential SEO Meta Tags -->
+    <meta name="description" content="EyeTrip VR - Award-winning 360° immersive WebXR experience. No download required. Experience virtual reality directly in your browser on Meta Quest, desktop, or mobile.">
+    <meta name="keywords" content="WebXR, VR, 360 video, virtual reality, immersive experience, Chroma Awards, experimental VR, Meta Quest, browser VR, no download VR">
+    <meta name="author" content="Dulce Dotcom LLC">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://eyetripvr.com/">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://eyetripvr.com/">
+    <meta property="og:title" content="EyeTrip VR - 360° Immersive WebXR Experience">
+    <meta property="og:description" content="Award-winning WebXR experience. Journey through immersive 360° worlds directly in your browser. No app download required.">
+    <meta property="og:image" content="https://eyetripvr.com/assets/thumbnails/eyetripvr-preview.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="EyeTrip VR">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://eyetripvr.com/">
+    <meta name="twitter:title" content="EyeTrip VR - 360° Immersive Experience">
+    <meta name="twitter:description" content="Award-winning WebXR experience. No app required. Experience VR directly in your browser.">
+    <meta name="twitter:image" content="https://eyetripvr.com/assets/thumbnails/eyetripvr-preview.png">
+    <meta name="twitter:creator" content="@eyetripvr">
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="EyeTrip VR">
@@ -18,10 +41,71 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     
-    <!-- Icons -->
+    <!-- Favicons - Multiple sizes for all devices -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
     <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
     <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
+    
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="css/eyetrip-style.css">
+    
+    <!-- Schema.org Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "EyeTrip VR",
+        "description": "Award-winning 360° immersive WebXR experience. No download required.",
+        "url": "https://eyetripvr.com",
+        "applicationCategory": "EntertainmentApplication",
+        "operatingSystem": "Web Browser (Chrome, Firefox, Edge, Safari)",
+        "browserRequirements": "Requires WebGL and WebXR support",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "Dulce Dotcom LLC",
+            "url": "https://eyetripvr.com"
+        },
+        "keywords": "WebXR, virtual reality, 360 video, immersive experience, browser VR"
+    }
+    </script>
+    
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y1YJBXJ2X"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7Y1YJBXJ2X', {
+            'page_title': 'EyeTrip VR - Home',
+            'page_path': window.location.pathname
+        });
+        
+        // VR Event Tracking Helper
+        window.trackVREvent = function(action, label, value) {
+            console.log('📊 Tracking:', action, label, value);
+            gtag('event', action, {
+                'event_category': 'VR_Engagement',
+                'event_label': label,
+                'value': value
+            });
+        };
+        
+        // Track page load performance
+        window.addEventListener('load', function() {
+            const loadTime = performance.now();
+            gtag('event', 'page_load_time', {
+                'event_category': 'Performance',
+                'value': Math.round(loadTime)
+            });
+        });
+    </script>
     
     <!-- Three.js for 3D logo control -->
     <script type="importmap">
@@ -326,6 +410,67 @@
             opacity: 0.8;
         }
         
+        /* Social Sharing Section */
+        .social-sharing {
+            text-align: center;
+            padding: 25px 40px;
+            background: rgba(27, 42, 65, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            margin: 20px auto;
+            max-width: 800px;
+        }
+        
+        .social-sharing h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .social-sharing p {
+            font-size: 1rem;
+            opacity: 0.9;
+            margin-bottom: 20px;
+        }
+        
+        .social-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: nowrap;
+        }
+        
+        .social-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            color: #f0f8ff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(205, 0, 255, 0.4);
+            border-color: rgba(205, 0, 255, 0.6);
+            background: rgba(205, 0, 255, 0.2);
+        }
+        
+        .social-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+        
         @media (max-width: 768px) {
             .logo {
                 flex-direction: column;
@@ -362,8 +507,8 @@
     <!-- 3D Logo Strip -->
     <div class="logo-strip" id="logoStrip"></div>
     
-    <video id="video-background" autoplay muted loop playsinline>
-        <source src="/assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" type="video/mp4">
+    <video id="video-background" autoplay muted loop playsinline preload="metadata" poster="assets/thumbnails/eyetrip-test-video4.png">
+        <source src="assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4" type="video/mp4">
     </video>
     
     <div class="page-wrapper">
@@ -373,7 +518,7 @@
                 <span class="logo-button-text">🎬 Enter Gallery</span>
                 <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
             </a>
-            <img src="images/eyetripimagesvr-tall.svg?v=2" alt="EyeTrip VR">
+            <img src="images/eyetripimagesvr-tall.svg?v=2" alt="EyeTripVR">
             <a href="gallery.html" class="logo-button">
                 <span class="logo-button-text">Enter Gallery 🎬</span>
                 <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
@@ -390,6 +535,11 @@
         <div class="user-note">
             <strong>🥽 Best experienced in a VR headset</strong> (Meta Quest, etc.)<br>
             Desktop and mobile users can enjoy an interactive 360° panoramic view with mouse/touch controls.
+        </div>
+        
+        <div class="user-note" style="background: rgba(25, 118, 210, 0.15); border-color: rgba(25, 118, 210, 0.4);">
+            <strong>🌐 Best viewed in Chrome, Edge, or Firefox</strong><br>
+            For the optimal WebXR experience, we recommend using a Chromium-based browser or Firefox with WebXR support enabled.
         </div>
         
         <div class="features">
@@ -426,6 +576,31 @@
         </div>
         </div>
     </div>
+    
+    <!-- Social Sharing Section -->
+    <div class="social-sharing">
+        <h3>✨ Share the Experience</h3>
+        <p>Help us spread the word about immersive WebXR</p>
+        <div class="social-buttons">
+            <a href="#" class="social-btn" id="shareTwitter" title="Share on Twitter">
+                <svg viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z"/></svg>
+                Twitter
+            </a>
+            <a href="#" class="social-btn" id="shareLinkedIn" title="Share on LinkedIn">
+                <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+                LinkedIn
+            </a>
+            <a href="#" class="social-btn" id="shareFacebook" title="Share on Facebook">
+                <svg viewBox="0 0 24 24"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+                Facebook
+            </a>
+            <a href="#" class="social-btn" id="copyLink" title="Copy Link">
+                <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                Copy Link
+            </a>
+        </div>
+    </div>
+    
     <footer class="site-footer">
             <nav class="footer-nav">
                 <a href="gallery.html">Gallery</a>
@@ -442,17 +617,39 @@
             import * as THREE from 'three';
             import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
             
-            // Video background autoplay
+            // Video background autoplay - delayed to improve page load
             const videoBackground = document.getElementById('video-background');
             
             if (videoBackground) {
-                videoBackground.play().catch(err => {
-                    console.log('Video autoplay prevented:', err);
-                    document.addEventListener('click', function playOnClick() {
-                        videoBackground.play();
-                        document.removeEventListener('click', playOnClick);
-                    }, { once: true });
-                });
+                // Delay video loading until page is interactive
+                const startVideo = () => {
+                    // Try to play
+                    const playPromise = videoBackground.play();
+                    
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('✅ Video autoplay started successfully');
+                        }).catch(err => {
+                            console.log('⚠️ Video autoplay prevented:', err);
+                            console.log('Video will play on user interaction');
+                            
+                            // Try again on any user interaction
+                            const tryPlay = () => {
+                                videoBackground.play().then(() => {
+                                    console.log('✅ Video started after user interaction');
+                                    document.removeEventListener('click', tryPlay);
+                                    document.removeEventListener('touchstart', tryPlay);
+                                }).catch(e => console.log('Still blocked:', e));
+                            };
+                            
+                            document.addEventListener('click', tryPlay, { once: true });
+                            document.addEventListener('touchstart', tryPlay, { once: true });
+                        });
+                    }
+                };
+                
+                // Start video after a short delay to let page render
+                setTimeout(startVideo, 500);
             }
             
             // Three.js 3D Logo Strip
@@ -631,10 +828,10 @@
             function initLogoStrip() {
                 const logoStrip = document.getElementById('logoStrip');
                 const models = [
-                    '/assets/models/eyetrip3Dblue.glb',
-                    '/assets/models/eyetrip3Dgreen.glb',
-                    '/assets/models/eyetrip3Dred.glb',
-                    '/assets/models/eyetrip3Dyellow.glb'
+                    'assets/models/eyetrip3Dblue.glb',
+                    'assets/models/eyetrip3Dgreen.glb',
+                    'assets/models/eyetrip3Dred.glb',
+                    'assets/models/eyetrip3Dyellow.glb'
                 ];
                 
                 logoStrip.innerHTML = '';
@@ -662,9 +859,12 @@
                 }
             }
             
-            // Initialize on load
+            // Initialize on load with delay to prioritize page content
             window.addEventListener('load', () => {
-                initLogoStrip();
+                // Delay 3D logo loading by 1 second to let page render first
+                setTimeout(() => {
+                    initLogoStrip();
+                }, 1000);
             });
             
             // Reinitialize on window resize
@@ -674,6 +874,48 @@
                 resizeTimeout = setTimeout(() => {
                     initLogoStrip();
                 }, 250);
+            });
+        </script>
+        
+        <script>
+            // Social Sharing Functions
+            document.getElementById('shareTwitter')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                const text = "Experience EyeTrip VR - Mind-blowing 360° WebXR directly in your browser! 🥽✨ #WebXR #VR #ImmersiveExperience";
+                const url = "https://eyetripvr.com";
+                window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, '_blank', 'width=550,height=420');
+            });
+            
+            document.getElementById('shareLinkedIn')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = "https://eyetripvr.com";
+                window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank', 'width=550,height=420');
+            });
+            
+            document.getElementById('shareFacebook')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = "https://eyetripvr.com";
+                window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank', 'width=550,height=420');
+            });
+            
+            document.getElementById('copyLink')?.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = "https://eyetripvr.com";
+                navigator.clipboard.writeText(url).then(() => {
+                    const btn = e.currentTarget;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg> Copied!';
+                    btn.style.background = 'rgba(76, 175, 80, 0.3)';
+                    btn.style.borderColor = 'rgba(76, 175, 80, 0.6)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = '';
+                        btn.style.borderColor = '';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Failed to copy:', err);
+                    alert('Link: https://eyetripvr.com');
+                });
             });
         </script>
         

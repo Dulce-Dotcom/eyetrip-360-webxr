@@ -21,6 +21,28 @@
     <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
     
+    <!-- Google Analytics 4 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y1YJBXJ2X"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-7Y1YJBXJ2X', {
+            'page_title': 'Stumpy Waves | EyeTrip VR',
+            'page_path': window.location.pathname
+        });
+        
+        // VR Event Tracking Helper
+        window.trackVREvent = function(action, label, value) {
+            console.log('📊 Tracking:', action, label, value);
+            gtag('event', action, {
+                'event_category': 'VR_Engagement',
+                'event_label': label,
+                'value': value
+            });
+        };
+    </script>
+    
     <!-- Import map to resolve bare module specifiers -->
     <script type="importmap">
     {
@@ -164,7 +186,7 @@
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <div class="md-title" style="display: inline-flex; align-items: center; vertical-align: middle;">
-                    <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTrip VR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
+                    <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTripVR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
                     <span>Stumpy Waves</span>
                 </div>
                     <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
@@ -236,6 +258,8 @@
                     <span class="material-icons" id="audioMuteIcon">volume_up</span>
                 </button>
                 <input id="mainVolume" type="range" min="0" max="1" step="0.01" value="1" style="width:100px; vertical-align:middle; margin:0 8px;">
+                <!-- Time display -->
+                <div id="videoTime" style="color: white; font-size: 14px; margin: 0 16px; font-family: 'Roboto Mono', monospace; min-width: 100px; text-align: center;">0:00 / 0:00</div>
                 <!-- Audio controls end -->
                 <button class="md-button" id="fullscreenBtn">
     <!-- Debug overlay for sphere/texture status -->

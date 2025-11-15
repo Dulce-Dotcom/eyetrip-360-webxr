@@ -167,10 +167,13 @@ class VideoStreamManager {
                 resolve();
             }, { once: true });
             
-            video.addEventListener('error', reject, { once: true });
+            video.addEventListener('error', (e) => {
+                console.error(`❌ Video error:`, e);
+                reject(new Error(`Video load error: ${e.message || 'Unknown error'}`));
+            }, { once: true });
             
-            // Timeout after 10 seconds
-            setTimeout(() => reject(new Error('Preload timeout')), 10000);
+            // Increased timeout to 30 seconds for large 360 videos
+            setTimeout(() => reject(new Error(`Preload timeout after 30s: ${videoPath}`)), 30000);
         });
 
         this.videoCache.set(cacheKey, video);

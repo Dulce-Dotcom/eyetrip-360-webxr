@@ -4,6 +4,8 @@ import { PanoramaPlayer } from './modules/PanoramaPlayer.js';
 import { UIController } from './modules/UIController.js';
 import { SceneManager } from './modules/SceneManager.js';
 import { WebXRHandler } from './modules/WebXRHandler.js';
+import { AchievementSystem } from './modules/AchievementSystem.js';
+import { ExperienceEnding } from './modules/ExperienceEnding.js';
 
 /**
  * Main Application Class
@@ -17,6 +19,8 @@ class App {
         this.ui = null;
         this.sceneManager = null;
         this.xrHandler = null;
+        this.achievements = null;
+        this.ending = null;
         this.isInitialized = false;
         this.initPromise = null; // Track initialization promise
         
@@ -58,7 +62,9 @@ class App {
             }
             
             this.player = new PanoramaPlayer(container);
-            console.log('📹 PanoramaPlayer created and initialized');
+            console.log('📹 PanoramaPlayer created, waiting for experience to start...');
+            await this.player.init(); // Wait for user to start experience (after intro or immediately)
+            console.log('📹 PanoramaPlayer initialized and experience started');
             
             // Step 2: Initialize WebXR handler
             console.log('🥽 Checking WebXR support...');
@@ -83,6 +89,23 @@ class App {
             // Step 4: Initialize UI controller
             console.log('🎮 Setting up UI controls...');
             this.ui = new UIController(this.player, this.sceneManager, this.xrHandler);
+            
+            // Step 4.5: Initialize Achievement System
+            console.log('🏆 Setting up achievement system...');
+            this.achievements = new AchievementSystem();
+            
+            // Make achievements globally accessible for easy integration
+            window.achievements = this.achievements;
+            
+            // Track experience visit for Explorer achievement
+            const pageName = this.getExperienceName();
+            if (pageName) {
+                this.achievements.trackExperienceVisit(pageName);
+            }
+            
+            // Step 4.75: Initialize Experience Ending system
+            console.log('🎬 Setting up experience ending...');
+            this.ending = new ExperienceEnding(this.player, this.achievements);
             
             // Step 5: Load the first scene automatically (restored)
             console.log('📦 Loading initial scene...');
@@ -196,6 +219,18 @@ class App {
                 loadingOverlay.style.display = 'none';
             }
         }
+    }
+    
+    /**
+     * Get experience name from page title
+     */
+    getExperienceName() {
+        const title = document.title;
+        if (title.includes('Matrix Caracas')) return 'Matrix Caracas Sphere';
+        if (title.includes('Scraptangle')) return 'Scraptangle';
+        if (title.includes('Shroom Zoom')) return 'Shroom Zoom';
+        if (title.includes('Stumpy')) return 'Stumpy Waves';
+        return null;
     }
     
     /**

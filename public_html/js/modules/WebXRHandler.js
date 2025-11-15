@@ -316,6 +316,16 @@ export class WebXRHandler {
             console.log('🎮 [DEBUG] Starting controller setup...');
             // CRITICAL: Set up controllers AFTER session is fully established
             this.setupVRControllers();
+            
+            // Track VR session start
+            if (window.trackVREvent) {
+                window.trackVREvent('vr_session_start', 'entered_vr', 1);
+            }
+            
+            // Achievement: VR Pioneer (entered VR mode)
+            if (window.achievements) {
+                window.achievements.unlock('vr_pioneer');
+            }
 
             console.log('👂 [DEBUG] Adding session event listeners...');
             // Listen for input source changes (when controllers connect/disconnect)
@@ -338,6 +348,12 @@ export class WebXRHandler {
             // Session event handlers
             this.xrSession.addEventListener('end', () => {
                 console.log('🔚 [DEBUG] WebXR session ended');
+                
+                // Track VR session end
+                if (window.trackVREvent) {
+                    window.trackVREvent('vr_session_end', 'exited_vr', 1);
+                }
+                
                 this.cleanup();
             });
 

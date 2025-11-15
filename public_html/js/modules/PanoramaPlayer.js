@@ -6,6 +6,7 @@ import { GLTFLoader } from 'https://unpkg.com/three@0.153.0/examples/jsm/loaders
 import { VRButton } from '../vendor/VRButton.js';
 import VRMenu from './VRMenu.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';
+import { HotspotManager } from './HotspotManager.js';
 
 export class PanoramaPlayer {
     // Play video by index (always reloads, even if same)
@@ -25,6 +26,9 @@ export class PanoramaPlayer {
     this.lastVRMode = false; // Track VR mode changes
     this.texture = null;
     this.isPlaying = false;
+    this.hotspotManager = null; // Will be initialized when video loads
+    this.hotspotsInitialized = false; // Prevent double initialization
+    this.currentVideoName = null; // Track current video for hotspot config
     // Camera controls
     this.lon = 0;
     this.lat = 0;
@@ -53,32 +57,50 @@ export class PanoramaPlayer {
     this.videoManager = new VideoStreamManager();
     
     window.panoramaPlayer = this; // Ensure global access
-    this.init();
+    // Don't auto-init - let app.js call init() and await it
     }
 
-    // Initialize Three.js scene, camera, renderer, and VRButton
-    init() {
+    // Initialize Three.js scene, camera, renderer, and VRButton  
+    // Returns Promise that resolves after intro completes (or immediately if seen)
+    async init() {
         console.log('🎥 [PanoramaPlayer] init() called');
         if (!this.container) throw new Error('Container element is required');
+        
         // Video playlist (up to 4 videos)
         this.videosList = [
-            'assets/videos/stumpy_rect_16_9_4ktest.mp4',  // Try this one - might have audio
-            'assets/videos/stumpy_sphereMap_4ktest1.mp4', // Or this one
+            'assets/videos/stumpy_rect_16_9_4ktest.mp4',
+            'assets/videos/stumpy_sphereMap_4ktest1.mp4',
             'assets/videos/stumpy_rect_16_9_4ktest_isVR.mp4'
         ];
         this.currentVideoIndex = 0;
+        
+        // Setup scene, camera, renderer FIRST - before intro
         console.log('🎥 [PanoramaPlayer] Setting up scene, camera, renderer...');
         this.setupScene();
         this.setupCamera();
         this.setupRenderer();
         this.createSphere();
         this.setupEventListeners();
-        
-        // Add VRButton for WebXR entry - only for immersive VR devices (Meta Quest, etc.)
         this.setupVRButton();
-
-        // Setup VR controllers
         this.setupControllers();
+        
+        // NOW check for intro
+        const introSeen = sessionStorage.getItem('eyetripvr_intro_seen');
+        
+        if (introSeen) {
+            console.log('✅ Intro already seen, resolving immediately');
+            return Promise.resolve();
+        } else {
+            console.log('🎬 Showing intro sequence...');
+            return new Promise(async (resolve) => {
+                const IntroSequence = (await import('./IntroSequence.js')).IntroSequence;
+                new IntroSequence(this.container, () => {
+                    console.log('🎬 Intro complete callback fired');
+                    sessionStorage.setItem('eyetripvr_intro_seen', 'true');
+                    resolve();
+                });
+            });
+        }
     }
 
     // Create Three.js scene
@@ -235,6 +257,12 @@ export class PanoramaPlayer {
     async loadProcessedVideo(videoName) {
         return new Promise(async (resolve, reject) => {
             try {
+                console.log('[DEBUG] loadProcessedVideo starting for:', videoName);
+                
+                // Store current video name for hotspot configuration
+                this.currentVideoName = videoName;
+                this.hotspotsInitialized = false; // Reset flag for new video
+                
                 // Remove previous video element if it exists
                 if (this.video && this.video instanceof HTMLVideoElement) {
                     this.video.pause();
@@ -251,128 +279,127 @@ export class PanoramaPlayer {
                 const loadingOverlay = document.getElementById('loadingOverlay');
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'flex';
-                    loadingOverlay.innerHTML = `
-                        <div class="md-spinner"></div>
-                        <div>Loading preview quality...</div>
-                    `;
+                    console.log('[DEBUG] Loading overlay shown');
                 }
                 
                 // Use VideoStreamManager to switch to this video
-                // It will automatically start with preview quality and upgrade
+                console.log('[DEBUG] Calling videoManager.switchVideo...');
                 this.video = await this.videoManager.switchVideo(videoName);
+                console.log('[DEBUG] VideoStreamManager returned video element, readyState:', this.video.readyState);
                 
                 // Append video to DOM and configure for audio
                 document.body.appendChild(this.video);
                 this.video.style.display = 'none';
-                this.video.muted = false; // Enable audio
+                this.video.muted = false;
                 this.video.volume = 1.0;
                 
-                // Update loading overlay
-                if (loadingOverlay) {
-                    loadingOverlay.innerHTML = `
-                        <div class="md-spinner"></div>
-                        <div>Loading HD quality...</div>
-                    `;
+                // Create texture immediately
+                this.texture = new THREE.VideoTexture(this.video);
+                this.texture.minFilter = THREE.LinearFilter;
+                this.texture.magFilter = THREE.LinearFilter;
+                this.texture.colorSpace = THREE.SRGBColorSpace;
+                this.texture.encoding = THREE.sRGBEncoding;
+                
+                // Update sphere
+                if (this.sphere && this.sphere.material) {
+                    this.sphere.material.map = this.texture;
+                    this.sphere.material.color.set(0xffffff);
+                    this.sphere.material.needsUpdate = true;
                 }
                 
-                // Video element is created and managed by VideoStreamManager
-                // We just need to create the texture and set up event handlers
-                const handleLoaded = () => {
-                    console.log('[DEBUG] Processed video loaded, creating texture');
-                    
-                    // Hide loading overlay
-                    if (loadingOverlay) {
-                        loadingOverlay.style.display = 'none';
-                    }
-                    
-                    this.texture = new THREE.VideoTexture(this.video);
-                    this.texture.minFilter = THREE.LinearFilter;
-                    this.texture.magFilter = THREE.LinearFilter;
-                    // Fix gamma/brightness for VR headsets - critical for Meta Quest
-                    this.texture.colorSpace = THREE.SRGBColorSpace;
-                    this.texture.encoding = THREE.sRGBEncoding;
-                    
-                    if (this.sphere && this.sphere.material) {
-                        this.sphere.material.map = this.texture;
-                        this.sphere.material.color.set(0xffffff);
-                        this.sphere.material.needsUpdate = true;
-                    }
-                    
-                    // Show canvas
-                    if (this.renderer && this.renderer.domElement) {
-                        this.renderer.domElement.style.opacity = '1';
-                    }
-                    
-                    // Reset camera orientation - check for custom initial rotation
-                    const initialRotation = sessionStorage.getItem('initialRotation');
-                    this.lon = initialRotation ? parseFloat(initialRotation) : 0;
-                    this.lat = 0;
-                    
-                    // Check if auto-play is requested
-                    const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
-                    
-                    // Try to play (may require user interaction)
-                    this.video.play().then(() => {
-                        console.log('[DEBUG] Processed video auto-play succeeded');
-                        if (shouldAutoPlay) {
-                            this.isPlaying = true;
-                        }
-                    }).catch((err) => {
-                        console.warn('[DEBUG] Processed video auto-play failed:', err);
-                        
-                        if (shouldAutoPlay) {
-                            // For auto-play videos, try one more time after a brief user interaction
-                            const attemptAutoPlay = () => {
-                                this.video.play().then(() => {
-                                    console.log('[DEBUG] Auto-play succeeded after interaction');
-                                    this.isPlaying = true;
-                                    // Hide play button if it's showing
-                                    const playBtn = document.getElementById('playBtn');
-                                    if (playBtn) playBtn.style.display = 'none';
-                                }).catch(() => {
-                                    // If still fails, show play button
-                                    const playBtn = document.getElementById('playBtn');
-                                    if (playBtn) {
-                                        playBtn.classList.add('pulse-animation');
-                                        playBtn.style.display = 'flex';
-                                    }
-                                });
-                                document.removeEventListener('click', attemptAutoPlay);
-                                document.removeEventListener('touchstart', attemptAutoPlay);
-                            };
-                            document.addEventListener('click', attemptAutoPlay, { once: true });
-                            document.addEventListener('touchstart', attemptAutoPlay, { once: true });
-                        } else {
-                            // Show pulsing play button if auto-play fails
-                            const playBtn = document.getElementById('playBtn');
-                            if (playBtn) {
-                                playBtn.classList.add('pulse-animation');
-                                playBtn.style.display = 'flex';
-                            }
-                        }
-                    });
-                    
-                    // Dispatch ready event
-                    window.dispatchEvent(new Event('mainVideoReady'));
-                    resolve();
+                // Create HotspotManager instance (before video loads)
+                console.log('🎯 Creating HotspotManager instance...');
+                if (this.hotspotManager) {
+                    this.hotspotManager.cleanup();
+                }
+                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video);
+                console.log('✅ HotspotManager instance created');
+                
+                // Set up metadata loaded handler
+                const onMetadataLoaded = () => {
+                    console.log('[DEBUG] loadedmetadata event fired!');
+                    this.handleVideoLoaded();
                 };
                 
-                // Check if metadata already loaded (sometimes switchVideo resolves after loadedmetadata)
-                if (this.video.readyState >= 2) { // HAVE_METADATA or higher
-                    handleLoaded();
+                // Check current readyState
+                console.log('[DEBUG] Current video readyState:', this.video.readyState);
+                console.log('[DEBUG] Video duration:', this.video.duration);
+                
+                // CRITICAL: Check if metadata already loaded
+                if (this.video.readyState >= 1) {
+                    console.log('[DEBUG] ✅ Metadata already loaded, calling handler immediately');
+                    setTimeout(() => this.handleVideoLoaded(), 100);
                 } else {
-                    this.video.addEventListener('loadeddata', handleLoaded, { once: true });
+                    // Wait for loadedmetadata event
+                    console.log('[DEBUG] Waiting for loadedmetadata event...');
+                    this.video.addEventListener('loadedmetadata', onMetadataLoaded, { once: true });
                 }
+                
+                // Add 5-second timeout fallback
+                setTimeout(() => {
+                    if (this.video.readyState >= 1 && !this.hotspotsInitialized) {
+                        console.warn('[DEBUG] ⏰ Timeout reached, forcing hotspot initialization');
+                        this.handleVideoLoaded();
+                    }
+                }, 5000);
+                
+                // Reset camera orientation
+                const initialRotation = sessionStorage.getItem('initialRotation');
+                this.lon = initialRotation ? parseFloat(initialRotation) : 0;
+                this.lat = 0;
+                
+                // Check if auto-play is requested
+                const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
+                
+                // Try to play video
+                this.video.play().then(() => {
+                    console.log('[DEBUG] Video auto-play succeeded');
+                    if (shouldAutoPlay) {
+                        this.isPlaying = true;
+                    }
+                }).catch((err) => {
+                    console.warn('[DEBUG] Video auto-play failed:', err);
+                    
+                    if (shouldAutoPlay) {
+                        // For auto-play videos, try one more time after user interaction
+                        const attemptAutoPlay = () => {
+                            this.video.play().then(() => {
+                                console.log('[DEBUG] Auto-play succeeded after interaction');
+                                this.isPlaying = true;
+                                const playBtn = document.getElementById('playBtn');
+                                if (playBtn) playBtn.style.display = 'none';
+                            }).catch(() => {
+                                // Show play button
+                                const playBtn = document.getElementById('playBtn');
+                                if (playBtn) {
+                                    playBtn.classList.add('pulse-animation');
+                                    playBtn.style.display = 'flex';
+                                }
+                            });
+                            document.removeEventListener('click', attemptAutoPlay);
+                            document.removeEventListener('touchstart', attemptAutoPlay);
+                        };
+                        document.addEventListener('click', attemptAutoPlay, { once: true });
+                        document.addEventListener('touchstart', attemptAutoPlay, { once: true });
+                    } else {
+                        // Show play button
+                        const playBtn = document.getElementById('playBtn');
+                        if (playBtn) {
+                            playBtn.classList.add('pulse-animation');
+                            playBtn.style.display = 'flex';
+                        }
+                    }
+                });
+                
+                // Dispatch ready event
+                window.dispatchEvent(new Event('mainVideoReady'));
+                resolve();
                 
                 // Add buffering indicators
                 this.video.addEventListener('waiting', () => {
                     console.log('[Video] Buffering...');
                     if (loadingOverlay) {
                         loadingOverlay.style.display = 'flex';
-                        loadingOverlay.innerHTML = `
-                            <div class="md-spinner"></div>
-                            <div>Buffering...</div>
-                        `;
                     }
                 });
                 
@@ -384,13 +411,10 @@ export class PanoramaPlayer {
                 });
                 
                 this.video.addEventListener('error', (e) => {
-                    console.error('[DEBUG] Processed video error:', e);
+                    console.error('[DEBUG] Video error:', e);
                     if (loadingOverlay) loadingOverlay.style.display = 'none';
                     reject(e);
                 });
-                
-                // Enable adaptive quality switching based on network conditions
-                this.videoManager.enableAdaptiveQuality();
                 
             } catch (error) {
                 console.error('Failed to load processed video:', error);
@@ -519,6 +543,24 @@ export class PanoramaPlayer {
                 if (this.renderer && this.renderer.domElement) {
                     this.renderer.domElement.style.opacity = '1';
                 }
+                
+                // Initialize HotspotManager for interactive audio
+                console.log('🎯 Initializing HotspotManager...');
+                if (this.hotspotManager) {
+                    this.hotspotManager.cleanup();
+                }
+                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video);
+                this.hotspotManager.setupAudio();
+                
+                // Extract video name from URL for hotspot configuration
+                const videoName = url.split('/').pop().split('.')[0];
+                this.hotspotManager.createHotspotsForVideo(videoName);
+                
+                // Setup discovery UI
+                this.setupHotspotDiscoveryUI();
+                
+                console.log('✅ HotspotManager initialized with hotspots for', videoName);
+                
                 // Set initial camera orientation - check for custom initial rotation
                 const initialRotation = sessionStorage.getItem('initialRotation');
                 this.lon = initialRotation ? parseFloat(initialRotation) : 0;
@@ -714,6 +756,11 @@ export class PanoramaPlayer {
                     this.particleTrailSystem.fadeOutTrail();
                 }
             }
+        }
+        
+        // Update hotspot manager
+        if (this.hotspotManager) {
+            this.hotspotManager.update();
         }
         
         this.renderer.render(this.scene, this.camera);
@@ -1003,7 +1050,25 @@ export class PanoramaPlayer {
             }
         });
 
-        dom.addEventListener('mouseup', () => {
+        dom.addEventListener('mouseup', (event) => {
+            // Check for hotspot click (only if not dragging much)
+            const dragDistance = Math.abs(event.clientX - onPointerDownMouseX) + Math.abs(event.clientY - onPointerDownMouseY);
+            if (dragDistance < 10 && this.hotspotManager) {
+                // It's a click, not a drag - check for hotspot interaction
+                this.mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                this.mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+                
+                this.raycaster.setFromCamera(this.mouse, this.camera);
+                const direction = new THREE.Vector3();
+                this.raycaster.ray.direction.clone().normalize();
+                
+                const hotspot = this.hotspotManager.checkInteraction(this.camera.position, this.raycaster.ray.direction);
+                if (hotspot) {
+                    console.log(`🎯 Hotspot discovered via click: ${hotspot.label}`);
+                    this.hotspotManager.discoverHotspot(hotspot);
+                }
+            }
+            
             isUserInteracting = false;
             
             // Stop drag overlay
@@ -1040,7 +1105,26 @@ export class PanoramaPlayer {
             }
         });
 
-        dom.addEventListener('touchend', () => {
+        dom.addEventListener('touchend', (event) => {
+            // Check for hotspot tap (only if not dragging much)
+            if (event.changedTouches.length > 0) {
+                const touch = event.changedTouches[0];
+                const dragDistance = Math.abs(touch.clientX - onPointerDownMouseX) + Math.abs(touch.clientY - onPointerDownMouseY);
+                
+                if (dragDistance < 20 && this.hotspotManager) {
+                    // It's a tap, not a drag - check for hotspot interaction
+                    this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
+                    this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
+                    
+                    this.raycaster.setFromCamera(this.mouse, this.camera);
+                    const hotspot = this.hotspotManager.checkInteraction(this.camera.position, this.raycaster.ray.direction);
+                    if (hotspot) {
+                        console.log(`🎯 Hotspot discovered via tap: ${hotspot.label}`);
+                        this.hotspotManager.discoverHotspot(hotspot);
+                    }
+                }
+            }
+            
             isUserInteracting = false;
         });
     }
@@ -1120,6 +1204,197 @@ export class PanoramaPlayer {
             this.showVRMenu();
         }
         console.log('🔥 [VR] Menu toggled - now', this.vrMenuVisible ? 'visible' : 'hidden');
+    }
+    
+    // Handle video metadata loaded - initialize hotspots and UI
+    handleVideoLoaded() {
+        if (this.hotspotsInitialized) {
+            console.log('⚠️ Hotspots already initialized, skipping');
+            return;
+        }
+        
+        console.log('✅ Video metadata loaded, initializing hotspot system...');
+        this.hotspotsInitialized = true;
+        
+        // Hide loading overlay
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+            console.log('✅ Loading overlay hidden');
+        }
+        
+        // Initialize HotspotManager with the current video
+        if (this.hotspotManager && this.currentVideoName) {
+            console.log('🎯 Creating hotspots for:', this.currentVideoName);
+            this.hotspotManager.setupAudio();
+            this.hotspotManager.createHotspotsForVideo(this.currentVideoName);
+            
+            // Setup discovery UI
+            this.setupHotspotDiscoveryUI();
+            
+            console.log('✅ Hotspot system fully initialized with discovery UI');
+        } else {
+            console.error('❌ Cannot initialize hotspots - missing hotspotManager or videoName');
+        }
+        
+        // Show canvas
+        if (this.renderer && this.renderer.domElement) {
+            this.renderer.domElement.style.opacity = '1';
+        }
+    }
+    
+    // Setup hotspot discovery UI and callbacks
+    setupHotspotDiscoveryUI() {
+        // Create or get discovery UI element
+        let discoveryUI = document.querySelector('.hotspot-discovery-ui');
+        if (!discoveryUI) {
+            discoveryUI = document.createElement('div');
+            discoveryUI.className = 'hotspot-discovery-ui';
+            discoveryUI.innerHTML = `🎵 Hidden Sounds: <span class="discovered-count">0</span>/<span class="total-count">10</span>`;
+            document.body.appendChild(discoveryUI);
+        }
+        
+        // Update total count
+        const totalCountEl = discoveryUI.querySelector('.total-count');
+        if (totalCountEl && this.hotspotManager) {
+            totalCountEl.textContent = this.hotspotManager.totalHotspots;
+        }
+        
+        // Setup discovery callback
+        if (this.hotspotManager) {
+            this.hotspotManager.onDiscoveryCallback = (hotspot, discovered, total) => {
+                // Update discovery count
+                const discoveredCountEl = discoveryUI.querySelector('.discovered-count');
+                if (discoveredCountEl) {
+                    discoveredCountEl.textContent = discovered;
+                }
+                
+                // Show UI if hidden
+                if (!discoveryUI.classList.contains('active')) {
+                    discoveryUI.classList.add('active');
+                }
+                
+                // NO toast notification (removed)
+                
+                // Check if all discovered
+                if (discovered === total) {
+                    setTimeout(() => {
+                        this.showCompletionMessage();
+                    }, 1000);
+                }
+            };
+        }
+    }
+    
+    // Show toast notification for hotspot discovery
+    showHotspotToast(label, color) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.className = 'hotspot-toast';
+        toast.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: #${color.toString(16).padStart(6, '0')};
+            padding: 16px 24px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            border: 2px solid #${color.toString(16).padStart(6, '0')};
+            box-shadow: 0 0 20px rgba(${parseInt(color.toString(16).substr(0,2), 16)}, ${parseInt(color.toString(16).substr(2,2), 16)}, ${parseInt(color.toString(16).substr(4,2), 16)}, 0.6);
+            z-index: 10000;
+            animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
+        `;
+        toast.textContent = `🎵 ${label}`;
+        document.body.appendChild(toast);
+        
+        // Add keyframes if not already added
+        if (!document.querySelector('#hotspot-toast-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'hotspot-toast-keyframes';
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(400px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                @keyframes fadeOut {
+                    to {
+                        opacity: 0;
+                        transform: translateY(-20px);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Remove toast after animation
+        setTimeout(() => {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 3000);
+    }
+    
+    // Show completion message
+    showCompletionMessage() {
+        const message = document.createElement('div');
+        message.className = 'completion-message';
+        message.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            color: #ffd700;
+            padding: 40px 60px;
+            border-radius: 16px;
+            font-size: 32px;
+            font-weight: bold;
+            text-align: center;
+            border: 3px solid #ffd700;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
+            z-index: 10002;
+            animation: scaleIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
+        `;
+        message.innerHTML = `
+            <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
+            <div>All Sounds Found!</div>
+            <div style="font-size: 20px; margin-top: 16px; color: #fff;">You discovered all hidden sounds!</div>
+        `;
+        document.body.appendChild(message);
+        
+        // Add scale-in animation if not already added
+        if (!document.querySelector('#completion-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'completion-keyframes';
+            style.textContent = `
+                @keyframes scaleIn {
+                    from {
+                        transform: translate(-50%, -50%) scale(0);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translate(-50%, -50%) scale(1);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Remove message after animation
+        setTimeout(() => {
+            if (message.parentNode) {
+                message.parentNode.removeChild(message);
+            }
+        }, 5000);
     }
 
     dispose() {
