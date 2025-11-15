@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 1: Affirmation Test | EyeTrip VR</title>
+    <link rel="stylesheet" href="css/app.css?v=103">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 2rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .test-section {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        
+        .test-section h2 {
+            margin-top: 0;
+            color: #ffd700;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: transform 0.2s;
+        }
+        
+        .test-button:hover {
+            transform: scale(1.05);
+        }
+        
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .console-output {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            margin-top: 1rem;
+        }
+        
+        .console-line {
+            margin: 0.25rem 0;
+            white-space: pre-wrap;
+        }
+        
+        .console-line.error {
+            color: #ff6b6b;
+        }
+        
+        .console-line.success {
+            color: #51cf66;
+        }
+        
+        .console-line.warning {
+            color: #ffd43b;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-left: 0.5rem;
+        }
+        
+        .status-badge.test-mode {
+            background: #ffd43b;
+            color: #1a1a1a;
+        }
+        
+        .status-badge.production {
+            background: #51cf66;
+            color: #1a1a1a;
+        }
+        
+        .audio-player {
+            margin-top: 1rem;
+            display: none;
+        }
+        
+        .audio-player.visible {
+            display: block;
+        }
+        
+        audio {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Phase 1: Affirmation Testing</h1>
+        
+        <div class="test-section">
+            <h2>📊 System Status</h2>
+            <div id="system-status">
+                <p><strong>Test Mode:</strong> <span id="test-mode-status">Loading...</span></p>
+                <p><strong>Cache Size:</strong> <span id="cache-size">0</span> entries</p>
+                <p><strong>API Key:</strong> <span id="api-key-status">Checking...</span></p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎮 Test Controls</h2>
+            <button class="test-button" onclick="runTest1()">Test 1: Mock Generation (No API)</button>
+            <button class="test-button" onclick="runTest2()">Test 2: Single Affirmation (Real API)</button>
+            <button class="test-button" onclick="runTest3()">Test 3: Check Cache</button>
+            <button class="test-button" onclick="clearCache()">Clear Cache</button>
+            <button class="test-button" onclick="toggleTestMode()">Toggle Test/Production Mode</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>📺 Console Output</h2>
+            <div class="console-output" id="console-output">
+                <div class="console-line">Ready for testing...</div>
+            </div>
+        </div>
+        
+        <div class="test-section audio-player" id="audio-player">
+            <h2>🎵 Generated Audio</h2>
+            <p id="affirmation-text"></p>
+            <audio controls id="audio-element"></audio>
+        </div>
+    </div>
+    
+    <script type="module">
+        import { ElevenLabsService } from './js/modules/ElevenLabsService.js';
+        
+        let elevenLabs;
+        let testStartTime;
+        
+        // Initialize
+        async function init() {
+            log('Initializing ElevenLabsService...', 'success');
+            elevenLabs = new ElevenLabsService();
+            
+            // Set progress callback
+            elevenLabs.setProgressCallback((message, percent) => {
+                log(`Progress: ${percent}% - ${message}`, 'warning');
+            });
+            
+            updateStatus();
+        }
+        
+        function updateStatus() {
+            document.getElementById('test-mode-status').innerHTML = 
+                elevenLabs.TEST_MODE ? 
+                '<span class="status-badge test-mode">TEST MODE</span>' : 
+                '<span class="status-badge production">PRODUCTION</span>';
+            
+            const cacheStats = elevenLabs.getCacheStats();
+            document.getElementById('cache-size').textContent = cacheStats.size;
+            
+            document.getElementById('api-key-status').textContent = 
+                elevenLabs.apiKey ? '✅ Present' : '❌ Missing';
+        }
+        
+        function log(message, type = 'info') {
+            const consoleEl = document.getElementById('console-output');
+            const line = document.createElement('div');
+            line.className = `console-line ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            line.textContent = `[${timestamp}] ${message}`;
+            
+            consoleEl.appendChild(line);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+            
+            // Also log to browser console
+            console.log(message);
+        }
+        
+        // Test 1: Mock generation
+        window.runTest1 = async function() {
+            log('========================================', 'warning');
+            log('TEST 1: Mock Generation (No API Calls)', 'warning');
+            log('========================================', 'warning');
+            
+            testStartTime = Date.now();
+            elevenLabs.TEST_MODE = true;
+            updateStatus();
+            
+            try {
+                const responses = {
+                    emotionalTone: 'calming',
+                    currentMood: 'anxious',
+                    focusArea: 'self-love'
+                };
+                
+                log('Generating mock affirmations...');
+                const result = await elevenLabs.generateAffirmations(responses);
+                
+                const elapsed = ((Date.now() - testStartTime) / 1000).toFixed(2);
+                log(`✅ Test 1 completed in ${elapsed}s`, 'success');
+                log(`Generated: ${result.affirmations.length} affirmations`, 'success');
+                log(`Metadata: ${JSON.stringify(result.metadata)}`, 'success');
+                
+                updateStatus();
+                
+            } catch (error) {
+                log(`❌ Test 1 failed: ${error.message}`, 'error');
+            }
+        };
+        
+        // Test 2: Real API call (single affirmation)
+        window.runTest2 = async function() {
+            log('========================================', 'warning');
+            log('TEST 2: Single Affirmation (Real API)', 'warning');
+            log('========================================', 'warning');
+            
+            const confirmed = confirm(
+                'This will make a REAL API call and consume credits.\\n\\n' +
+                'It will generate ONE affirmation to test the system.\\n\\n' +
+                'Continue?'
+            );
+            
+            if (!confirmed) {
+                log('Test 2 cancelled by user');
+                return;
+            }
+            
+            testStartTime = Date.now();
+            elevenLabs.TEST_MODE = false;
+            updateStatus();
+            
+            try {
+                const responses = {
+                    emotionalTone: 'calming',
+                    currentMood: 'anxious',
+                    focusArea: 'self-love'
+                };
+                
+                log('🎤 Starting real API call...');
+                log('⚠️ This will consume ElevenLabs credits', 'warning');
+                
+                const result = await elevenLabs.generateAffirmations(responses);
+                
+                const elapsed = ((Date.now() - testStartTime) / 1000).toFixed(2);
+                log(`✅ Test 2 completed in ${elapsed}s`, 'success');
+                log(`Generated: ${result.affirmations.length} affirmations`, 'success');
+                log(`Audio duration: ${result.fullAudio.duration.toFixed(2)}s`, 'success');
+                
+                // Play the audio
+                if (result.affirmations[0] && result.affirmations[0].url) {
+                    const audioEl = document.getElementById('audio-element');
+                    const textEl = document.getElementById('affirmation-text');
+                    const playerEl = document.getElementById('audio-player');
+                    
+                    textEl.textContent = result.affirmations[0].text;
+                    audioEl.src = result.affirmations[0].url;
+                    playerEl.classList.add('visible');
+                    
+                    log('🎵 Audio ready to play', 'success');
+                }
+                
+                updateStatus();
+                
+            } catch (error) {
+                log(`❌ Test 2 failed: ${error.message}`, 'error');
+                log(`Stack: ${error.stack}`, 'error');
+            }
+        };
+        
+        // Test 3: Check cache
+        window.runTest3 = function() {
+            log('========================================', 'warning');
+            log('TEST 3: Cache Check', 'warning');
+            log('========================================', 'warning');
+            
+            const cacheStats = elevenLabs.getCacheStats();
+            log(`Cache size: ${cacheStats.size} entries`);
+            
+            if (cacheStats.size > 0) {
+                log('Cache keys:', 'success');
+                cacheStats.keys.forEach(key => {
+                    log(`  - ${key}`, 'success');
+                });
+            } else {
+                log('Cache is empty');
+            }
+        };
+        
+        // Clear cache
+        window.clearCache = function() {
+            log('Clearing cache...');
+            elevenLabs.clearCache();
+            updateStatus();
+            log('✅ Cache cleared', 'success');
+        };
+        
+        // Toggle test mode
+        window.toggleTestMode = function() {
+            elevenLabs.TEST_MODE = !elevenLabs.TEST_MODE;
+            updateStatus();
+            log(`Test mode ${elevenLabs.TEST_MODE ? 'enabled' : 'disabled'}`, 'warning');
+        };
+        
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>

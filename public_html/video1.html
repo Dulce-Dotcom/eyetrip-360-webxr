@@ -96,13 +96,13 @@
         })();
         
         // Set single video configuration
-        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
+        sessionStorage.setItem('selectedVideo', 'public_html/assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
         sessionStorage.setItem('selectedTitle', 'Matrix Caracas Sphere');
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/material-ui.css">
-    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/material-ui.css?v=5">
+    <link rel="stylesheet" href="css/app.css?v=103">
     <style>
         /* Gallery thumbnail hover effects */
         .gallery-thumb {
@@ -247,7 +247,7 @@
                 <button class="md-button" id="prevBtn" style="visibility: hidden;">
                     <span class="material-icons">skip_previous</span>
                 </button>
-                <button class="md-button md-primary" id="playBtn">
+                <button class="md-button pulse-animation" id="playBtn" style="display: flex;">
                     <span class="material-icons">play_arrow</span>
                 </button>
                 <button class="md-button" id="nextBtn" style="visibility: hidden;">
@@ -285,7 +285,7 @@
                 <div>Initializing 360° Experience...</div>
             </div>
 
-            <div class="webxr-badge" id="webxrBadge"></div>
+            <div id="webxrBadge" style="display: block !important;">WebXR Ready</div>
 
             <button class="md-fab" id="fabBtn">
                 <span class="material-icons">360</span>
@@ -560,6 +560,9 @@
     <!-- Webpack will inject the correct bundled script automatically. -->
      <script type="module" src="js/app.js"></script>
     
+    <!-- PWA Install Button -->
+    <button id="pwa-install-btn" style="display: none;">📱 Install App</button>
+    
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -573,6 +576,30 @@
                     });
             });
         }
+        
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installButton = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installButton.style.display = 'none';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed');
+            installButton.style.display = 'none';
+        });
     </script>
 </body>
 </html>

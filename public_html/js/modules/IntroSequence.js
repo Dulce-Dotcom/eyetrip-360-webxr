@@ -47,32 +47,34 @@ export class IntroSequence {
                     <p class="intro-subtitle">Immersive 360° Audio-Visual Experience</p>
                 </div>
                 
-                <!-- Instructions Section -->
-                <div class="intro-instructions">
-                    <div class="instruction-item">
-                        <span class="instruction-icon">🖱️</span>
-                        <span class="instruction-text"><strong>Desktop:</strong> Click & drag to look around</span>
+                <!-- Instructions and Button Section -->
+                <div class="intro-main-section">
+                    <div class="intro-instructions">
+                        <div class="instruction-item">
+                            <span class="instruction-icon">🖱️</span>
+                            <span class="instruction-text"><strong>Desktop:</strong> Click & drag to look around</span>
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">👆</span>
+                            <span class="instruction-text"><strong>Mobile:</strong> Touch & drag to explore</span>
+                        </div>
+                        <div class="instruction-item">
+                            <span class="instruction-icon">🥽</span>
+                            <span class="instruction-text"><strong>VR:</strong> Use controller trigger to interact</span>
+                        </div>
+                        <div class="instruction-item instruction-highlight">
+                            <span class="instruction-icon">🎵</span>
+                            <span class="instruction-text"><strong>Find 10 hidden sounds</strong> throughout the experience</span>
+                        </div>
                     </div>
-                    <div class="instruction-item">
-                        <span class="instruction-icon">👆</span>
-                        <span class="instruction-text"><strong>Mobile:</strong> Touch & drag to explore</span>
+                    
+                    <!-- Action Button -->
+                    <div class="intro-actions">
+                        <button class="intro-button intro-start-btn" id="intro-start-btn">
+                            <span class="button-icon">▶</span>
+                            Start Experience
+                        </button>
                     </div>
-                    <div class="instruction-item">
-                        <span class="instruction-icon">🥽</span>
-                        <span class="instruction-text"><strong>VR:</strong> Use controller trigger to interact</span>
-                    </div>
-                    <div class="instruction-item instruction-highlight">
-                        <span class="instruction-icon">🎵</span>
-                        <span class="instruction-text"><strong>Find 10 hidden sounds</strong> throughout the experience</span>
-                    </div>
-                </div>
-                
-                <!-- Action Buttons -->
-                <div class="intro-actions">
-                    <button class="intro-button intro-start-btn" id="intro-start-btn">
-                        <span class="button-icon">▶</span>
-                        Start Experience
-                    </button>
                 </div>
             </div>
             
