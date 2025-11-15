@@ -23,6 +23,7 @@
     <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
     <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
     <link rel="stylesheet" href="css/eyetrip-style.css">
+    <link rel="stylesheet" href="css/app.css">
     <style>
         * {
             margin: 0;
@@ -415,7 +416,7 @@
     <div class="gallery-container">
         <h1 class="page-title">VR Video Gallery</h1>
         
-        <!-- Filter Bar -->
+        <!-- Filter Bar (MOVED TO TOP) -->
         <div class="filter-bar">
             <div class="filter-group">
                 <label>Status:</label>
@@ -425,6 +426,108 @@
             </div>
             <div class="search-group">
                 <input type="search" id="searchInput" placeholder="🔍 Search experiences..." oninput="searchGallery()">
+            </div>
+        </div>
+        
+        <!-- AFFIRMATION EXPERIENCES SECTION (MOVED TO TOP) -->
+        <div class="affirmation-section" style="margin-top: 2rem; margin-bottom: 5rem; padding: 0 2rem;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; text-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
+                    ✨ Affirmation Experiences
+                </h2>
+                <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
+                    Personalized affirmation journeys powered by <strong>ElevenLabs AI</strong>. Each experience generates unique voice affirmations based on your emotional state and intentions.
+                </p>
+                <div style="display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1rem; background: rgba(102, 126, 234, 0.1); border: 1px solid rgba(102, 126, 234, 0.3); padding: 0.75rem 1.5rem; border-radius: 24px;">
+                    <span style="color: rgba(240, 248, 255, 0.7); font-size: 0.95rem;">Powered by</span>
+                    <strong style="color: #667eea; font-size: 1.1rem;">ElevenLabs</strong>
+                </div>
+            </div>
+
+            <div class="gallery-grid" id="affirmationGrid">
+                <!-- Affirmation Experience 1: Matrix Caracas -->
+                <div class="video-card affirmation-card" data-video-id="affirmation_1" data-affirmation-id="1" data-video-src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4" data-title="Affirmation Journey: Matrix Caracas" onclick="startAffirmationExperience(1, 'Matrix Caracas', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4')">
+                    <img src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_thumb.jpg?v=2" alt="Affirmation Journey: Matrix Caracas" class="video-thumbnail">
+                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                        ✨ AI Powered
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">✨ Affirmation Journey: Matrix Caracas</h3>
+                        <div class="video-duration">🕐 4:17 • 10 Affirmations</div>
+                        <p class="video-description">
+                            Urban soundscape paired with personalized AI-generated affirmations. Your unique journey through digital transformation and self-discovery.
+                        </p>
+                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            ✨ Create My Journey
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Affirmation Experience 2: Scraptangle -->
+                <div class="video-card affirmation-card" data-video-id="affirmation_2" data-affirmation-id="2" data-video-src="assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4" data-title="Affirmation Journey: Scraptangle" onclick="startAffirmationExperience(2, 'Scraptangle', 'assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4')">
+                    <img src="assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_thumb.jpg?v=2" alt="Affirmation Journey: Scraptangle" class="video-thumbnail">
+                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                        ✨ AI Powered
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">✨ Affirmation Journey: Scraptangle</h3>
+                        <div class="video-duration">🕐 5:36 • 10 Affirmations</div>
+                        <p class="video-description">
+                            Find beauty in chaos with personalized affirmations. Transform your perspective through rust and renewal.
+                        </p>
+                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            ✨ Create My Journey
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Affirmation Experience 3: Shroom Zoom -->
+                <div class="video-card affirmation-card" data-video-id="affirmation_3" data-affirmation-id="3" data-video-src="assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_1080p.mp4" data-title="Affirmation Journey: Shroom Zoom" onclick="startAffirmationExperience(3, 'Shroom Zoom', 'assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_1080p.mp4')">
+                    <img src="assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_thumb.jpg?v=2" alt="Affirmation Journey: Shroom Zoom" class="video-thumbnail">
+                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                        ✨ AI Powered
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">✨ Affirmation Journey: Shroom Zoom</h3>
+                        <div class="video-duration">🕐 5:23 • 10 Affirmations</div>
+                        <p class="video-description">
+                            Nature's wisdom paired with healing affirmations. Grow and expand your consciousness organically.
+                        </p>
+                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            ✨ Create My Journey
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Affirmation Experience 4: Stumpy Waves -->
+                <div class="video-card affirmation-card" data-video-id="affirmation_4" data-affirmation-id="4" data-video-src="assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_1080p.mp4" data-title="Affirmation Journey: Stumpy Waves" onclick="startAffirmationExperience(4, 'Stumpy Waves', 'assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_1080p.mp4')">
+                    <img src="assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_thumb.jpg?v=2" alt="Affirmation Journey: Stumpy Waves" class="video-thumbnail">
+                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
+                        ✨ AI Powered
+                    </div>
+                    <div class="video-info">
+                        <h3 class="video-title">✨ Affirmation Journey: Stumpy Waves</h3>
+                        <div class="video-duration">🕐 5:25 • 10 Affirmations</div>
+                        <p class="video-description">
+                            Grounding affirmations rooted in nature's resilience. Flow through life's changes with steady strength.
+                        </p>
+                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
+                            ✨ Create My Journey
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SOUND HUNT EXPERIENCES SECTION -->
+        <div class="sound-hunt-section" style="margin-top: 3rem; padding: 0 2rem;">
+            <div style="text-align: center; margin-bottom: 3rem;">
+                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; background: linear-gradient(135deg, #cd00ff 0%, #ff6ec7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; text-shadow: 0 4px 12px rgba(205, 0, 255, 0.3);">
+                    🎯 Sound Hunt Experiences
+                </h2>
+                <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
+                    Explore immersive 360° worlds and discover hidden sound hotspots. Find all the audio treasures in each unique environment.
+                </p>
             </div>
         </div>
         
@@ -646,6 +749,297 @@
             });
         });
     </script>
+    
+    <!-- Affirmation Experience Integration -->
+    <script type="module">
+        import { AffirmationSurvey } from './js/modules/AffirmationSurvey.js';
+        import { ElevenLabsService } from './js/modules/ElevenLabsService.js';
+        
+        console.log('✨ Initializing affirmation system on gallery...');
+        
+        // Store affirmation state globally
+        window.affirmationState = {
+            survey: new AffirmationSurvey(),
+            elevenlabs: new ElevenLabsService(),
+            currentExperience: null
+        };
+        
+        console.log('✅ Affirmation services created');
+        
+        // Function called when user clicks an affirmation card
+        window.startAffirmationExperience = function(id, title, videoSrc) {
+            console.log(`🎯 Starting affirmation experience: ${title} (ID: ${id})`);
+            
+            // Store the experience details
+            window.affirmationState.currentExperience = {
+                id: id,
+                title: title,
+                videoSrc: videoSrc,
+                targetPage: `affirmation${id}.html`
+            };
+            
+            console.log('📋 Showing survey...');
+            
+            // Show the survey
+            window.affirmationState.survey.show(async (responses) => {
+                console.log('📋 Survey completed:', responses);
+                
+                try {
+                    // Hide survey first
+                    window.affirmationState.survey.hide();
+                    
+                    // Show progress overlay
+                    const progressOverlay = showProgressOverlay();
+                    
+                    // Step 1: Preparing affirmations
+                    updateProgress(progressOverlay, 1, 'Selecting your personalized affirmations...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Step 2: Generate affirmations with ElevenLabs (ONE optimized call)
+                    updateProgress(progressOverlay, 2, 'Connecting to AI voice service...');
+                    console.log('🎤 Starting OPTIMIZED ElevenLabs generation (single MP3)...');
+                    console.log('📋 Survey responses:', responses);
+                    
+                    const result = await window.affirmationState.elevenlabs.generateAffirmations(responses);
+                    
+                    console.log(`✅ Generated ${result.affirmations.length} affirmations from single MP3`);
+                    console.log(`🎼 Full audio: ${result.fullAudio.duration.toFixed(2)}s`);
+                    console.log(`📦 Sample affirmation URL:`, result.affirmations[0]?.url);
+                    
+                    // Step 3: Processing audio
+                    updateProgress(progressOverlay, 3, 'Processing and splitting audio clips...');
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    
+                    // Step 4: Store in sessionStorage for the video page
+                    updateProgress(progressOverlay, 4, 'Preparing your experience...');
+                    const dataToStore = {
+                        responses: responses,
+                        affirmations: result.affirmations.map(a => ({
+                            id: a.id,
+                            text: a.text,
+                            url: a.url,
+                            playCount: 0  // Track plays (max 2 per session)
+                        })),
+                        fullAudio: {
+                            url: result.fullAudio.url,
+                            duration: result.fullAudio.duration
+                        },
+                        metadata: result.metadata,
+                        experience: window.affirmationState.currentExperience,
+                        timestamp: Date.now()
+                    };
+                    
+                    console.log('💾 Storing affirmation data in sessionStorage');
+                    console.log('📦 Data size:', JSON.stringify(dataToStore).length, 'characters');
+                    sessionStorage.setItem('affirmationData', JSON.stringify(dataToStore));
+                    
+                    // Verify storage worked
+                    const stored = sessionStorage.getItem('affirmationData');
+                    if (stored) {
+                        console.log('✅ sessionStorage verified - data saved successfully');
+                    } else {
+                        console.error('❌ sessionStorage failed - data not saved!');
+                        throw new Error('Failed to save affirmation data to sessionStorage');
+                    }
+                    
+                    // Step 5: Complete!
+                    updateProgress(progressOverlay, 5, 'All set! Launching your journey...');
+                    await new Promise(resolve => setTimeout(resolve, 800));
+                    
+                    // Redirect to the affirmation video page
+                    console.log(`🚀 Redirecting to ${window.affirmationState.currentExperience.targetPage}`);
+                    window.location.href = window.affirmationState.currentExperience.targetPage;
+                    
+                } catch (error) {
+                    console.error('❌ Error generating affirmations:', error);
+                    console.error('Stack trace:', error.stack);
+                    
+                    // Remove progress overlay
+                    const progressOverlay = document.querySelector('.affirmation-progress-overlay');
+                    if (progressOverlay) {
+                        progressOverlay.remove();
+                    }
+                    
+                    alert('Sorry, there was an error generating your affirmations. Please check your internet connection and try again.\n\nError: ' + error.message);
+                    window.affirmationState.survey.hide();
+                }
+            });
+        };
+        
+        // Show progress overlay with steps
+        function showProgressOverlay() {
+            const overlay = document.createElement('div');
+            overlay.className = 'affirmation-progress-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 600px; padding: 3rem;">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">🎤</div>
+                    <h2 style="font-size: 2.2rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Crafting Your Personalized Affirmations
+                    </h2>
+                    <p class="progress-status" style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem; min-height: 60px;">
+                        Initializing...
+                    </p>
+                    
+                    <!-- Progress Bar -->
+                    <div style="width: 100%; max-width: 400px; margin: 0 auto 2rem; background: rgba(255, 255, 255, 0.1); border-radius: 20px; overflow: hidden; height: 8px;">
+                        <div class="progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.5s ease; border-radius: 20px;"></div>
+                    </div>
+                    
+                    <!-- Step Indicators -->
+                    <div style="display: flex; justify-content: space-between; max-width: 400px; margin: 0 auto 2rem;">
+                        <div class="step-indicator" data-step="1" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">1</div>
+                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Select</div>
+                        </div>
+                        <div class="step-indicator" data-step="2" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">2</div>
+                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Generate</div>
+                        </div>
+                        <div class="step-indicator" data-step="3" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">3</div>
+                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Process</div>
+                        </div>
+                        <div class="step-indicator" data-step="4" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">4</div>
+                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Prepare</div>
+                        </div>
+                        <div class="step-indicator" data-step="5" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
+                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">5</div>
+                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Launch</div>
+                        </div>
+                    </div>
+                    
+                    <div class="loading-spinner" style="width: 50px; height: 50px; margin: 0 auto; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    
+                    <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; margin-top: 2rem; font-style: italic;">
+                        Using AI to create unique voice affirmations just for you
+                    </p>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+            
+            return overlay;
+        }
+        
+        // Update progress
+        function updateProgress(overlay, step, message) {
+            const statusText = overlay.querySelector('.progress-status');
+            const progressBar = overlay.querySelector('.progress-bar');
+            const indicators = overlay.querySelectorAll('.step-indicator');
+            
+            // Update message
+            if (statusText) {
+                statusText.textContent = message;
+            }
+            
+            // Update progress bar (0-100%)
+            const progress = (step / 5) * 100;
+            if (progressBar) {
+                progressBar.style.width = `${progress}%`;
+            }
+            
+            // Update step indicators
+            indicators.forEach((indicator, index) => {
+                const indicatorStep = parseInt(indicator.getAttribute('data-step'));
+                if (indicatorStep <= step) {
+                    indicator.style.opacity = '1';
+                    const circle = indicator.querySelector('div:first-child');
+                    if (circle) {
+                        circle.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                        circle.style.transform = 'scale(1.1)';
+                    }
+                } else {
+                    indicator.style.opacity = '0.4';
+                }
+            });
+        }
+        
+        // Show transition message (kept for backup, but now using progress overlay)
+        function showTransitionMessage() {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10001;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 600px; padding: 3rem;">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">✨</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Your Affirmations Are Ready!
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Launching your personalized immersive experience...
+                    </p>
+                    <div class="loading-spinner" style="width: 60px; height: 60px; margin: 0 auto; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+        
+        console.log('✅ Affirmation system ready - startAffirmationExperience() is now global');
+        
+        // Add click listeners to affirmation cards as backup
+        document.addEventListener('DOMContentLoaded', () => {
+            const affirmationCards = document.querySelectorAll('.affirmation-card');
+            console.log(`🎯 Found ${affirmationCards.length} affirmation cards`);
+            
+            affirmationCards.forEach(card => {
+                // Remove onclick and add event listener instead
+                card.removeAttribute('onclick');
+                card.style.cursor = 'pointer';
+                
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const id = card.getAttribute('data-affirmation-id');
+                    const title = card.getAttribute('data-title');
+                    const videoSrc = card.getAttribute('data-video-src');
+                    
+                    console.log(`📍 Card clicked: ID=${id}, Title=${title}`);
+                    
+                    if (window.startAffirmationExperience) {
+                        window.startAffirmationExperience(parseInt(id), title, videoSrc);
+                    } else {
+                        console.error('❌ startAffirmationExperience not defined!');
+                    }
+                });
+            });
+        });
+    </script>
+    
     <footer class="site-footer">
         <div>&copy; 2025 David Aughenbaugh - EyeTripVR. All rights reserved.</div>
         <div>Powered by <a href="https://dulce.com" target="_blank">Dulce Dotcom</a></div>

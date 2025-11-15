@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scraptangle | EyeTrip VR</title>
+    <title>Affirmation Journey: Matrix Caracas Sphere | EyeTrip VR</title>
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="EyeTrip VR">
@@ -28,7 +28,7 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-7Y1YJBXJ2X', {
-            'page_title': 'Scraptangle | EyeTrip VR',
+            'page_title': 'Affirmation Journey: Matrix Caracas Sphere | EyeTrip VR',
             'page_path': window.location.pathname
         });
         
@@ -96,15 +96,14 @@
         })();
         
         // Set single video configuration
-        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4');
-        sessionStorage.setItem('selectedTitle', 'Scraptangle');
-        sessionStorage.setItem('initialRotation', '52.5'); // Rotate to 7:45 o'clock position
-        // Auto-play disabled - user must click play button
+        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
+        sessionStorage.setItem('selectedTitle', 'Affirmation Journey: Matrix Caracas Sphere');
+        sessionStorage.setItem('isAffirmationMode', 'true'); // Flag for affirmation mode
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/material-ui.css?v=5">
-    <link rel="stylesheet" href="css/app.css?v=103">
+    <link rel="stylesheet" href="css/material-ui.css">
+    <link rel="stylesheet" href="css/app.css">
     <style>
         /* Gallery thumbnail hover effects */
         .gallery-thumb {
@@ -189,7 +188,7 @@
                 </button>
                 <div class="md-title" style="display: inline-flex; align-items: center; vertical-align: middle;">
                     <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTripVR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
-                    <span>Scraptangle</span>
+                    <span>✨ Affirmation Journey</span>
                 </div>
                     <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
                         <ul style="list-style: none; margin: 0; padding: 0;">
@@ -249,7 +248,7 @@
                 <button class="md-button" id="prevBtn" style="visibility: hidden;">
                     <span class="material-icons">skip_previous</span>
                 </button>
-                <button class="md-button pulse-animation" id="playBtn" style="display: flex;">
+                <button class="md-button md-primary" id="playBtn">
                     <span class="material-icons">play_arrow</span>
                 </button>
                 <button class="md-button" id="nextBtn" style="visibility: hidden;">
@@ -276,7 +275,7 @@
                 <!-- Debug overlay for sphere/texture status -->
                 <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
                 <!-- VRButton from Three.js will be injected by PanoramaPlayer.js -->
-            <button id="VRButton" title="Enter immersive VR mode - requires Meta Quest or compatible WebXR headset">ENTER VR</button></div>
+            </div>
 
             <div class="md-vr-indicator" id="vrIndicator">
                 VR Mode Active
@@ -287,7 +286,7 @@
                 <div>Initializing 360° Experience...</div>
             </div>
 
-            <div id="webxrBadge">WebXR Ready</div>
+            <div class="webxr-badge" id="webxrBadge"></div>
 
             <button class="md-fab" id="fabBtn">
                 <span class="material-icons">360</span>
@@ -350,22 +349,41 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const menuButton = document.getElementById('menuButton');
                 const mainMenu = document.getElementById('mainMenu');
-                menuButton.addEventListener('click', function() {
-                    mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
-                });
+                
+                if (menuButton && mainMenu) {
+                    menuButton.addEventListener('click', function() {
+                        mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
+                    });
+                }
+                
                 // Modal triggers
-                document.getElementById('galleryMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('galleryModal').style.display = 'flex';
-                };
-                document.getElementById('aboutMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('aboutModal').style.display = 'flex';
-                };
-                document.getElementById('contactMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('contactModal').style.display = 'flex';
-                };
+                const galleryMenu = document.getElementById('galleryMenu');
+                const aboutMenu = document.getElementById('aboutMenu');
+                const contactMenu = document.getElementById('contactMenu');
+                
+                if (galleryMenu) {
+                    galleryMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('galleryModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (aboutMenu) {
+                    aboutMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('aboutModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (contactMenu) {
+                    contactMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('contactModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
                 // Modal close logic
                 document.querySelectorAll('.modal-close').forEach(btn => {
                     btn.onclick = function() {
@@ -542,6 +560,389 @@
 
     <!-- Webpack will inject the correct bundled script automatically. -->
      <script type="module" src="js/app.js"></script>
+    
+    <!-- Affirmation System Integration -->
+    <script type="module">
+        import { AffirmationExporter } from './js/modules/AffirmationExporter.js';
+        
+        // Global affirmation state
+        window.affirmationState = {
+            exporter: null,
+            generatedAffirmations: [],
+            collectedAffirmations: [],
+            userResponses: null,
+            isInitialized: false
+        };
+        
+        console.log('✨ Affirmation experience loading...');
+        
+        // DEBUG: Check sessionStorage immediately
+        const testData = sessionStorage.getItem('affirmationData');
+        if (testData) {
+            console.log('✅ Found affirmation data in sessionStorage');
+            try {
+                const parsed = JSON.parse(testData);
+                console.log('📊 Data preview:', {
+                    hasResponses: !!parsed.responses,
+                    hasAffirmations: !!parsed.affirmations,
+                    affirmationCount: parsed.affirmations?.length,
+                    hasFullAudio: !!parsed.fullAudio
+                });
+            } catch (e) {
+                console.error('❌ Invalid JSON in sessionStorage:', e);
+            }
+        } else {
+            console.warn('⚠️ NO affirmation data in sessionStorage - user must complete survey first!');
+        }
+        
+        // Wait for app to be ready
+        function waitForApp() {
+            if (window.app && window.app.hotspotManager) {
+                console.log('✅ App ready, loading affirmation data');
+                loadAffirmationData();
+            } else {
+                console.log('⏳ Waiting for app...');
+                setTimeout(waitForApp, 500);
+            }
+        }
+        
+        // Load affirmation data from sessionStorage
+        function loadAffirmationData() {
+            if (window.affirmationState.isInitialized) return;
+            
+            // Get data from sessionStorage (set by gallery page)
+            const storedData = sessionStorage.getItem('affirmationData');
+            
+            if (!storedData) {
+                console.error('❌ No affirmation data found! Redirecting to gallery...');
+                alert('Please start your affirmation journey from the gallery page.');
+                window.location.href = 'gallery.html';
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(storedData);
+                console.log('📦 Loaded affirmation data:', data);
+                console.log('📊 Data details:', {
+                    responsesCount: Object.keys(data.responses || {}).length,
+                    affirmationsCount: data.affirmations?.length || 0,
+                    hasFullAudio: !!data.fullAudio?.url,
+                    experienceId: data.experience?.id,
+                    timestamp: data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'
+                });
+                
+                // Validate blob URLs
+                if (data.affirmations && data.affirmations.length > 0) {
+                    console.log('🔍 Validating blob URLs...');
+                    const sampleUrl = data.affirmations[0].url;
+                    console.log('📎 Sample URL:', sampleUrl);
+                    console.log('📎 URL type:', typeof sampleUrl);
+                    console.log('📎 Is blob URL:', sampleUrl?.startsWith('blob:'));
+                    
+                    // Test if blob URL is accessible
+                    if (sampleUrl?.startsWith('blob:')) {
+                        fetch(sampleUrl, { method: 'HEAD' })
+                            .then(response => {
+                                console.log('✅ Blob URL accessible:', response.ok);
+                            })
+                            .catch(error => {
+                                console.error('❌ Blob URL not accessible:', error);
+                            });
+                    }
+                }
+                
+                window.affirmationState.userResponses = data.responses;
+                window.affirmationState.generatedAffirmations = data.affirmations;
+                
+                // Replace hotspot sounds with generated affirmations
+                replaceHotspotSounds(data.affirmations);
+                
+                // Show ready message
+                showReadyMessage();
+                
+                window.affirmationState.isInitialized = true;
+                
+            } catch (error) {
+                console.error('❌ Error loading affirmation data:', error);
+                console.error('Stack trace:', error.stack);
+                alert('Error loading your affirmations. Please try again.');
+                window.location.href = 'gallery.html';
+            }
+        }
+        
+        // Replace hotspot sounds with generated affirmations
+        function replaceHotspotSounds(affirmations) {
+            if (!window.app || !window.app.hotspotManager) {
+                console.error('❌ HotspotManager not available');
+                return;
+            }
+            
+            const hotspots = window.app.hotspotManager.hotspots;
+            console.log(`🎯 Replacing sounds for ${hotspots.length} hotspots with play-twice logic`);
+            console.log(`📝 Affirmations to assign:`, affirmations);
+            
+            // Initialize play count tracker
+            if (!window.affirmationState.playCount) {
+                window.affirmationState.playCount = {};
+            }
+            
+            // Replace each hotspot's sound with an affirmation
+            hotspots.forEach((hotspot, index) => {
+                if (index < affirmations.length && affirmations[index].url) {
+                    console.log(`   🔄 Hotspot ${index}: Original="${hotspot.sound}" → New="${affirmations[index].url}"`);
+                    
+                    // Store original sound
+                    hotspot.originalSound = hotspot.sound;
+                    
+                    // Replace with affirmation
+                    hotspot.sound = affirmations[index].url;
+                    hotspot.affirmationText = affirmations[index].text;
+                    hotspot.affirmationIndex = index;
+                    hotspot.affirmationId = affirmations[index].id;
+                    
+                    // Initialize play count for this affirmation
+                    window.affirmationState.playCount[affirmations[index].id] = 0;
+                    
+                    console.log(`   ✅ Hotspot ${index + 1}: "${affirmations[index].text.substring(0, 40)}..." [0/2 plays]`);
+                } else {
+                    console.log(`   ⚠️ Hotspot ${index}: No affirmation available (index: ${index}, total: ${affirmations.length})`);
+                }
+            });
+            
+            console.log('✅ Hotspot sounds replaced with affirmations (play-twice enabled)');
+            console.log('🎯 Final hotspot states:', hotspots.map((h, i) => ({
+                index: i,
+                sound: h.sound,
+                hasAffirmation: !!h.affirmationText
+            })));
+        }
+        
+        // Show ready message
+        function showReadyMessage() {
+            const overlay = document.createElement('div');
+            overlay.className = 'affirmation-ready-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            const { emotionalTone, focusArea } = window.affirmationState.userResponses;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 700px; padding: 3rem;">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">✨</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Your Journey Awaits
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                        We've prepared <strong>10 personalized ${emotionalTone} affirmations</strong> focused on <strong>${focusArea}</strong>.
+                    </p>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Discover the glowing hotspots in this immersive 360° experience to hear your unique messages.
+                    </p>
+                    <button onclick="this.closest('.affirmation-ready-overlay').remove(); document.getElementById('playBtn').click();" 
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1.25rem 3rem; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
+                        Begin Journey ✨
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+        
+        // Track hotspot discoveries with PLAY-TWICE logic
+        if (window.app && window.app.hotspotManager) {
+            const originalOnHotspotClick = window.app.hotspotManager.onHotspotClick;
+            window.app.hotspotManager.onHotspotClick = function(hotspot) {
+                // Check play-twice limit BEFORE playing
+                if (hotspot.affirmationId !== undefined) {
+                    const playCount = window.affirmationState.playCount[hotspot.affirmationId] || 0;
+                    
+                    if (playCount >= 2) {
+                        console.log(`⏭️ Affirmation ${hotspot.affirmationId} already played 2 times - skipping`);
+                        
+                        // Show message to user
+                        const msg = document.createElement('div');
+                        msg.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: rgba(255, 100, 100, 0.9);
+                            color: white;
+                            padding: 1rem 2rem;
+                            border-radius: 12px;
+                            font-size: 1.1rem;
+                            z-index: 9999;
+                            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+                        `;
+                        msg.textContent = 'This affirmation has already been heard twice ✨';
+                        document.body.appendChild(msg);
+                        setTimeout(() => msg.remove(), 2000);
+                        
+                        return; // Don't play the sound
+                    }
+                    
+                    // Increment play count
+                    window.affirmationState.playCount[hotspot.affirmationId] = playCount + 1;
+                    console.log(`▶️ Playing affirmation ${hotspot.affirmationId} (${playCount + 1}/2)`);
+                }
+                
+                // Call original handler (this will play the sound)
+                if (originalOnHotspotClick) {
+                    originalOnHotspotClick.call(this, hotspot);
+                }
+                
+                // Track affirmation collection
+                if (hotspot.affirmationIndex !== undefined) {
+                    const affirmation = window.affirmationState.generatedAffirmations[hotspot.affirmationIndex];
+                    if (affirmation && !window.affirmationState.collectedAffirmations.includes(affirmation)) {
+                        window.affirmationState.collectedAffirmations.push(affirmation);
+                        const collected = window.affirmationState.collectedAffirmations.length;
+                        console.log(`✅ Collected affirmation ${collected}/10`);
+                        
+                        // Show affirmation text overlay with play count
+                        const playCount = window.affirmationState.playCount[hotspot.affirmationId];
+                        showAffirmationOverlay(affirmation.text, playCount);
+                        
+                        // Check if all collected
+                        if (collected === 10) {
+                            setTimeout(() => {
+                                showExportUI();
+                            }, 3000);
+                        }
+                    } else if (affirmation) {
+                        // Show overlay again for repeated play
+                        const playCount = window.affirmationState.playCount[hotspot.affirmationId];
+                        showAffirmationOverlay(affirmation.text, playCount);
+                    }
+                }
+            };
+        }
+        
+        // Show affirmation text overlay
+        function showAffirmationOverlay(text, playCount) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(102, 126, 234, 0.95);
+                color: white;
+                padding: 1.5rem 2.5rem;
+                border-radius: 16px;
+                font-size: 1.2rem;
+                max-width: 80%;
+                text-align: center;
+                z-index: 9998;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                animation: slideUpFade 0.5s ease;
+            `;
+            
+            const playStatus = playCount ? ` [${playCount}/2]` : '';
+            overlay.innerHTML = `
+                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">${playStatus}</div>
+                <div>"${text}"</div>
+            `;
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                overlay.style.transform = 'translateX(-50%) translateY(-20px)';
+                overlay.style.transition = 'all 0.5s ease';
+                setTimeout(() => overlay.remove(), 500);
+            }, 4000);
+        }
+        
+        // Show export UI with instant download (full MP3 already created!)
+        function showExportUI() {
+            console.log('🎉 All affirmations collected! Preparing export...');
+            
+            // Get the full audio URL from sessionStorage
+            const data = JSON.parse(sessionStorage.getItem('affirmationData'));
+            const fullAudioUrl = data.fullAudio.url;
+            const duration = data.fullAudio.duration;
+            
+            // Create export overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'affirmation-export-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 600px; padding: 3rem; background: rgba(255, 255, 255, 0.05); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem;">🎉</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Journey Complete!
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 2rem;">
+                        You've discovered all <strong>10 affirmations</strong>. Your personalized audio (${Math.floor(duration)}s) is ready to download!
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="downloadFullAudio('${fullAudioUrl}')" 
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1.25rem 2.5rem; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
+                            💾 Download My Affirmations
+                        </button>
+                        <button onclick="window.location.href='gallery.html'" 
+                                style="background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.3); padding: 1rem 2rem; border-radius: 12px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                            ✨ Create New Journey
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+        
+        // Download the full audio MP3 (already generated!)
+        function downloadFullAudio(audioUrl) {
+            console.log('💾 Downloading full affirmation audio...');
+            
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = `affirmations_${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            console.log('✅ Download initiated!');
+        }
+        
+        // Start initialization when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForApp);
+        } else {
+            waitForApp();
+        }
+    </script>
     
     <!-- PWA Service Worker Registration -->
     <script>

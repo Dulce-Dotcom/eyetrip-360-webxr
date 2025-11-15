@@ -1,9 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en" style="--high-contrast: true;"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scraptangle | EyeTrip VR</title>
+    <title>Affirmation Journey: Matrix Caracas Sphere | EyeTrip VR</title>
     
     <!-- PWA Meta Tags -->
     <meta name="application-name" content="EyeTrip VR">
@@ -22,13 +20,13 @@
     <link rel="stylesheet" href="css/eyetrip-style.css">
     
     <!-- Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y1YJBXJ2X"></script>
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-7Y1YJBXJ2X"></script>
     <script>
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-7Y1YJBXJ2X', {
-            'page_title': 'Scraptangle | EyeTrip VR',
+            'page_title': 'Affirmation Journey: Matrix Caracas Sphere | EyeTrip VR',
             'page_path': window.location.pathname
         });
         
@@ -96,15 +94,14 @@
         })();
         
         // Set single video configuration
-        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4');
-        sessionStorage.setItem('selectedTitle', 'Scraptangle');
-        sessionStorage.setItem('initialRotation', '52.5'); // Rotate to 7:45 o'clock position
-        // Auto-play disabled - user must click play button
+        sessionStorage.setItem('selectedVideo', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
+        sessionStorage.setItem('selectedTitle', 'Affirmation Journey: Matrix Caracas Sphere');
+        sessionStorage.setItem('isAffirmationMode', 'true'); // Flag for affirmation mode
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&amp;display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/material-ui.css?v=5">
-    <link rel="stylesheet" href="css/app.css?v=103">
+    <link rel="stylesheet" href="css/material-ui.css">
+    <link rel="stylesheet" href="css/app.css">
     <style>
         /* Gallery thumbnail hover effects */
         .gallery-thumb {
@@ -122,8 +119,34 @@
             transform: translateY(-4px) !important;
         }
     </style>
-</head>
-<body>
+<style id="high-contrast-css">
+            body.high-contrast {
+                background: #000;
+                color: #FFF;
+            }
+            
+            body.high-contrast button {
+                background: #000 !important;
+                color: #FFF !important;
+                border: 2px solid #FFF !important;
+            }
+            
+            body.high-contrast button:hover {
+                background: #FFF !important;
+                color: #000 !important;
+            }
+            
+            body.high-contrast a {
+                color: #FFFF00 !important;
+                text-decoration: underline !important;
+            }
+        </style><style id="pwa-animations">
+                @keyframes pulseInstall {
+                    0%, 100% { transform: scale(1); }
+                    50% { transform: scale(1.05); }
+                }
+            </style></head>
+<body data-app-initialized="true" class="high-contrast">
     <!-- Hamburger menu for video switching is now a child of the header -->
         <script>
         // Hamburger menu toggle
@@ -177,19 +200,19 @@
                 });
         // Audio controls (mute/unmute, volume) remain unchanged and work in desktop mode
         </script>
-    <div id="videoProgressBar" style="position:fixed;top:0;left:0;width:100vw;height:6px;background:#eee;z-index:100000;display:none;">
+    <div id="videoProgressBar" style="position: fixed; top: 0px; left: 0px; width: 100vw; height: 6px; background: rgb(238, 238, 238); z-index: 100000; display: none;">
             <div id="videoProgress" style="height:100%;width:0;background:#1976d2;transition:width 0.2s;"></div>
         </div>
-        <div id="canvas-container"></div>
+        <div id="canvas-container"><canvas data-engine="three.js r153" width="1510" height="1600" style="display: block; width: 755px; height: 800px; opacity: 1; transition: opacity 0.5s;"></canvas></div>
         
         <div class="md-ui-layer">
-            <div class="md-top-bar" id="topBar">
+            <div class="md-top-bar hidden" id="topBar">
                 <button class="md-button" onclick="window.location.href='gallery.html'" style="margin-right: 8px;" title="Back to Gallery">
                     <span class="material-icons">arrow_back</span>
                 </button>
                 <div class="md-title" style="display: inline-flex; align-items: center; vertical-align: middle;">
                     <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTripVR" style="height: 40px; width: auto; filter: brightness(0) invert(1) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6)); margin-right: 16px;">
-                    <span>Scraptangle</span>
+                    <span>✨ Affirmation Journey</span>
                 </div>
                     <div id="mainMenu" style="display: none; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); position: absolute; left: 16px; min-width: 180px;">
                         <ul style="list-style: none; margin: 0; padding: 0;">
@@ -242,14 +265,21 @@
             </div>
 
             <div class="md-scene-selector hidden" id="sceneSelector">
-                <!-- Scene items will be generated dynamically -->
-            </div>
+            
+                <div class="md-scene-item active" data-scene="0">
+                    <div class="md-scene-info" style="color: white; padding: 10px;">
+                        <div class="md-scene-title">Affirmation Journey: Matrix Caracas Sphere</div>
+                        <div class="md-scene-duration">0:00</div>
+                    </div>
+                </div>
+            
+        </div>
 
-            <div class="md-controls" id="controls">
+            <div class="md-controls hidden" id="controls">
                 <button class="md-button" id="prevBtn" style="visibility: hidden;">
                     <span class="material-icons">skip_previous</span>
                 </button>
-                <button class="md-button pulse-animation" id="playBtn" style="display: flex;">
+                <button class="md-button md-primary pulse-animation" id="playBtn" style="display: flex;">
                     <span class="material-icons">play_arrow</span>
                 </button>
                 <button class="md-button" id="nextBtn" style="visibility: hidden;">
@@ -261,7 +291,7 @@
                 </button>
                 <input id="mainVolume" type="range" min="0" max="1" step="0.01" value="1" style="width:100px; vertical-align:middle; margin:0 8px;">
                 <!-- Time display -->
-                <div id="videoTime" style="color: white; font-size: 14px; margin: 0 16px; font-family: 'Roboto Mono', monospace; min-width: 100px; text-align: center;">0:00 / 0:00</div>
+                <div id="videoTime" style="color: white; font-size: 14px; margin: 0 16px; font-family: 'Roboto Mono', monospace; min-width: 100px; text-align: center;">0:00 / 4:16</div>
                 <!-- Audio controls end -->
                 <button class="md-button" id="fullscreenBtn">
                     <span class="material-icons">fullscreen</span>
@@ -276,18 +306,19 @@
                 <!-- Debug overlay for sphere/texture status -->
                 <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
                 <!-- VRButton from Three.js will be injected by PanoramaPlayer.js -->
-            <button id="VRButton" title="Enter immersive VR mode - requires Meta Quest or compatible WebXR headset">ENTER VR</button></div>
+            <button id="VRButton" style="position: static; margin-left: 8px; width: 100px; cursor: pointer; left: calc(50% - 50px); opacity: 0.5;" title="Enter immersive VR mode - requires Meta Quest or compatible WebXR headset">ENTER VR</button></div>
 
             <div class="md-vr-indicator" id="vrIndicator">
                 VR Mode Active
             </div>
 
-            <div class="md-loading" id="loadingOverlay">
-                <div class="md-spinner"></div>
-                <div>Initializing 360° Experience...</div>
-            </div>
+            <div class="md-loading" id="loadingOverlay" style="display: none;">
+                        <div class="md-spinner"></div>
+                        <div>Loading 360° Experience...</div>
+                        <div id="loadingProgress" style="margin-top: 10px; font-size: 18px; font-weight: bold;">5%</div>
+                    </div>
 
-            <div id="webxrBadge">WebXR Ready</div>
+            <div class="" id="webxrBadge" style="display: block !important; position: fixed !important; bottom: 20px !important; left: 20px !important; top: auto !important; background: rgb(76, 175, 80) !important; color: white !important; padding: 4px 8px !important; border-radius: 4px !important; font-family: Arial, sans-serif !important; font-size: 11px !important; font-weight: normal !important; z-index: 1000 !important; max-width: 120px !important; width: auto !important; height: auto !important; text-align: center !important; pointer-events: none !important; box-shadow: rgba(0, 0, 0, 0.2) 0px 2px 4px !important; margin: 0px !important; border: none !important; outline: none !important;">WebXR Ready</div>
 
             <button class="md-fab" id="fabBtn">
                 <span class="material-icons">360</span>
@@ -299,7 +330,7 @@
             <!-- Gallery Modal -->
             <div class="modal" id="galleryModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
                 <div style="background:#222; color:#fff; border-radius:16px; padding:32px; max-width:1000px; width:96vw; position:relative; box-shadow:0 8px 32px rgba(0,0,0,0.35); overflow-y:auto; max-height:90vh;">
-                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">×</button>
                     <h2 style="margin-top:0; margin-bottom:24px; font-size:2em; font-weight:500; letter-spacing:0.02em;">Select Experience</h2>
                     <div class="gallery-grid" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:18px; margin-bottom:24px;">
                         <div class="gallery-item" style="background:#23272f; border-radius:12px; box-shadow:0 2px 12px rgba(25,118,210,0.10); padding:10px; display:flex; flex-direction:column; align-items:center; max-width:170px;">
@@ -319,14 +350,14 @@
                             <button class="play-experience-btn" data-index="3" style="margin-top:8px; width:100%; background:#1976d2; color:#fff; border:none; border-radius:6px; padding:8px; font-size:0.95em; cursor:pointer; font-weight:500;">Play in Experience</button>
                         </div>
                     </div>
-                    <video id="galleryVideoPlayer" controls style="width:100%; border-radius:6px; display:none; background:#000;"></video>
+                    <video id="galleryVideoPlayer" controls="" style="width:100%; border-radius:6px; display:none; background:#000;"></video>
                 </div>
             </div>
 
             <!-- About Modal -->
             <div class="modal" id="aboutModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
                 <div style="background:#222; color:#fff; border-radius:8px; padding:32px; max-width:500px; width:90vw; position:relative;">
-                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">×</button>
                     <h2 style="margin-top:0;">About</h2>
                     <p style="font-size:1.1em; line-height:1.6;">Welcome to EyeTrip Images 360° Experience. Immerse yourself in a curated selection of panoramic videos and explore new perspectives. This is a placeholder for more information about the project, the creators, and the vision behind EyeTrip Images. Stay tuned for updates!</p>
                 </div>
@@ -335,11 +366,11 @@
             <!-- Contact Modal -->
             <div class="modal" id="contactModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.85); z-index:10001; align-items:center; justify-content:center;">
                 <div style="background:#222; color:#fff; border-radius:8px; padding:32px; max-width:400px; width:90vw; position:relative;">
-                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">&times;</button>
+                    <button class="modal-close" style="position:absolute; top:16px; right:16px; background:none; border:none; color:#fff; font-size:28px; cursor:pointer;">×</button>
                     <h2 style="margin-top:0;">Contact</h2>
                     <form id="contactForm" style="display:flex; flex-direction:column; gap:16px;">
-                        <input type="email" name="email" placeholder="Your email" required style="padding:10px; border-radius:4px; border:none; font-size:1em;">
-                        <textarea name="message" placeholder="Your message" required style="padding:10px; border-radius:4px; border:none; font-size:1em; min-height:80px;"></textarea>
+                        <input type="email" name="email" placeholder="Your email" required="" style="padding:10px; border-radius:4px; border:none; font-size:1em;">
+                        <textarea name="message" placeholder="Your message" required="" style="padding:10px; border-radius:4px; border:none; font-size:1em; min-height:80px;"></textarea>
                         <button type="submit" style="background:#1976d2; color:#fff; border:none; border-radius:4px; padding:10px; font-size:1em; cursor:pointer;">Send</button>
                     </form>
                     <div id="contactSuccess" style="display:none; color:#4caf50; margin-top:12px;">Thank you! Your message has been sent.</div>
@@ -350,22 +381,41 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const menuButton = document.getElementById('menuButton');
                 const mainMenu = document.getElementById('mainMenu');
-                menuButton.addEventListener('click', function() {
-                    mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
-                });
+                
+                if (menuButton && mainMenu) {
+                    menuButton.addEventListener('click', function() {
+                        mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
+                    });
+                }
+                
                 // Modal triggers
-                document.getElementById('galleryMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('galleryModal').style.display = 'flex';
-                };
-                document.getElementById('aboutMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('aboutModal').style.display = 'flex';
-                };
-                document.getElementById('contactMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('contactModal').style.display = 'flex';
-                };
+                const galleryMenu = document.getElementById('galleryMenu');
+                const aboutMenu = document.getElementById('aboutMenu');
+                const contactMenu = document.getElementById('contactMenu');
+                
+                if (galleryMenu) {
+                    galleryMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('galleryModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (aboutMenu) {
+                    aboutMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('aboutModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (contactMenu) {
+                    contactMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('contactModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
                 // Modal close logic
                 document.querySelectorAll('.modal-close').forEach(btn => {
                     btn.onclick = function() {
@@ -538,10 +588,346 @@
                 }
             });
             </script>
-    </div>
+    
 
     <!-- Webpack will inject the correct bundled script automatically. -->
      <script type="module" src="js/app.js"></script>
+    
+    <!-- Affirmation System Integration -->
+    <script type="module">
+        import { AffirmationExporter } from './js/modules/AffirmationExporter.js';
+        
+        // Global affirmation state
+        window.affirmationState = {
+            exporter: null,
+            generatedAffirmations: [],
+            collectedAffirmations: [],
+            userResponses: null,
+            isInitialized: false
+        };
+        
+        console.log('✨ Affirmation experience loading...');
+        
+        // Wait for app to be ready
+        function waitForApp() {
+            if (window.app && window.app.hotspotManager) {
+                console.log('✅ App ready, loading affirmation data');
+                loadAffirmationData();
+            } else {
+                console.log('⏳ Waiting for app...');
+                setTimeout(waitForApp, 500);
+            }
+        }
+        
+        // Load affirmation data from sessionStorage
+        function loadAffirmationData() {
+            if (window.affirmationState.isInitialized) return;
+            
+            // Get data from sessionStorage (set by gallery page)
+            const storedData = sessionStorage.getItem('affirmationData');
+            
+            if (!storedData) {
+                console.error('❌ No affirmation data found! Redirecting to gallery...');
+                alert('Please start your affirmation journey from the gallery page.');
+                window.location.href = 'gallery.html';
+                return;
+            }
+            
+            try {
+                const data = JSON.parse(storedData);
+                console.log('📦 Loaded affirmation data:', data);
+                
+                window.affirmationState.userResponses = data.responses;
+                window.affirmationState.generatedAffirmations = data.affirmations;
+                
+                // Replace hotspot sounds with generated affirmations
+                replaceHotspotSounds(data.affirmations);
+                
+                // Show ready message
+                showReadyMessage();
+                
+                window.affirmationState.isInitialized = true;
+                
+            } catch (error) {
+                console.error('❌ Error loading affirmation data:', error);
+                alert('Error loading your affirmations. Please try again.');
+                window.location.href = 'gallery.html';
+            }
+        }
+        
+        // Replace hotspot sounds with generated affirmations
+        function replaceHotspotSounds(affirmations) {
+            if (!window.app || !window.app.hotspotManager) {
+                console.error('❌ HotspotManager not available');
+                return;
+            }
+            
+            const hotspots = window.app.hotspotManager.hotspots;
+            console.log(`🎯 Replacing sounds for ${hotspots.length} hotspots with play-twice logic`);
+            console.log(`📝 Affirmations to assign:`, affirmations);
+            
+            // Initialize play count tracker
+            if (!window.affirmationState.playCount) {
+                window.affirmationState.playCount = {};
+            }
+            
+            // Replace each hotspot's sound with an affirmation
+            hotspots.forEach((hotspot, index) => {
+                if (index < affirmations.length && affirmations[index].url) {
+                    console.log(`   🔄 Hotspot ${index}: Original="${hotspot.sound}" → New="${affirmations[index].url}"`);
+                    
+                    // Store original sound
+                    hotspot.originalSound = hotspot.sound;
+                    
+                    // Replace with affirmation
+                    hotspot.sound = affirmations[index].url;
+                    hotspot.affirmationText = affirmations[index].text;
+                    hotspot.affirmationIndex = index;
+                    hotspot.affirmationId = affirmations[index].id;
+                    
+                    // Initialize play count for this affirmation
+                    window.affirmationState.playCount[affirmations[index].id] = 0;
+                    
+                    console.log(`   ✅ Hotspot ${index + 1}: "${affirmations[index].text.substring(0, 40)}..." [0/2 plays]`);
+                } else {
+                    console.log(`   ⚠️ Hotspot ${index}: No affirmation available (index: ${index}, total: ${affirmations.length})`);
+                }
+            });
+            
+            console.log('✅ Hotspot sounds replaced with affirmations (play-twice enabled)');
+            console.log('🎯 Final hotspot states:', hotspots.map((h, i) => ({
+                index: i,
+                sound: h.sound,
+                hasAffirmation: !!h.affirmationText
+            })));
+        }
+        
+        // Show ready message
+        function showReadyMessage() {
+            const overlay = document.createElement('div');
+            overlay.className = 'affirmation-ready-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 9999;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            const { emotionalTone, focusArea } = window.affirmationState.userResponses;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 700px; padding: 3rem;">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">✨</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Your Journey Awaits
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 1.5rem;">
+                        We've prepared <strong>10 personalized ${emotionalTone} affirmations</strong> focused on <strong>${focusArea}</strong>.
+                    </p>
+                    <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
+                        Discover the glowing hotspots in this immersive 360° experience to hear your unique messages.
+                    </p>
+                    <button onclick="this.closest('.affirmation-ready-overlay').remove(); document.getElementById('playBtn').click();" 
+                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1.25rem 3rem; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
+                        Begin Journey ✨
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+        
+        // Track hotspot discoveries with PLAY-TWICE logic
+        if (window.app && window.app.hotspotManager) {
+            const originalOnHotspotClick = window.app.hotspotManager.onHotspotClick;
+            window.app.hotspotManager.onHotspotClick = function(hotspot) {
+                // Check play-twice limit BEFORE playing
+                if (hotspot.affirmationId !== undefined) {
+                    const playCount = window.affirmationState.playCount[hotspot.affirmationId] || 0;
+                    
+                    if (playCount >= 2) {
+                        console.log(`⏭️ Affirmation ${hotspot.affirmationId} already played 2 times - skipping`);
+                        
+                        // Show message to user
+                        const msg = document.createElement('div');
+                        msg.style.cssText = `
+                            position: fixed;
+                            top: 50%;
+                            left: 50%;
+                            transform: translate(-50%, -50%);
+                            background: rgba(255, 100, 100, 0.9);
+                            color: white;
+                            padding: 1rem 2rem;
+                            border-radius: 12px;
+                            font-size: 1.1rem;
+                            z-index: 9999;
+                            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+                        `;
+                        msg.textContent = 'This affirmation has already been heard twice ✨';
+                        document.body.appendChild(msg);
+                        setTimeout(() => msg.remove(), 2000);
+                        
+                        return; // Don't play the sound
+                    }
+                    
+                    // Increment play count
+                    window.affirmationState.playCount[hotspot.affirmationId] = playCount + 1;
+                    console.log(`▶️ Playing affirmation ${hotspot.affirmationId} (${playCount + 1}/2)`);
+                }
+                
+                // Call original handler (this will play the sound)
+                if (originalOnHotspotClick) {
+                    originalOnHotspotClick.call(this, hotspot);
+                }
+                
+                // Track affirmation collection
+                if (hotspot.affirmationIndex !== undefined) {
+                    const affirmation = window.affirmationState.generatedAffirmations[hotspot.affirmationIndex];
+                    if (affirmation && !window.affirmationState.collectedAffirmations.includes(affirmation)) {
+                        window.affirmationState.collectedAffirmations.push(affirmation);
+                        const collected = window.affirmationState.collectedAffirmations.length;
+                        console.log(`✅ Collected affirmation ${collected}/10`);
+                        
+                        // Show affirmation text overlay with play count
+                        const playCount = window.affirmationState.playCount[hotspot.affirmationId];
+                        showAffirmationOverlay(affirmation.text, playCount);
+                        
+                        // Check if all collected
+                        if (collected === 10) {
+                            setTimeout(() => {
+                                showExportUI();
+                            }, 3000);
+                        }
+                    } else if (affirmation) {
+                        // Show overlay again for repeated play
+                        const playCount = window.affirmationState.playCount[hotspot.affirmationId];
+                        showAffirmationOverlay(affirmation.text, playCount);
+                    }
+                }
+            };
+        }
+        
+        // Show affirmation text overlay
+        function showAffirmationOverlay(text, playCount) {
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(102, 126, 234, 0.95);
+                color: white;
+                padding: 1.5rem 2.5rem;
+                border-radius: 16px;
+                font-size: 1.2rem;
+                max-width: 80%;
+                text-align: center;
+                z-index: 9998;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+                animation: slideUpFade 0.5s ease;
+            `;
+            
+            const playStatus = playCount ? ` [${playCount}/2]` : '';
+            overlay.innerHTML = `
+                <div style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 0.5rem;">${playStatus}</div>
+                <div>"${text}"</div>
+            `;
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.style.opacity = '0';
+                overlay.style.transform = 'translateX(-50%) translateY(-20px)';
+                overlay.style.transition = 'all 0.5s ease';
+                setTimeout(() => overlay.remove(), 500);
+            }, 4000);
+        }
+        
+        // Show export UI with instant download (full MP3 already created!)
+        function showExportUI() {
+            console.log('🎉 All affirmations collected! Preparing export...');
+            
+            // Get the full audio URL from sessionStorage
+            const data = JSON.parse(sessionStorage.getItem('affirmationData'));
+            const fullAudioUrl = data.fullAudio.url;
+            const duration = data.fullAudio.duration;
+            
+            // Create export overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'affirmation-export-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
+                backdrop-filter: blur(30px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            `;
+            
+            overlay.innerHTML = `
+                <div style="text-align: center; max-width: 600px; padding: 3rem; background: rgba(255, 255, 255, 0.05); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.1);">
+                    <div style="font-size: 5rem; margin-bottom: 1.5rem;">🎉</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                        Journey Complete!
+                    </h2>
+                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 2rem;">
+                        You've discovered all <strong>10 affirmations</strong>. Your personalized audio (${Math.floor(duration)}s) is ready to download!
+                    </p>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 2rem;">
+                        <button onclick="downloadFullAudio('${fullAudioUrl}')" 
+                                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1.25rem 2.5rem; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
+                            💾 Download My Affirmations
+                        </button>
+                        <button onclick="window.location.href='gallery.html'" 
+                                style="background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.3); padding: 1rem 2rem; border-radius: 12px; font-size: 1.1rem; font-weight: 500; cursor: pointer; transition: all 0.3s ease;">
+                            ✨ Create New Journey
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(overlay);
+            setTimeout(() => overlay.style.opacity = '1', 10);
+        }
+        
+        // Download the full audio MP3 (already generated!)
+        function downloadFullAudio(audioUrl) {
+            console.log('💾 Downloading full affirmation audio...');
+            
+            const a = document.createElement('a');
+            a.href = audioUrl;
+            a.download = `affirmations_${Date.now()}.mp3`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            console.log('✅ Download initiated!');
+        }
+        
+        // Start initialization when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', waitForApp);
+        } else {
+            waitForApp();
+        }
+    </script>
     
     <!-- PWA Service Worker Registration -->
     <script>
@@ -557,5 +943,29 @@
             });
         }
     </script>
-</body>
-</html>
+
+
+<div id="performance-monitor" style="position: fixed; top: 80px; right: 20px; background: rgba(0, 0, 0, 0.9); color: rgb(0, 255, 0); font-family: &quot;Courier New&quot;, monospace; font-size: 12px; border-radius: 8px 0px 0px 8px; z-index: 10000; min-width: 250px; border-top: 1px solid rgba(0, 255, 0, 0.3); border-bottom: 1px solid rgba(0, 255, 0, 0.3); border-left: 1px solid rgba(0, 255, 0, 0.3); border-image: initial; border-right: none; transition: transform 0.3s;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; cursor: pointer;" id="perf-header">
+                <span style="font-weight: bold; color: #0ff;">
+                    <span id="perf-emoji">📊</span>
+                    <span style="transition: opacity 0.3s ease;" id="perf-title"> Performance</span>
+                </span>
+                <span style="font-size: 18px; transition: transform 0.3s ease;" id="perf-toggle">◀</span>
+            </div>
+            <div id="perf-content" style="padding: 0 15px 15px 15px;">
+                <canvas id="fps-graph" width="220" height="60" style="display: block; margin-bottom: 10px;"></canvas>
+                <div id="perf-stats">
+            <div style="color: #ff0;">FPS: 48</div>
+            <div>Frame: 20.86ms</div>
+            <div>Memory: 35.07 MB</div>
+            <div>Draw Calls: 1</div>
+            <div>Triangles: 4.7K</div>
+            <div>Textures: 6</div>
+            <div>Geometries: 6</div>
+            <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(0,255,0,0.3);">
+                <span style="color: #0f0;">✅ Performance good</span>
+            </div>
+        </div>
+            </div>
+        </div><div id="aria-live-region" role="status" aria-live="polite" aria-atomic="true" style="position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;">Now facing North</div><video crossorigin="anonymous" preload="metadata" playsinline="" data-quality="1080p" loop="" src="http://localhost:8000/assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4" style="display: none;"></video><div class="hotspot-discovery-ui" id="hotspot-discovery-ui">🎵 Hidden Sounds: <span class="discovered-count" id="discovered-count">0</span>/<span class="total-count" id="total-count">10</span></div><button id="pwa-install-btn" style="position: fixed; bottom: 20px; right: 20px; background: linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%); color: white; border: none; padding: 15px 25px; border-radius: 50px; font-size: 14px; font-weight: bold; cursor: pointer; z-index: 10000; box-shadow: rgba(102, 126, 234, 0.4) 0px 4px 15px; animation: 2s ease 0s infinite normal none running pulseInstall;">📱 Install App</button></body></html>

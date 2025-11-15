@@ -180,11 +180,11 @@ class App {
             console.log('📳 Initializing Haptic Feedback...');
             this.haptics = new HapticFeedbackSystem(this.xrHandler);
             
-            // 4. Accessibility System
-            console.log('♿ Initializing Accessibility...');
-            this.accessibility = new AccessibilitySystem(this.player, this.player.hotspotManager);
-            this.accessibility.createAccessibilityMenu();
-            window.accessibility = this.accessibility; // Make globally accessible
+            // 4. Accessibility System (DISABLED FOR NOW)
+            console.log('♿ Accessibility System disabled');
+            // this.accessibility = new AccessibilitySystem(this.player, this.player.hotspotManager);
+            // this.accessibility.createAccessibilityMenu();
+            // window.accessibility = this.accessibility; // Make globally accessible
             
             // 5. Adaptive Difficulty System
             console.log('🎯 Initializing Adaptive Difficulty...');
