@@ -653,7 +653,73 @@ export class WebXRHandler {
     onSelectStart(event) {
         console.log('🎮 Controller select start - trigger pressed');
         
-        // Handle VR menu interactions
+        // First check for hotspot interactions
+        const controller = event.target;
+        const tempMatrix = new THREE.Matrix4();
+        const raycaster = new THREE.Raycaster();
+        
+        // Get controller's world matrix
+        tempMatrix.identity().extractRotation(controller.matrixWorld);
+        
+        // Set raycaster from controller's world position and direction
+        raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        
+        console.log('🔍 [VR DEBUG] Controller raycaster:', {
+            origin: raycaster.ray.origin.toArray(),
+            direction: raycaster.ray.direction.toArray()
+        });
+        
+        // Check if we're pointing at a hotspot
+        if (this.panoramaPlayer?.hotspotManager?.hotspots) {
+            const allHotspots = this.panoramaPlayer.hotspotManager.hotspots;
+            console.log('🔍 [VR DEBUG] Total hotspots:', allHotspots.length);
+            
+            const activeHotspots = allHotspots.filter(h => h.active);
+            console.log('🔍 [VR DEBUG] Active hotspots:', activeHotspots.length);
+            
+            const undiscoveredHotspots = allHotspots.filter(h => h.active && !h.discovered);
+            console.log('🔍 [VR DEBUG] Undiscovered hotspots:', undiscoveredHotspots.length);
+            
+            const hotspotMeshes = allHotspots
+                .filter(h => h.mesh && h.active && !h.discovered)
+                .map(h => h.mesh);
+            
+            console.log('🔍 [VR DEBUG] Hotspot meshes to check:', hotspotMeshes.length);
+            
+            if (hotspotMeshes.length > 0) {
+                console.log('🔍 [VR DEBUG] First hotspot mesh position:', hotspotMeshes[0].position.toArray());
+            }
+            
+            const hotspotIntersects = raycaster.intersectObjects(hotspotMeshes, true);
+            
+            console.log('🔍 [VR DEBUG] Hotspot intersections found:', hotspotIntersects.length);
+            
+            if (hotspotIntersects.length > 0) {
+                const intersectedMesh = hotspotIntersects[0].object;
+                const hotspot = intersectedMesh.userData.hotspot;
+                
+                console.log('🎯 [VR DEBUG] Hotspot intersection details:', {
+                    distance: hotspotIntersects[0].distance,
+                    point: hotspotIntersects[0].point.toArray(),
+                    hasHotspot: !!hotspot,
+                    hotspotId: hotspot?.id,
+                    discovered: hotspot?.discovered
+                });
+                
+                if (hotspot && !hotspot.discovered) {
+                    console.log('🎮 VR Controller discovered hotspot:', hotspot.id);
+                    this.panoramaPlayer.hotspotManager.discoverHotspot(hotspot);
+                    return; // Don't show menu if we discovered a hotspot
+                }
+            } else {
+                console.log('⚠️ [VR DEBUG] No intersections found - controller may not be pointing at hotspots');
+            }
+        } else {
+            console.error('❌ [VR DEBUG] No hotspotManager or hotspots available!');
+        }
+        
+        // Handle VR menu interactions if no hotspot was discovered
         if (this.vrMenuVisible) {
             this.handleVRMenuInteraction(event);
         } else {

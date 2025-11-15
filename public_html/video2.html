@@ -264,10 +264,17 @@
                 <div id="videoTime" style="color: white; font-size: 14px; margin: 0 16px; font-family: 'Roboto Mono', monospace; min-width: 100px; text-align: center;">0:00 / 0:00</div>
                 <!-- Audio controls end -->
                 <button class="md-button" id="fullscreenBtn">
-    <!-- Debug overlay for sphere/texture status -->
-    <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
                     <span class="material-icons">fullscreen</span>
                 </button>
+                <!-- Exit to Gallery Button -->
+                <button class="control-btn md-button" id="exitBtn" title="Exit to Gallery (ESC)" style="margin-left: 8px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <!-- Debug overlay for sphere/texture status -->
+                <div id="debugOverlay" style="position:fixed;top:10px;right:10px;z-index:9999;background:#222;color:#fff;padding:8px;border-radius:4px;display:none;font-size:14px;"></div>
                 <!-- VRButton from Three.js will be injected by PanoramaPlayer.js -->
             </div>
 

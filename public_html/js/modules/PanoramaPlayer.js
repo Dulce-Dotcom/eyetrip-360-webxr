@@ -7,6 +7,7 @@ import { VRButton } from '../vendor/VRButton.js';
 import VRMenu from './VRMenu.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';
 import { HotspotManager } from './HotspotManager.js';
+import { MiniMap } from './MiniMap.js';
 
 export class PanoramaPlayer {
     // Play video by index (always reloads, even if same)
@@ -27,6 +28,7 @@ export class PanoramaPlayer {
     this.texture = null;
     this.isPlaying = false;
     this.hotspotManager = null; // Will be initialized when video loads
+    this.miniMap = null; // Mini-map navigation aid
     this.hotspotsInitialized = false; // Prevent double initialization
     this.currentVideoName = null; // Track current video for hotspot config
     // Camera controls
@@ -275,11 +277,16 @@ export class PanoramaPlayer {
                     this.video = null;
                 }
                 
-                // Show loading overlay
+                // Show loading overlay with progress
                 const loadingOverlay = document.getElementById('loadingOverlay');
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'flex';
-                    console.log('[DEBUG] Loading overlay shown');
+                    loadingOverlay.innerHTML = `
+                        <div class="md-spinner"></div>
+                        <div>Loading 360° Experience...</div>
+                        <div id="loadingProgress" style="margin-top: 10px; font-size: 18px; font-weight: bold;">0%</div>
+                    `;
+                    console.log('[DEBUG] Loading overlay shown with progress');
                 }
                 
                 // Use VideoStreamManager to switch to this video
@@ -292,6 +299,20 @@ export class PanoramaPlayer {
                 this.video.style.display = 'none';
                 this.video.muted = false;
                 this.video.volume = 1.0;
+                
+                // Add progress event listener for loading indicator
+                this.video.addEventListener('progress', () => {
+                    const progressEl = document.getElementById('loadingProgress');
+                    if (progressEl && this.video.buffered.length > 0) {
+                        const bufferedEnd = this.video.buffered.end(this.video.buffered.length - 1);
+                        const duration = this.video.duration;
+                        if (duration > 0) {
+                            const percent = Math.round((bufferedEnd / duration) * 100);
+                            progressEl.textContent = `${percent}%`;
+                            console.log(`📊 Loading progress: ${percent}%`);
+                        }
+                    }
+                });
                 
                 // Create texture immediately
                 this.texture = new THREE.VideoTexture(this.video);
@@ -357,6 +378,10 @@ export class PanoramaPlayer {
                     if (shouldAutoPlay) {
                         this.isPlaying = true;
                     }
+                    
+                    // Add playback controls when video starts
+                    this.addPlaybackControls();
+                    
                 }).catch((err) => {
                     console.warn('[DEBUG] Video auto-play failed:', err);
                     
@@ -440,13 +465,32 @@ export class PanoramaPlayer {
             // Create new video element
             this.video = document.createElement('video');
             document.body.appendChild(this.video);
+            
+            // Detect iOS/Safari for special handling
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
             // Always set video properties before use
             this.video.crossOrigin = 'anonymous';
             this.video.loop = false;
-            this.video.muted = false; // Ensure audio is not muted by default
-            this.video.volume = 1.0; // Ensure full volume
-            this.video.setAttribute('playsinline', '');
+            this.video.setAttribute('playsinline', ''); // Required for iOS inline playback
+            this.video.setAttribute('webkit-playsinline', ''); // Older iOS versions
             this.video.style.display = 'none';
+            
+            // iOS-specific handling
+            if (isIOS || isSafari) {
+                console.log('📱 iOS/Safari detected - applying mobile video optimizations');
+                this.video.muted = true; // Required for autoplay on iOS
+                this.video.volume = 0; // Start muted
+                this.isIOSMuted = true; // Track muted state
+                
+                // Show unmute button after video starts
+                this.showUnmuteButton = true;
+            } else {
+                this.video.muted = false; // Desktop can have audio by default
+                this.video.volume = 1.0; // Full volume
+            }
+            
             console.log('[DEBUG] loadVideo called with:', url);
             this.video.src = url;
             this.video.load();
@@ -554,10 +598,22 @@ export class PanoramaPlayer {
                 
                 // Extract video name from URL for hotspot configuration
                 const videoName = url.split('/').pop().split('.')[0];
+                this.currentVideoName = videoName; // Store for progress tracking
                 this.hotspotManager.createHotspotsForVideo(videoName);
                 
                 // Setup discovery UI
                 this.setupHotspotDiscoveryUI();
+                
+                // Create mini-map
+                if (this.miniMap) {
+                    this.miniMap.cleanup();
+                }
+                this.miniMap = new MiniMap(this.camera, this.hotspotManager);
+                this.miniMap.create();
+                console.log('✅ MiniMap created');
+                
+                // Restore progress if any
+                this.restoreProgress();
                 
                 console.log('✅ HotspotManager initialized with hotspots for', videoName);
                 
@@ -574,6 +630,11 @@ export class PanoramaPlayer {
                     console.log('[DEBUG] video.play() after loadeddata succeeded');
                     if (shouldAutoPlay) {
                         this.isPlaying = true;
+                    }
+                    
+                    // Show unmute button for iOS users
+                    if (this.showUnmuteButton && this.video.muted) {
+                        this.createUnmuteButton();
                     }
                 }).catch((err) => {
                     console.warn('[DEBUG] video.play() after loadeddata failed:', err);
@@ -613,6 +674,15 @@ export class PanoramaPlayer {
                 });
                 // Dispatch custom event for main video ready
                 window.dispatchEvent(new Event('mainVideoReady'));
+                
+                // Show tutorial on first visit
+                this.showTutorialIfFirstTime();
+                
+                // Show narrative introduction for this video
+                setTimeout(() => {
+                    this.showVideoNarrative(url);
+                }, 2000); // Show after tutorial (or 2s delay)
+                
                 resolve();
             });
             this.video.addEventListener('error', (e) => {
@@ -761,6 +831,11 @@ export class PanoramaPlayer {
         // Update hotspot manager
         if (this.hotspotManager) {
             this.hotspotManager.update();
+        }
+        
+        // Update mini-map (only in desktop mode)
+        if (this.miniMap && !this.renderer.xr.isPresenting) {
+            this.miniMap.update();
         }
         
         this.renderer.render(this.scene, this.camera);
@@ -1001,6 +1076,39 @@ export class PanoramaPlayer {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
+        // Update time display during video playback
+        if (this.video) {
+            this.video.addEventListener('timeupdate', () => {
+                const currentTime = this.formatTime(this.video.currentTime);
+                const duration = this.formatTime(this.video.duration);
+                const displayText = `${currentTime} / ${duration}`;
+                
+                // Update the main time display in md-controls
+                const videoTimeEl = document.getElementById('videoTime');
+                if (videoTimeEl) {
+                    videoTimeEl.textContent = displayText;
+                }
+            });
+            
+            // Also update on metadata load to get initial duration
+            this.video.addEventListener('loadedmetadata', () => {
+                const duration = this.formatTime(this.video.duration);
+                const videoTimeEl = document.getElementById('videoTime');
+                if (videoTimeEl) {
+                    videoTimeEl.textContent = `0:00 / ${duration}`;
+                }
+            });
+        }
+
+        // Detect mobile for adaptive sensitivity
+        const isMobile = /iPad|iPhone|iPod|Android/i.test(navigator.userAgent) || window.innerWidth < 768;
+        
+        // Adaptive sensitivity: mobile needs MUCH reduced sensitivity (higher value = slower movement)
+        const mouseSensitivity = isMobile ? 0.2 : 0.1;  // Desktop is more precise
+        const touchSensitivity = isMobile ? 0.2 : 0.3;  // Touch is even less sensitive on mobile
+        
+        console.log(`📱 Device: ${isMobile ? 'Mobile' : 'Desktop'} | Mouse: ${mouseSensitivity}x | Touch: ${touchSensitivity}x`);
+
         // Desktop mouse/touch navigation for 360°
         let isUserInteracting = false, onPointerDownMouseX = 0, onPointerDownMouseY = 0, onPointerDownLon = 0, onPointerDownLat = 0;
         const dom = this.renderer.domElement;
@@ -1020,9 +1128,9 @@ export class PanoramaPlayer {
 
         dom.addEventListener('mousemove', (event) => {
             if (isUserInteracting) {
-                // Desktop sensitivity remains at 0.1 for precise control
-                this.lon = (onPointerDownMouseX - event.clientX) * 0.1 + onPointerDownLon;
-                this.lat = (event.clientY - onPointerDownMouseY) * 0.1 + onPointerDownLat;
+                // Use adaptive sensitivity based on device
+                this.lon = (onPointerDownMouseX - event.clientX) * mouseSensitivity + onPointerDownLon;
+                this.lat = (event.clientY - onPointerDownMouseY) * mouseSensitivity + onPointerDownLat;
             }
             
             // Update particle trails based on mouse movement in desktop mode
@@ -1099,9 +1207,9 @@ export class PanoramaPlayer {
 
         dom.addEventListener('touchmove', (event) => {
             if (isUserInteracting && event.touches.length === 1) {
-                // Reduced sensitivity for mobile touch (0.3 instead of 0.1)
-                this.lon = (onPointerDownMouseX - event.touches[0].clientX) * 0.3 + onPointerDownLon;
-                this.lat = (event.touches[0].clientY - onPointerDownMouseY) * 0.3 + onPointerDownLat;
+                // Use adaptive touch sensitivity based on device
+                this.lon = (onPointerDownMouseX - event.touches[0].clientX) * touchSensitivity + onPointerDownLon;
+                this.lat = (event.touches[0].clientY - onPointerDownMouseY) * touchSensitivity + onPointerDownLat;
             }
         });
 
@@ -1149,6 +1257,531 @@ export class PanoramaPlayer {
             this.isMuted = this.video.muted;
         }
     }
+    
+    // Create unmute button for iOS/Safari (required for autoplay)
+    createUnmuteButton() {
+        // Check if button already exists
+        if (document.getElementById('unmute-button')) return;
+        
+        console.log('🔇 Creating unmute button for iOS');
+        
+        const unmuteBtn = document.createElement('button');
+        unmuteBtn.id = 'unmute-button';
+        unmuteBtn.innerHTML = `
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+            </svg>
+            <span>Tap to Enable Sound</span>
+        `;
+        unmuteBtn.style.cssText = `
+            position: fixed;
+            bottom: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 100, 0, 0.95);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 20px rgba(255, 100, 0, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        `;
+        
+        // Add pulse animation
+        if (!document.getElementById('unmute-animation')) {
+            const style = document.createElement('style');
+            style.id = 'unmute-animation';
+            style.textContent = `
+                @keyframes pulse {
+                    0%, 100% { transform: translateX(-50%) scale(1); }
+                    50% { transform: translateX(-50%) scale(1.05); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        unmuteBtn.addEventListener('click', () => {
+            this.handleUnmute();
+            unmuteBtn.remove();
+        });
+        
+        // Also handle touchstart for better iOS support
+        unmuteBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            this.handleUnmute();
+            unmuteBtn.remove();
+        });
+        
+        // Fallback: any document interaction unmutes
+        const documentUnmute = () => {
+            this.handleUnmute();
+            unmuteBtn.remove();
+            document.removeEventListener('click', documentUnmute);
+            document.removeEventListener('touchstart', documentUnmute);
+        };
+        document.addEventListener('click', documentUnmute, { once: true });
+        document.addEventListener('touchstart', documentUnmute, { once: true });
+        
+        document.body.appendChild(unmuteBtn);
+    }
+    
+    // Handle unmute with full audio context resume
+    handleUnmute() {
+        if (this.video) {
+            this.video.muted = false;
+            this.video.volume = 1.0;
+            this.isIOSMuted = false;
+            console.log('🔊 Video audio unmuted');
+        }
+        
+        // Resume audio context for spatial audio if it exists
+        if (this.hotspotManager && this.hotspotManager.audioListener) {
+            const context = this.hotspotManager.audioListener.context;
+            if (context && context.state === 'suspended') {
+                context.resume().then(() => {
+                    console.log('🔊 Audio context resumed');
+                }).catch(err => {
+                    console.error('❌ Failed to resume audio context:', err);
+                });
+            }
+        }
+        
+        console.log('✅ Audio fully unmuted for iOS');
+    }
+    
+    // Add playback controls (pause/play/exit/time)
+    addPlaybackControls() {
+        // Attach event listener to existing exit button in md-controls
+        const exitBtn = document.getElementById('exitBtn');
+        if (exitBtn) {
+            exitBtn.addEventListener('click', () => {
+                this.showExitConfirmation();
+            });
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.showExitConfirmation();
+            }
+        });
+    }
+    
+    // Show exit confirmation modal with glassmorphism
+    showExitConfirmation() {
+        // Remove existing modal if any
+        const existing = document.getElementById('exit-modal');
+        if (existing) existing.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'exit-modal';
+        modal.className = 'exit-modal';
+        modal.innerHTML = `
+            <div class="exit-modal-backdrop"></div>
+            <div class="exit-modal-content">
+                <div class="exit-modal-icon">🚪</div>
+                <h2 class="exit-modal-title">Exit to Gallery?</h2>
+                <p class="exit-modal-text">Your progress will be saved automatically</p>
+                <div class="exit-modal-actions">
+                    <button class="exit-modal-btn exit-modal-cancel">Stay Here</button>
+                    <button class="exit-modal-btn exit-modal-confirm">Exit to Gallery</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Animate in
+        setTimeout(() => modal.classList.add('active'), 10);
+        
+        // Cancel button
+        modal.querySelector('.exit-modal-cancel').addEventListener('click', () => {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        });
+        
+        // Confirm button
+        modal.querySelector('.exit-modal-confirm').addEventListener('click', () => {
+            this.saveProgress();
+            window.location.href = 'gallery.html';
+        });
+        
+        // Click backdrop to cancel
+        modal.querySelector('.exit-modal-backdrop').addEventListener('click', () => {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        });
+        
+        // ESC to cancel
+        const escHandler = (e) => {
+            if (e.key === 'Escape') {
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+                document.removeEventListener('keydown', escHandler);
+            }
+        };
+        document.addEventListener('keydown', escHandler);
+    }
+    
+    // Format time in MM:SS
+    formatTime(seconds) {
+        if (isNaN(seconds)) return '0:00';
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Save progress to localStorage
+    saveProgress() {
+        if (!this.currentVideoName || !this.hotspotManager) return;
+        
+        const progress = {
+            videoId: this.currentVideoName,
+            discoveredHotspots: this.hotspotManager.hotspots
+                .filter(h => h.discovered)
+                .map(h => h.id),
+            totalHotspots: this.hotspotManager.hotspots.length,
+            completionTime: Date.now(),
+            completed: this.hotspotManager.hotspots.every(h => h.discovered)
+        };
+        
+        localStorage.setItem(`progress_${this.currentVideoName}`, JSON.stringify(progress));
+        
+        // Mark as completed if all found
+        if (progress.completed) {
+            localStorage.setItem(`completed_${this.currentVideoName}`, 'true');
+            console.log('✅ Experience completed and saved');
+        }
+        
+        console.log('💾 Progress saved:', progress);
+    }
+    
+    // Load progress from localStorage
+    loadProgress() {
+        if (!this.currentVideoName) return null;
+        
+        const saved = localStorage.getItem(`progress_${this.currentVideoName}`);
+        if (!saved) return null;
+        
+        try {
+            const progress = JSON.parse(saved);
+            console.log('📂 Loaded progress:', progress);
+            return progress;
+        } catch (e) {
+            console.error('Failed to load progress:', e);
+            return null;
+        }
+    }
+    
+    // Restore discovered hotspots from saved progress
+    restoreProgress() {
+        const progress = this.loadProgress();
+        if (!progress || !this.hotspotManager) return;
+        
+        console.log('🔄 Restoring progress...');
+        
+        // Mark hotspots as discovered
+        progress.discoveredHotspots.forEach(hotspotId => {
+            const hotspot = this.hotspotManager.hotspots.find(h => h.id === hotspotId);
+            if (hotspot && !hotspot.discovered) {
+                // Silently mark as discovered without triggering animations
+                hotspot.discovered = true;
+                hotspot.mesh.visible = false;
+                if (hotspot.glowLayers) {
+                    hotspot.glowLayers.forEach(layer => layer.visible = false);
+                }
+            }
+        });
+        
+        // Update counter
+        if (this.hotspotManager.onDiscoveryCallback) {
+            this.hotspotManager.onDiscoveryCallback();
+        }
+        
+        console.log(`✅ Restored ${progress.discoveredHotspots.length}/${progress.totalHotspots} hotspots`);
+    }
+    
+    // Show tutorial overlay on first visit
+    showTutorialIfFirstTime() {
+        // Check if tutorial has been seen
+        if (localStorage.getItem('eyetripvr-tutorial-seen')) {
+            console.log('📖 Tutorial already seen, skipping');
+            return;
+        }
+        
+        console.log('📖 Showing first-time tutorial');
+        
+        // Detect platform
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isAndroid = /android/i.test(navigator.userAgent);
+        const isMobile = isIOS || isAndroid || window.innerWidth < 768;
+        const hasVR = navigator.xr !== undefined;
+        
+        // Determine appropriate instructions
+        let instructions = {
+            title: "Welcome to EyeTrip VR",
+            icon: "🎨",
+            controls: "",
+            goal: "Find hidden sounds scattered throughout the experience"
+        };
+        
+        if (isMobile) {
+            instructions.icon = "📱";
+            instructions.controls = "Swipe to explore • Tap glowing orbs to discover sounds";
+        } else {
+            instructions.icon = "🖱️";
+            instructions.controls = "Drag to look around • Click glowing orbs to discover sounds";
+        }
+        
+        if (hasVR) {
+            instructions.vr = "👓 Click 'Enter VR' to experience in virtual reality";
+        }
+        
+        // Create tutorial overlay
+        const tutorial = document.createElement('div');
+        tutorial.id = 'tutorial-overlay';
+        tutorial.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20000;
+            animation: fadeIn 0.5s ease;
+        `;
+        
+        tutorial.innerHTML = `
+            <div style="
+                max-width: 500px;
+                background: linear-gradient(135deg, rgba(205, 0, 255, 0.95), rgba(25, 118, 210, 0.95));
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                color: white;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+            ">
+                <div style="font-size: 64px; margin-bottom: 20px;">${instructions.icon}</div>
+                <h2 style="font-size: 32px; margin: 0 0 16px 0; font-weight: bold;">${instructions.title}</h2>
+                <p style="font-size: 18px; margin: 24px 0; line-height: 1.6; opacity: 0.95;">
+                    ${instructions.controls}
+                </p>
+                <div style="
+                    background: rgba(255, 255, 255, 0.2);
+                    padding: 20px;
+                    border-radius: 12px;
+                    margin: 24px 0;
+                    font-size: 16px;
+                    line-height: 1.6;
+                ">
+                    🎵 <strong>Goal:</strong> ${instructions.goal}
+                </div>
+                ${instructions.vr ? `
+                    <p style="font-size: 16px; margin: 16px 0; opacity: 0.9;">
+                        ${instructions.vr}
+                    </p>
+                ` : ''}
+                <button id="tutorial-start-btn" style="
+                    background: white;
+                    color: #cd00ff;
+                    border: none;
+                    padding: 16px 48px;
+                    border-radius: 50px;
+                    font-size: 18px;
+                    font-weight: bold;
+                    cursor: pointer;
+                    margin-top: 24px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+                    transition: transform 0.2s;
+                ">
+                    Start Experience
+                </button>
+            </div>
+        `;
+        
+        // Add fade in animation
+        if (!document.getElementById('tutorial-animations')) {
+            const style = document.createElement('style');
+            style.id = 'tutorial-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                #tutorial-start-btn:hover {
+                    transform: scale(1.05);
+                }
+                #tutorial-start-btn:active {
+                    transform: scale(0.95);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(tutorial);
+        
+        // Handle start button click
+        const startBtn = document.getElementById('tutorial-start-btn');
+        startBtn.addEventListener('click', () => {
+            // Mark tutorial as seen
+            localStorage.setItem('eyetripvr-tutorial-seen', 'true');
+            console.log('✅ Tutorial marked as seen');
+            
+            // Fade out and remove
+            tutorial.style.animation = 'fadeOut 0.5s ease';
+            tutorial.style.opacity = '0';
+            setTimeout(() => {
+                tutorial.remove();
+            }, 500);
+            
+            // Track analytics
+            if (window.trackVREvent) {
+                window.trackVREvent('tutorial_completed', isMobile ? 'mobile' : 'desktop', 1);
+            }
+        });
+    }
+    
+    // Show narrative introduction for the video
+    showVideoNarrative(videoUrl) {
+        // Import narratives
+        import('./utils/videoGalleryConfig.js').then(module => {
+            const narratives = module.videoNarratives;
+            
+            // Extract video ID from URL
+            let videoId = null;
+            for (const id in narratives) {
+                if (videoUrl.includes(id)) {
+                    videoId = id;
+                    break;
+                }
+            }
+            
+            if (!videoId || !narratives[videoId]) {
+                console.log('📖 No narrative found for this video');
+                return;
+            }
+            
+            const narrative = narratives[videoId];
+            console.log(`📖 Showing narrative: ${narrative.title}`);
+            
+            // Create narrative overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'narrative-overlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                max-width: 600px;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(20px);
+                padding: 40px;
+                border-radius: 20px;
+                text-align: center;
+                color: white;
+                z-index: 15000;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+                border: 2px solid rgba(255, 255, 255, 0.1);
+                animation: narrativeSlideIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            `;
+            
+            overlay.innerHTML = `
+                <div style="font-size: 56px; margin-bottom: 16px;">${narrative.emoji}</div>
+                <h2 style="
+                    font-size: 28px;
+                    margin: 0 0 20px 0;
+                    font-weight: bold;
+                    background: linear-gradient(135deg, #cd00ff, #1976d2);
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
+                ">${narrative.title}</h2>
+                <p style="
+                    font-size: 20px;
+                    font-style: italic;
+                    margin: 16px 0;
+                    color: #ccc;
+                    line-height: 1.6;
+                ">${narrative.story}</p>
+                <div style="
+                    margin: 24px 0;
+                    padding: 20px;
+                    background: rgba(205, 0, 255, 0.1);
+                    border-left: 4px solid #cd00ff;
+                    border-radius: 8px;
+                    font-size: 16px;
+                    line-height: 1.8;
+                    text-align: left;
+                ">${narrative.mission}</div>
+                <div style="
+                    margin-top: 32px;
+                    font-size: 14px;
+                    opacity: 0.6;
+                    animation: pulse 2s ease-in-out infinite;
+                ">Click anywhere to begin...</div>
+            `;
+            
+            // Add animations
+            if (!document.getElementById('narrative-animations')) {
+                const style = document.createElement('style');
+                style.id = 'narrative-animations';
+                style.textContent = `
+                    @keyframes narrativeSlideIn {
+                        from {
+                            opacity: 0;
+                            transform: translate(-50%, -50%) scale(0.8);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translate(-50%, -50%) scale(1);
+                        }
+                    }
+                    @keyframes narrativeSlideOut {
+                        from {
+                            opacity: 1;
+                            transform: translate(-50%, -50%) scale(1);
+                        }
+                        to {
+                            opacity: 0;
+                            transform: translate(-50%, -50%) scale(0.8);
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            document.body.appendChild(overlay);
+            
+            // Remove on click
+            const removeOverlay = () => {
+                overlay.style.animation = 'narrativeSlideOut 0.5s ease';
+                setTimeout(() => overlay.remove(), 500);
+                
+                // Track analytics
+                if (window.trackVREvent) {
+                    window.trackVREvent('narrative_viewed', videoId, 1);
+                }
+            };
+            
+            overlay.addEventListener('click', removeOverlay);
+            
+            // Auto-remove after 8 seconds
+            setTimeout(removeOverlay, 8000);
+            
+        }).catch(err => {
+            console.warn('Failed to load narratives:', err);
+        });
+    }
+    
     // Set volume for experience video
     setVolume(val) {
         if (this.video) {
@@ -1245,28 +1878,56 @@ export class PanoramaPlayer {
     
     // Setup hotspot discovery UI and callbacks
     setupHotspotDiscoveryUI() {
-        // Create or get discovery UI element
-        let discoveryUI = document.querySelector('.hotspot-discovery-ui');
-        if (!discoveryUI) {
-            discoveryUI = document.createElement('div');
-            discoveryUI.className = 'hotspot-discovery-ui';
-            discoveryUI.innerHTML = `🎵 Hidden Sounds: <span class="discovered-count">0</span>/<span class="total-count">10</span>`;
-            document.body.appendChild(discoveryUI);
+        console.log('🎨 Setting up hotspot discovery UI');
+        
+        // Remove any existing UI first
+        const existing = document.querySelector('.hotspot-discovery-ui');
+        if (existing) {
+            existing.remove();
+            console.log('🗑️ Removed existing UI');
         }
         
-        // Update total count
-        const totalCountEl = discoveryUI.querySelector('.total-count');
-        if (totalCountEl && this.hotspotManager) {
-            totalCountEl.textContent = this.hotspotManager.totalHotspots;
-        }
+        // Create fresh discovery UI element
+        const discoveryUI = document.createElement('div');
+        discoveryUI.className = 'hotspot-discovery-ui';
+        discoveryUI.id = 'hotspot-discovery-ui'; // Add ID for easier access
+        
+        // Create counter spans
+        const discoveredSpan = document.createElement('span');
+        discoveredSpan.className = 'discovered-count';
+        discoveredSpan.id = 'discovered-count';
+        discoveredSpan.textContent = '0';
+        
+        const totalSpan = document.createElement('span');
+        totalSpan.className = 'total-count';
+        totalSpan.id = 'total-count';
+        totalSpan.textContent = this.hotspotManager ? this.hotspotManager.totalHotspots : '10';
+        
+        // Build the UI - Use textContent to avoid destroying DOM nodes
+        const labelText = document.createTextNode('🎵 Hidden Sounds: ');
+        const slashText = document.createTextNode('/');
+        
+        discoveryUI.appendChild(labelText);
+        discoveryUI.appendChild(discoveredSpan);
+        discoveryUI.appendChild(slashText);
+        discoveryUI.appendChild(totalSpan);
+        
+        document.body.appendChild(discoveryUI);
+        console.log(`✅ Created discovery UI: 0/${totalSpan.textContent}`);
         
         // Setup discovery callback
         if (this.hotspotManager) {
+            console.log('🎯 Setting up discovery callback');
             this.hotspotManager.onDiscoveryCallback = (hotspot, discovered, total) => {
-                // Update discovery count
-                const discoveredCountEl = discoveryUI.querySelector('.discovered-count');
-                if (discoveredCountEl) {
-                    discoveredCountEl.textContent = discovered;
+                console.log(`🔔 Discovery callback fired! ${discovered}/${total}`);
+                
+                // Update using ID (most reliable)
+                const counterEl = document.getElementById('discovered-count');
+                if (counterEl) {
+                    console.log(`✅ Updating counter from ${counterEl.textContent} to ${discovered}`);
+                    counterEl.textContent = discovered;
+                } else {
+                    console.error('❌ Could not find #discovered-count element!');
                 }
                 
                 // Show UI if hidden
@@ -1274,7 +1935,8 @@ export class PanoramaPlayer {
                     discoveryUI.classList.add('active');
                 }
                 
-                // NO toast notification (removed)
+                // Auto-save progress
+                this.saveProgress();
                 
                 // Check if all discovered
                 if (discovered === total) {
@@ -1283,6 +1945,9 @@ export class PanoramaPlayer {
                     }, 1000);
                 }
             };
+            console.log('✅ Discovery callback registered');
+        } else {
+            console.error('❌ No hotspotManager found!');
         }
     }
     

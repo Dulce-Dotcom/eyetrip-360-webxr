@@ -19,6 +19,8 @@ export class HotspotManager {
         this.audioListener = null;
         this.audioLoader = new THREE.AudioLoader();
         this.currentLoopingAudio = null; // Track currently playing looped sound
+        this.proximityAudio = null; // Audio cue for proximity hints
+        this.lastProximitySound = 0; // Throttle proximity sounds
         
         // Raycaster for interaction detection
         this.raycaster = new THREE.Raycaster();
@@ -336,6 +338,22 @@ export class HotspotManager {
         
         const currentTime = this.video.currentTime;
         
+        // Check proximity for all active hotspots (for audio cues)
+        let maxProximity = 0;
+        this.hotspots.forEach(hotspot => {
+            if (hotspot.visible && !hotspot.discovered) {
+                const proximity = this.checkProximity(hotspot);
+                maxProximity = Math.max(maxProximity, proximity);
+            }
+        });
+        
+        // Play proximity audio cue if very close (throttled to once every 3 seconds)
+        const now = Date.now();
+        if (maxProximity > 0.7 && now - this.lastProximitySound > 3000) {
+            this.playProximitySound();
+            this.lastProximitySound = now;
+        }
+        
         // Show/hide hotspots based on video time
         this.hotspots.forEach(hotspot => {
             const shouldBeVisible = currentTime >= hotspot.time && 
@@ -406,32 +424,37 @@ export class HotspotManager {
     animateHotspot(hotspot, deltaTime) {
         const time = Date.now() * 0.001 * this.pulseSpeed;
         
-        // Pulsing scale with more dramatic effect
-        const scale = 1 + Math.sin(time * 2) * 0.3;
+        // Check proximity to camera view
+        const proximityLevel = this.checkProximity(hotspot);
+        
+        // Pulsing scale with more dramatic effect when in view
+        const baseScale = proximityLevel > 0 ? 1.2 : 1.0; // Larger when camera looking near it
+        const scale = baseScale + Math.sin(time * 2) * 0.3;
         hotspot.mesh.scale.setScalar(scale);
         
-        // Pulse emissive intensity (much brighter)
-        hotspot.mesh.material.emissiveIntensity = 5.0 + Math.sin(time * 3) * 2.0;
+        // Pulse emissive intensity (brighter when in proximity)
+        const baseIntensity = proximityLevel > 0 ? 7.0 : 5.0;
+        hotspot.mesh.material.emissiveIntensity = baseIntensity + Math.sin(time * 3) * 2.0;
         
         // Animate all glow layers for blur effect
         if (hotspot.glowLayers) {
             hotspot.glowLayers.forEach((layer, i) => {
-                const layerScale = 1 + Math.sin(time * 1.5 + i * 0.2) * 0.3;
+                const layerScale = (baseScale + Math.sin(time * 1.5 + i * 0.2) * 0.3) * (proximityLevel > 0 ? 1.3 : 1.0);
                 layer.scale.setScalar(layerScale);
                 
                 // Each layer pulses slightly offset for more organic blur
-                const baseOpacity = 0.5 - (i * 0.1);
+                const baseOpacity = (0.5 - (i * 0.1)) * (proximityLevel > 0 ? 1.5 : 1.0);
                 layer.material.opacity = baseOpacity + Math.sin(time * 2 + i * 0.3) * 0.1;
-                layer.material.emissiveIntensity = (4.0 - i * 0.5) + Math.sin(time * 2.5 + i * 0.2) * 1.0;
+                layer.material.emissiveIntensity = (4.0 - i * 0.5) + Math.sin(time * 2.5 + i * 0.2) * 1.0 + (proximityLevel * 2);
                 
                 // Billboard effect
                 layer.lookAt(this.camera.position);
             });
         }
         
-        // Pulse point light intensity
+        // Pulse point light intensity (brighter when in proximity)
         if (hotspot.pointLight) {
-            hotspot.pointLight.intensity = 3.0 + Math.sin(time * 2) * 1.5;
+            hotspot.pointLight.intensity = (3.0 + proximityLevel * 2.0) + Math.sin(time * 2) * 1.5;
         }
         
         // Rotate particle ring around Y axis (like Saturn's rings)
@@ -454,6 +477,80 @@ export class HotspotManager {
         // Billboard effect - always face camera
         hotspot.mesh.lookAt(this.camera.position);
         hotspot.glowMesh.lookAt(this.camera.position);
+    }
+    
+    /**
+     * Check if camera is looking near a hotspot (proximity hint)
+     * Returns 0 (not near) to 1 (very close to view direction)
+     */
+    checkProximity(hotspot) {
+        if (!hotspot.visible || hotspot.discovered) return 0;
+        
+        // Get camera direction
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        
+        // Get direction from camera to hotspot
+        const hotspotDirection = new THREE.Vector3();
+        hotspotDirection.subVectors(hotspot.mesh.position, this.camera.position).normalize();
+        
+        // Calculate angle between camera direction and hotspot direction
+        const dotProduct = cameraDirection.dot(hotspotDirection);
+        
+        // Convert to degrees
+        const angleDegrees = Math.acos(dotProduct) * (180 / Math.PI);
+        
+        // Proximity levels:
+        // 0-20 degrees: Very close (proximity = 1.0)
+        // 20-45 degrees: Close (proximity = 0.5)
+        // 45+ degrees: Far (proximity = 0)
+        if (angleDegrees <= 20) {
+            return 1.0;
+        } else if (angleDegrees <= 45) {
+            // Linear fade from 1.0 to 0 between 20 and 45 degrees
+            return 1.0 - ((angleDegrees - 20) / 25);
+        }
+        
+        return 0;
+    }
+    
+    /**
+     * Play subtle audio cue when camera is looking near a hotspot
+     */
+    playProximitySound() {
+        if (!this.audioListener) return;
+        
+        // Create proximity audio if it doesn't exist
+        if (!this.proximityAudio) {
+            this.proximityAudio = new THREE.Audio(this.audioListener);
+            
+            // Use a simple beep/chime sound
+            // For now, we'll use the AudioContext to generate a tone
+            const context = this.audioListener.context;
+            if (context.state === 'suspended') {
+                context.resume();
+            }
+            
+            // Create a simple oscillator-based chime sound
+            const oscillator = context.createOscillator();
+            const gainNode = context.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(context.destination);
+            
+            oscillator.frequency.value = 800; // High pitched chime
+            oscillator.type = 'sine';
+            
+            // Quick fade in/out envelope
+            gainNode.gain.setValueAtTime(0, context.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.05); // Fade in
+            gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 0.3); // Fade out
+            
+            oscillator.start(context.currentTime);
+            oscillator.stop(context.currentTime + 0.3);
+            
+            console.log('🔔 Proximity audio cue played');
+        }
     }
     
     /**
@@ -543,7 +640,10 @@ export class HotspotManager {
         
         // Callback for UI update
         if (this.onDiscoveryCallback) {
+            console.log(`📊 Calling discovery callback: ${this.discoveredHotspots.size}/${this.totalHotspots}`);
             this.onDiscoveryCallback(hotspot, this.discoveredHotspots.size, this.totalHotspots);
+        } else {
+            console.warn('⚠️ No onDiscoveryCallback set!');
         }
         
         // Check if all hotspots discovered
