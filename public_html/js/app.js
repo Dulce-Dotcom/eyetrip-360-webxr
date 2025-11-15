@@ -7,6 +7,17 @@ import { WebXRHandler } from './modules/WebXRHandler.js';
 import { AchievementSystem } from './modules/AchievementSystem.js';
 import { ExperienceEnding } from './modules/ExperienceEnding.js';
 
+// 🏆 Chroma Awards Features
+import { CollaborativeMode } from './modules/CollaborativeMode.js';
+import { AdaptiveDifficulty } from './modules/AdaptiveDifficulty.js';
+import { AccessibilitySystem } from './modules/AccessibilitySystem.js';
+import { HapticFeedbackSystem } from './modules/HapticFeedbackSystem.js';
+import { ProceduralHotspotGenerator } from './modules/ProceduralHotspotGenerator.js';
+import { PerformanceMonitor } from './modules/PerformanceMonitor.js';
+import { PWASupport } from './modules/PWASupport.js';
+import { CinematicCamera } from './modules/CinematicCamera.js';
+import { AudioReactiveParticles } from './modules/AudioReactiveParticles.js';
+
 /**
  * Main Application Class
  * Initializes and coordinates all modules for the 360° video player
@@ -23,6 +34,17 @@ class App {
         this.ending = null;
         this.isInitialized = false;
         this.initPromise = null; // Track initialization promise
+        
+        // 🏆 Chroma Awards Features
+        this.collaborative = null;
+        this.adaptiveDiff = null;
+        this.accessibility = null;
+        this.haptics = null;
+        this.procedural = null;
+        this.perfMonitor = null;
+        this.pwaSupport = null;
+        this.cinematicCam = null;
+        this.audioParticles = null;
         
         // Bind methods
         this.init = this.init.bind(this);
@@ -107,6 +129,10 @@ class App {
             console.log('🎬 Setting up experience ending...');
             this.ending = new ExperienceEnding(this.player, this.achievements);
             
+            // Step 4.8: Initialize Chroma Awards Features
+            console.log('🏆 Initializing Chroma Awards features...');
+            this.initializeChromaFeatures();
+            
             // Step 5: Load the first scene automatically (restored)
             console.log('📦 Loading initial scene...');
             this.showLoading(true, 'Loading 360° Experience...');
@@ -134,6 +160,150 @@ class App {
         } catch (error) {
             this.handleError(error);
         }
+    }
+    
+    /**
+     * Initialize Chroma Awards competition features
+     */
+    initializeChromaFeatures() {
+        try {
+            // 1. Performance Monitor (initialize first to track everything)
+            console.log('📊 Initializing Performance Monitor...');
+            this.perfMonitor = new PerformanceMonitor(this.player.renderer, this.player.scene);
+            
+            // 2. PWA Support
+            console.log('📱 Initializing PWA Support...');
+            this.pwaSupport = new PWASupport();
+            this.pwaSupport.setupOfflineDetection();
+            
+            // 3. Haptic Feedback System
+            console.log('📳 Initializing Haptic Feedback...');
+            this.haptics = new HapticFeedbackSystem(this.xrHandler);
+            
+            // 4. Accessibility System
+            console.log('♿ Initializing Accessibility...');
+            this.accessibility = new AccessibilitySystem(this.player, this.player.hotspotManager);
+            this.accessibility.createAccessibilityMenu();
+            window.accessibility = this.accessibility; // Make globally accessible
+            
+            // 5. Adaptive Difficulty System
+            console.log('🎯 Initializing Adaptive Difficulty...');
+            this.adaptiveDiff = new AdaptiveDifficulty(this.player.hotspotManager);
+            
+            // 6. Cinematic Camera System
+            console.log('🎬 Initializing Cinematic Camera...');
+            this.cinematicCam = new CinematicCamera(this.player);
+            
+            // 7. Audio-Reactive Particles (only if audio context exists)
+            if (this.player.audioContext) {
+                console.log('🎨 Initializing Audio-Reactive Particles...');
+                this.audioParticles = new AudioReactiveParticles(
+                    this.player.scene,
+                    this.player.audioContext,
+                    this.player.video
+                );
+            } else {
+                console.log('⚠️ Skipping Audio-Reactive Particles (no audio context)');
+            }
+            
+            // 8. Procedural Hotspot Generator
+            console.log('🎲 Initializing Procedural Generator...');
+            this.procedural = new ProceduralHotspotGenerator(
+                this.player.scene,
+                this.player.audioContext
+            );
+            
+            // 9. Collaborative Mode (optional - requires room ID)
+            // Uncomment when ready to test multiplayer:
+            // console.log('🤝 Initializing Collaborative Mode...');
+            // this.collaborative = new CollaborativeMode(
+            //     this.player.scene,
+            //     this.player.camera,
+            //     'room_' + Math.random().toString(36).substr(2, 9)
+            // );
+            // this.collaborative.connect();
+            
+            console.log('✅ All Chroma Awards features initialized!');
+            
+            // Add keyboard shortcuts for testing features
+            this.setupChromaKeyboardShortcuts();
+            
+        } catch (error) {
+            console.error('❌ Error initializing Chroma features:', error);
+        }
+    }
+    
+    /**
+     * Keyboard shortcuts for Chroma features
+     */
+    setupChromaKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if (!this.isInitialized) return;
+            
+            // Performance Monitor
+            if (e.key === 'p' && e.shiftKey) {
+                if (this.perfMonitor) {
+                    this.perfMonitor.toggle();
+                    console.log('Performance Monitor toggled');
+                }
+            }
+            
+            // Accessibility Menu
+            if (e.key === 'a' && e.shiftKey) {
+                const menu = document.getElementById('accessibility-menu');
+                if (menu) {
+                    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+                }
+            }
+            
+            // Cinematic Camera - Intro sequence
+            if (e.key === 'i' && e.shiftKey) {
+                if (this.cinematicCam) {
+                    this.cinematicCam.playIntroSequence();
+                    console.log('Playing cinematic intro...');
+                }
+            }
+            
+            // Cinematic Camera - Orbit
+            if (e.key === 'o' && e.shiftKey) {
+                if (this.cinematicCam) {
+                    if (this.cinematicCam.isAnimating) {
+                        this.cinematicCam.stop();
+                        console.log('Orbit stopped');
+                    } else {
+                        this.cinematicCam.orbit(30, 8, 'clockwise');
+                        console.log('Orbit started');
+                    }
+                }
+            }
+            
+            // Audio Particles - Toggle
+            if (e.key === 'v' && e.shiftKey) {
+                if (this.audioParticles) {
+                    const current = this.audioParticles.particles?.visible;
+                    this.audioParticles.setVisible(!current);
+                    console.log('Audio particles:', !current ? 'visible' : 'hidden');
+                }
+            }
+            
+            // Haptic Test
+            if (e.key === 't' && e.shiftKey) {
+                if (this.haptics) {
+                    this.haptics.celebrateDiscovery();
+                    console.log('Haptic test triggered');
+                }
+            }
+        });
+        
+        console.log(`
+🎮 Chroma Features Keyboard Shortcuts:
+• Shift+P: Toggle Performance Monitor
+• Shift+A: Toggle Accessibility Menu
+• Shift+I: Play Cinematic Intro
+• Shift+O: Toggle Orbit Camera
+• Shift+V: Toggle Audio Particles
+• Shift+T: Test Haptic Feedback
+        `);
     }
     
     /**

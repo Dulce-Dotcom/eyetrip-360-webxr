@@ -902,6 +902,38 @@ export class HotspotManager {
     }
     
     /**
+     * Find nearest hotspot to camera view (for Chroma features)
+     */
+    findNearestHotspot() {
+        if (!this.camera || this.hotspots.length === 0) return null;
+        
+        let nearest = null;
+        let minDistance = Infinity;
+        
+        // Get camera direction
+        const cameraDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraDirection);
+        
+        this.hotspots.forEach(hotspot => {
+            if (!hotspot.mesh || hotspot.discovered) return;
+            
+            // Get direction to hotspot
+            const hotspotDirection = hotspot.mesh.position.clone().normalize();
+            
+            // Calculate angle between camera and hotspot
+            const angle = Math.acos(cameraDirection.dot(hotspotDirection));
+            const angleDegrees = THREE.MathUtils.radToDeg(angle);
+            
+            if (angleDegrees < minDistance) {
+                minDistance = angleDegrees;
+                nearest = hotspot;
+            }
+        });
+        
+        return nearest ? { hotspot: nearest, distance: minDistance } : null;
+    }
+    
+    /**
      * Reset discovery state
      */
     reset() {

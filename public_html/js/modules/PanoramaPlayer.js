@@ -838,6 +838,34 @@ export class PanoramaPlayer {
             this.miniMap.update();
         }
         
+        // 🏆 Update Chroma Awards features
+        if (window.app) {
+            // Performance Monitor
+            if (window.app.perfMonitor) {
+                window.app.perfMonitor.update();
+            }
+            
+            // Audio-Reactive Particles
+            if (window.app.audioParticles) {
+                window.app.audioParticles.update();
+            }
+            
+            // Adaptive Difficulty (track player performance)
+            if (window.app.adaptiveDiff && this.hotspotManager) {
+                // This is updated via hotspot discovery callbacks
+            }
+            
+            // Haptic Feedback (check proximity to hotspots)
+            if (window.app.haptics && this.hotspotManager) {
+                const nearest = this.hotspotManager.findNearestHotspot();
+                if (nearest && nearest.distance < 45) {
+                    window.app.haptics.continuousProximityUpdate(nearest.hotspot, nearest.distance);
+                } else {
+                    window.app.haptics.continuousProximityUpdate(null, Infinity);
+                }
+            }
+        }
+        
         this.renderer.render(this.scene, this.camera);
     }
 
