@@ -99,6 +99,112 @@
         sessionStorage.setItem('selectedVideo', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
         sessionStorage.setItem('selectedTitle', 'Affirmation Journey: Matrix Caracas Sphere');
         sessionStorage.setItem('isAffirmationMode', 'true'); // Flag for affirmation mode
+        
+        // FOR TESTING: Create mock affirmation data if none exists
+        if (!sessionStorage.getItem('affirmationData')) {
+            console.log('🧪 TEST MODE: Creating mock affirmation data for direct page testing');
+            
+            // Create a simple test audio file (sine wave beep)
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const duration = 3; // 3 seconds
+            const sampleRate = audioContext.sampleRate;
+            const numSamples = duration * sampleRate;
+            const audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+            const channelData = audioBuffer.getChannelData(0);
+            
+            // Generate a simple tone
+            for (let i = 0; i < numSamples; i++) {
+                channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.3;
+            }
+            
+            // Convert to WAV format and then to base64
+            const wav = audioBufferToWav(audioBuffer);
+            const blob = new Blob([wav], { type: 'audio/wav' });
+            const reader = new FileReader();
+            reader.readAsDataURL(blob);
+            reader.onloadend = function() {
+                const base64Audio = reader.result;
+                
+                const mockData = {
+                    responses: {
+                        emotionalTone: 'calming',
+                        currentMood: 'anxious',
+                        focusArea: 'self-love'
+                    },
+                    affirmations: [{
+                        id: 1,
+                        text: "TEST: I am worthy of love and acceptance",
+                        audioData: base64Audio,
+                        playCount: 0
+                    }],
+                    fullAudio: {
+                        audioData: base64Audio,
+                        duration: 3
+                    },
+                    metadata: {
+                        tone: 'calming',
+                        mood: 'anxious',
+                        focus: 'self-love',
+                        generatedAt: new Date().toISOString(),
+                        testMode: true
+                    },
+                    experience: {
+                        id: 1,
+                        title: 'Matrix Caracas',
+                        videoSrc: 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4'
+                    },
+                    timestamp: Date.now()
+                };
+                
+                sessionStorage.setItem('affirmationData', JSON.stringify(mockData));
+                console.log('✅ Mock affirmation data created and stored');
+            };
+        }
+        
+        // Helper function to convert AudioBuffer to WAV
+        function audioBufferToWav(buffer) {
+            const length = buffer.length * buffer.numberOfChannels * 2 + 44;
+            const arrayBuffer = new ArrayBuffer(length);
+            const view = new DataView(arrayBuffer);
+            const channels = [];
+            let offset = 0;
+            let pos = 0;
+            
+            // Write WAV header
+            const setUint16 = (data) => { view.setUint16(pos, data, true); pos += 2; };
+            const setUint32 = (data) => { view.setUint32(pos, data, true); pos += 4; };
+            
+            setUint32(0x46464952); // "RIFF"
+            setUint32(length - 8); // file length - 8
+            setUint32(0x45564157); // "WAVE"
+            setUint32(0x20746d66); // "fmt " chunk
+            setUint32(16); // length = 16
+            setUint16(1); // PCM (uncompressed)
+            setUint16(buffer.numberOfChannels);
+            setUint32(buffer.sampleRate);
+            setUint32(buffer.sampleRate * 2 * buffer.numberOfChannels); // avg. bytes/sec
+            setUint16(buffer.numberOfChannels * 2); // block-align
+            setUint16(16); // 16-bit
+            setUint32(0x61746164); // "data" - chunk
+            setUint32(length - pos - 4); // chunk length
+            
+            // Write interleaved data
+            for (let i = 0; i < buffer.numberOfChannels; i++) {
+                channels.push(buffer.getChannelData(i));
+            }
+            
+            while (pos < length) {
+                for (let i = 0; i < buffer.numberOfChannels; i++) {
+                    let sample = Math.max(-1, Math.min(1, channels[i][offset]));
+                    sample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+                    view.setInt16(pos, sample, true);
+                    pos += 2;
+                }
+                offset++;
+            }
+            
+            return arrayBuffer;
+        }
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -564,6 +670,8 @@
     <!-- Affirmation System Integration -->
     <script type="module">
         import { AffirmationExporter } from './js/modules/AffirmationExporter.js';
+        import { AffirmationSurvey } from './js/modules/AffirmationSurvey.js';
+        import { ElevenLabsService } from './js/modules/ElevenLabsService.js';
         
         // Global affirmation state
         window.affirmationState = {
@@ -571,96 +679,264 @@
             generatedAffirmations: [],
             collectedAffirmations: [],
             userResponses: null,
-            isInitialized: false
+            isInitialized: false,
+            survey: null,
+            elevenLabs: null
         };
         
         console.log('✨ Affirmation experience loading...');
         
-        // DEBUG: Check sessionStorage immediately
-        const testData = sessionStorage.getItem('affirmationData');
-        if (testData) {
-            console.log('✅ Found affirmation data in sessionStorage');
-            try {
-                const parsed = JSON.parse(testData);
-                console.log('📊 Data preview:', {
-                    hasResponses: !!parsed.responses,
-                    hasAffirmations: !!parsed.affirmations,
-                    affirmationCount: parsed.affirmations?.length,
-                    hasFullAudio: !!parsed.fullAudio
-                });
-            } catch (e) {
-                console.error('❌ Invalid JSON in sessionStorage:', e);
+        // Initialize services
+        function initAffirmationServices() {
+            window.affirmationState.survey = new AffirmationSurvey();
+            window.affirmationState.elevenLabs = new ElevenLabsService();
+            
+            // Set up progress callback
+            window.affirmationState.elevenLabs.setProgressCallback((message, percent) => {
+                console.log(`📊 Progress: ${percent}% - ${message}`);
+            });
+            
+            console.log('✅ Affirmation services initialized');
+        }
+        
+        // Check if we need to show survey
+        function checkAffirmationData() {
+            const testData = sessionStorage.getItem('affirmationData');
+            
+            if (testData) {
+                console.log('✅ Found affirmation data in sessionStorage');
+                try {
+                    const parsed = JSON.parse(testData);
+                    console.log('📊 Data preview:', {
+                        hasResponses: !!parsed.responses,
+                        hasAffirmations: !!parsed.affirmations,
+                        affirmationCount: parsed.affirmations?.length,
+                        hasFullAudio: !!parsed.fullAudio
+                    });
+                    
+                    // Data exists, load it properly first
+                    loadAffirmationData();
+                } catch (e) {
+                    console.error('❌ Invalid JSON in sessionStorage:', e);
+                    // Invalid data, start survey
+                    startAffirmationSurvey();
+                }
+            } else {
+                console.warn('⚠️ NO affirmation data - launching survey...');
+                // No data, start survey
+                startAffirmationSurvey();
             }
-        } else {
-            console.warn('⚠️ NO affirmation data in sessionStorage - user must complete survey first!');
+        }
+        
+        // Start affirmation survey
+        function startAffirmationSurvey() {
+            console.log('🎯 Starting affirmation survey...');
+            
+            initAffirmationServices();
+            
+            // Show survey with callback
+            window.affirmationState.survey.show(async (responses, uiCallbacks) => {
+                console.log('📝 Survey completed with responses:', responses);
+                
+                try {
+                    // Update UI callbacks if provided
+                    if (uiCallbacks) {
+                        window.affirmationState.elevenLabs.setProgressCallback((message, percent) => {
+                            console.log(`📊 Progress: ${percent}% - ${message}`);
+                            uiCallbacks.updateProgress(message, percent);
+                            
+                            if (percent > 0 && percent < 30) {
+                                uiCallbacks.updateApiStatus('Connecting...');
+                            } else if (percent >= 30 && percent < 70) {
+                                uiCallbacks.updateApiStatus('Generating...');
+                            } else if (percent >= 70) {
+                                uiCallbacks.updateApiStatus('Processing...');
+                            }
+                        });
+                        
+                        const cacheStats = window.affirmationState.elevenLabs.getCacheStats();
+                        uiCallbacks.updateCacheStatus(cacheStats.size > 0 ? 'Hit!' : 'Miss');
+                    }
+                    
+                    // Generate affirmations
+                    console.log('🎤 Generating affirmations...');
+                    const result = await window.affirmationState.elevenLabs.generateAffirmations(responses);
+                    
+                    console.log('✅ Generation complete!', result);
+                    
+                    // Store in sessionStorage
+                    const affirmationData = {
+                        responses: responses,
+                        affirmations: result.affirmations,
+                        fullAudio: result.fullAudio,
+                        metadata: result.metadata,
+                        experience: {
+                            id: Date.now(),
+                            videoPath: sessionStorage.getItem('selectedVideo'),
+                            videoTitle: sessionStorage.getItem('selectedTitle')
+                        }
+                    };
+                    
+                    sessionStorage.setItem('affirmationData', JSON.stringify(affirmationData));
+                    console.log('💾 Affirmation data saved to sessionStorage');
+                    
+                    // Hide survey
+                    window.affirmationState.survey.hide();
+                    
+                    // Wait a moment, then load the data
+                    setTimeout(() => {
+                        waitForApp();
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('❌ Generation failed:', error);
+                    alert(`Failed to generate affirmations: ${error.message}\\n\\nPlease try again or check your internet connection.`);
+                    
+                    // Hide survey so user can retry
+                    window.affirmationState.survey.hide();
+                }
+            });
         }
         
         // Wait for app to be ready
-        function waitForApp() {
-            if (window.app && window.app.hotspotManager) {
-                console.log('✅ App ready, loading affirmation data');
-                loadAffirmationData();
+        function waitForApp(data) {
+            console.log('⏳ Waiting for app and hotspots...');
+            
+            // Use window.panoramaPlayer directly (set by PanoramaPlayer constructor)
+            if (window.panoramaPlayer && window.panoramaPlayer.hotspotManager) {
+                console.log('✅ PanoramaPlayer ready, hotspotManager exists');
+                // Wait a bit more for hotspots to be created
+                setTimeout(() => {
+                    if (window.panoramaPlayer.hotspotManager.hotspots && window.panoramaPlayer.hotspotManager.hotspots.length > 0) {
+                        console.log(`✅ Hotspots created (${window.panoramaPlayer.hotspotManager.hotspots.length} hotspots)`);
+                        replaceHotspotSounds(data);
+                        // Experience starts automatically - no "Begin Journey" message needed
+                        console.log('✅ Affirmations ready - experience starting automatically');
+                    } else {
+                        console.log('⏳ Hotspots not yet created, waiting...');
+                        setTimeout(() => waitForApp(data), 500);
+                    }
+                }, 1000);
             } else {
-                console.log('⏳ Waiting for app...');
-                setTimeout(waitForApp, 500);
+                console.log('⏳ Waiting for panoramaPlayer.hotspotManager...');
+                setTimeout(() => waitForApp(data), 500);
             }
         }
         
         // Load affirmation data from sessionStorage
         function loadAffirmationData() {
-            if (window.affirmationState.isInitialized) return;
+            console.log('🔍 loadAffirmationData() called');
+            console.log('   - isInitialized:', window.affirmationState.isInitialized);
+            
+            if (window.affirmationState.isInitialized) {
+                console.log('⏭️ Already initialized, skipping');
+                return;
+            }
             
             // Get data from sessionStorage (set by gallery page)
+            console.log('📂 Checking sessionStorage for affirmationData...');
             const storedData = sessionStorage.getItem('affirmationData');
+            console.log('   - storedData exists:', !!storedData);
+            console.log('   - storedData length:', storedData?.length || 0, 'characters');
             
             if (!storedData) {
-                console.error('❌ No affirmation data found! Redirecting to gallery...');
+                console.error('❌ No affirmation data found in sessionStorage!');
+                console.log('🔍 All sessionStorage keys:', Object.keys(sessionStorage));
+                console.error('❌ Cannot proceed without affirmation data');
                 alert('Please start your affirmation journey from the gallery page.');
                 window.location.href = 'gallery.html';
                 return;
             }
             
             try {
+                console.log('🔄 Parsing JSON data...');
                 const data = JSON.parse(storedData);
-                console.log('📦 Loaded affirmation data:', data);
-                console.log('📊 Data details:', {
-                    responsesCount: Object.keys(data.responses || {}).length,
-                    affirmationsCount: data.affirmations?.length || 0,
-                    hasFullAudio: !!data.fullAudio?.url,
-                    experienceId: data.experience?.id,
-                    timestamp: data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A'
-                });
+                console.log('✅ JSON parsed successfully');
+                console.log('📦 Affirmation data structure:');
+                console.log('   - responses:', data.responses);
+                console.log('   - affirmations count:', data.affirmations?.length || 0);
+                console.log('   - first affirmation has audioDataBase64:', !!data.affirmations?.[0]?.audioDataBase64);
+                console.log('   - first affirmation base64 length:', data.affirmations?.[0]?.audioDataBase64?.length || 0);
+                console.log('   - fullAudio has audioDataBase64:', !!data.fullAudio?.audioDataBase64);
+                console.log('   - experience:', data.experience);
+                console.log('   - metadata:', data.metadata);
+                console.log('   - timestamp:', data.timestamp ? new Date(data.timestamp).toLocaleString() : 'N/A');
                 
-                // Validate blob URLs
-                if (data.affirmations && data.affirmations.length > 0) {
-                    console.log('🔍 Validating blob URLs...');
-                    const sampleUrl = data.affirmations[0].url;
-                    console.log('📎 Sample URL:', sampleUrl);
-                    console.log('📎 URL type:', typeof sampleUrl);
-                    console.log('📎 Is blob URL:', sampleUrl?.startsWith('blob:'));
+                // Validate data structure
+                if (!data.affirmations || data.affirmations.length === 0) {
+                    console.error('❌ No affirmations in data!');
+                    throw new Error('Invalid affirmation data: no affirmations found');
+                }
+                
+                if (!data.affirmations[0].audioDataBase64) {
+                    console.error('❌ Affirmations missing audioDataBase64 field!');
+                    console.log('📦 First affirmation structure:', data.affirmations[0]);
+                    throw new Error('Invalid affirmation data: audioDataBase64 field missing');
+                }
+                
+                // Convert base64 back to Audio elements
+                console.log('🔄 Converting base64 to playable Audio elements...');
+                
+                for (let i = 0; i < data.affirmations.length; i++) {
+                    const aff = data.affirmations[i];
                     
-                    // Test if blob URL is accessible
-                    if (sampleUrl?.startsWith('blob:')) {
-                        fetch(sampleUrl, { method: 'HEAD' })
-                            .then(response => {
-                                console.log('✅ Blob URL accessible:', response.ok);
-                            })
-                            .catch(error => {
-                                console.error('❌ Blob URL not accessible:', error);
-                            });
+                    if (aff.audioDataBase64) {
+                        // Remove data URL prefix if present
+                        const base64Data = aff.audioDataBase64.includes(',') 
+                            ? aff.audioDataBase64.split(',')[1] 
+                            : aff.audioDataBase64;
+                        
+                        // Decode base64 to binary
+                        const binaryString = atob(base64Data);
+                        const bytes = new Uint8Array(binaryString.length);
+                        for (let j = 0; j < binaryString.length; j++) {
+                            bytes[j] = binaryString.charCodeAt(j);
+                        }
+                        
+                        // Create blob and Audio element
+                        const blob = new Blob([bytes], { type: 'audio/wav' });
+                        const audioUrl = URL.createObjectURL(blob);
+                        
+                        // Create Audio element WITHOUT loop (play once only)
+                        aff.audio = new Audio(audioUrl);
+                        aff.audio.volume = 1.0;
+                        aff.audio.loop = false; // Play once only
+                        aff.audio.preload = 'auto';
+                        
+                        console.log(`   ✅ Affirmation ${aff.id}: Audio element created (${Math.round(blob.size / 1024)}KB, loop enabled)`);
                     }
                 }
                 
+                // Convert full audio for download
+                if (data.fullAudio && data.fullAudio.audioDataBase64) {
+                    const base64Data = data.fullAudio.audioDataBase64.includes(',')
+                        ? data.fullAudio.audioDataBase64.split(',')[1]
+                        : data.fullAudio.audioDataBase64;
+                    
+                    const binaryString = atob(base64Data);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let j = 0; j < binaryString.length; j++) {
+                        bytes[j] = binaryString.charCodeAt(j);
+                    }
+                    
+                    const blob = new Blob([bytes], { type: 'audio/wav' });
+                    data.fullAudio.downloadUrl = URL.createObjectURL(blob);
+                    data.fullAudio.blob = blob;
+                    
+                    console.log(`   ✅ Full audio ready for download (${Math.round(blob.size / 1024)}KB)`);
+                }
+                
+                // Store in global state
                 window.affirmationState.userResponses = data.responses;
                 window.affirmationState.generatedAffirmations = data.affirmations;
-                
-                // Replace hotspot sounds with generated affirmations
-                replaceHotspotSounds(data.affirmations);
-                
-                // Show ready message
-                showReadyMessage();
-                
+                window.affirmationState.fullAudioData = data.fullAudio;
                 window.affirmationState.isInitialized = true;
+                
+                console.log('✅ Affirmation data loaded and ready');
+                console.log(`📊 ${data.affirmations.length} affirmation(s) with Audio elements`);
+                
+                // Wait for app and hotspots to be ready, then replace sounds
+                waitForApp(data);
                 
             } catch (error) {
                 console.error('❌ Error loading affirmation data:', error);
@@ -671,54 +947,253 @@
         }
         
         // Replace hotspot sounds with generated affirmations
-        function replaceHotspotSounds(affirmations) {
-            if (!window.app || !window.app.hotspotManager) {
-                console.error('❌ HotspotManager not available');
+        function replaceHotspotSounds(data) {
+            console.log('🎯 ========================================');
+            console.log('🎯 REPLACING HOTSPOT SOUNDS');
+            console.log('🎯 ========================================');
+            console.log('   - window.panoramaPlayer exists:', !!window.panoramaPlayer);
+            console.log('   - window.panoramaPlayer.hotspotManager exists:', !!(window.panoramaPlayer && window.panoramaPlayer.hotspotManager));
+            
+            if (!window.panoramaPlayer || !window.panoramaPlayer.hotspotManager) {
+                console.error('❌ HotspotManager not available, retrying in 500ms...');
+                setTimeout(() => replaceHotspotSounds(data), 500);
                 return;
             }
             
-            const hotspots = window.app.hotspotManager.hotspots;
-            console.log(`🎯 Replacing sounds for ${hotspots.length} hotspots with play-twice logic`);
-            console.log(`📝 Affirmations to assign:`, affirmations);
+            const hotspots = window.panoramaPlayer.hotspotManager.hotspots;
+            const affirmations = data.affirmations;
             
-            // Initialize play count tracker
-            if (!window.affirmationState.playCount) {
-                window.affirmationState.playCount = {};
+            console.log('   - hotspots array exists:', !!hotspots);
+            console.log('   - hotspots.length:', hotspots?.length);
+            console.log('   - affirmations.length:', affirmations?.length);
+            
+            // Wait for hotspots to be created
+            if (!hotspots || hotspots.length === 0) {
+                console.log('⏳ Hotspots not yet created (length=0), waiting 500ms...');
+                setTimeout(() => replaceHotspotSounds(data), 500);
+                return;
             }
             
-            // Replace each hotspot's sound with an affirmation
-            hotspots.forEach((hotspot, index) => {
-                if (index < affirmations.length && affirmations[index].url) {
-                    console.log(`   🔄 Hotspot ${index}: Original="${hotspot.sound}" → New="${affirmations[index].url}"`);
+            if (!affirmations || affirmations.length === 0) {
+                console.error('❌ No affirmations to assign!');
+                return;
+            }
+            
+            // Replace the first N hotspots where N = number of affirmations
+            const replaceCount = Math.min(hotspots.length, affirmations.length);
+            console.log(`📝 Will replace ${replaceCount} hotspot(s) with affirmations`);
+            console.log(`📝 Remaining ${hotspots.length - replaceCount} hotspot(s) will keep hunt sounds`);
+            
+            let successCount = 0;
+            
+            for (let i = 0; i < replaceCount; i++) {
+                const hotspot = hotspots[i];
+                const affirmation = affirmations[i];
+                
+                if (!affirmation.audio) {
+                    console.error(`❌ Hotspot ${i}: Affirmation ${affirmation.id} has no audio element!`);
+                    continue;
+                }
+                
+                // Store original for debugging
+                const originalSound = hotspot.sound;
+                const originalLabel = hotspot.label;
+                
+                // REPLACE the audio element directly
+                hotspot.audio = affirmation.audio;
+                hotspot.isRegularAudio = true; // Flag that it's HTML5 Audio
+                
+                // Update the label to show FULL affirmation text (not truncated)
+                hotspot.label = affirmation.text;
+                
+                // Store affirmation metadata
+                hotspot.affirmationId = affirmation.id;
+                hotspot.affirmationText = affirmation.text;
+                hotspot.isAffirmation = true;
+                
+                console.log(`✅ Hotspot ${i + 1}: Replaced sound and label`);
+                console.log(`   - Original sound: ${originalSound}`);
+                console.log(`   - Original label: ${originalLabel}`);
+                console.log(`   - New label: "${hotspot.label}"`);
+                console.log(`   - Audio ready: ${!!affirmation.audio}`);
+                
+                successCount++;
+            }
+            
+            console.log('🎯 ========================================');
+            console.log(`✅ REPLACEMENT COMPLETE: ${successCount}/${replaceCount} successful`);
+            console.log('🎯 ========================================');
+            
+            // Setup download UI when all affirmations found
+            setupDownloadTracking(data);
+        }
+        
+        // Setup download tracking
+        function setupDownloadTracking(data) {
+            console.log('📊 Setting up download tracking...');
+            console.log(`   - Tracking ${data.affirmations.length} affirmation(s)`);
+            
+            // Track which affirmations have been found
+            if (!window.affirmationState.foundAffirmations) {
+                window.affirmationState.foundAffirmations = new Set();
+            }
+            
+            // Listen for hotspot discovery
+            const hotspotManager = window.panoramaPlayer.hotspotManager;
+            if (hotspotManager) {
+                // Store original callback if it exists
+                const originalCallback = hotspotManager.onHotspotClick;
+                
+                // Override with our tracking
+                hotspotManager.onHotspotClick = function(hotspot) {
+                    // Call original if it exists
+                    if (originalCallback) {
+                        originalCallback.call(this, hotspot);
+                    }
                     
-                    // Store original sound
-                    hotspot.originalSound = hotspot.sound;
+                    // Track affirmation discovery
+                    if (hotspot.isAffirmation && hotspot.affirmationId) {
+                        window.affirmationState.foundAffirmations.add(hotspot.affirmationId);
+                        
+                        const foundCount = window.affirmationState.foundAffirmations.size;
+                        const totalCount = data.affirmations.length;
+                        
+                        console.log(`✅ Found affirmation ${hotspot.affirmationId}: ${foundCount}/${totalCount}`);
+                        
+                        // Check if all found
+                        if (foundCount === totalCount) {
+                            console.log('� All affirmations discovered!');
+                            setTimeout(() => showDownloadUI(data), 2000);
+                        }
+                    }
+                };
+                
+                console.log('✅ Download tracking setup complete');
+            } else {
+                console.error('❌ Could not setup download tracking: hotspotManager not found');
+            }
+        }
+        
+        // Show download UI when all affirmations found
+        function showDownloadUI(data) {
+            console.log('💾 ========================================');
+            console.log('💾 ALL AFFIRMATIONS FOUND!');
+            console.log('💾 Showing download UI...');
+            console.log('💾 ========================================');
+            
+            // Create download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.id = 'download-affirmations-btn';
+            downloadBtn.innerHTML = `
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="margin-right: 8px;">
+                    <path d="M19 12v7H5v-7H3v7c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2zm-6 .67l2.59-2.58L17 11.5l-5 5-5-5 1.41-1.41L11 12.67V3h2z"/>
+                </svg>
+                Download My Affirmations (${data.affirmations.length} tracks)
+            `;
+            downloadBtn.style.cssText = `
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                padding: 16px 32px;
+                border-radius: 50px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: pointer;
+                z-index: 10001;
+                display: flex;
+                align-items: center;
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.5);
+                animation: pulse 2s ease-in-out infinite;
+                transition: all 0.3s ease;
+            `;
+            
+            downloadBtn.addEventListener('mouseenter', () => {
+                downloadBtn.style.transform = 'translateX(-50%) scale(1.05)';
+                downloadBtn.style.boxShadow = '0 6px 30px rgba(102, 126, 234, 0.7)';
+            });
+            
+            downloadBtn.addEventListener('mouseleave', () => {
+                downloadBtn.style.transform = 'translateX(-50%) scale(1)';
+                downloadBtn.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.5)';
+            });
+            
+            downloadBtn.addEventListener('click', () => {
+                if (data.fullAudio && data.fullAudio.downloadUrl) {
+                    console.log('💾 Initiating download...');
+                    console.log('   - URL:', data.fullAudio.downloadUrl.substring(0, 50) + '...');
+                    console.log('   - Duration:', data.fullAudio.duration, 'seconds');
+                    console.log('   - Size:', Math.round(data.fullAudio.blob?.size / 1024) || 'unknown', 'KB');
                     
-                    // Replace with affirmation
-                    hotspot.sound = affirmations[index].url;
-                    hotspot.affirmationText = affirmations[index].text;
-                    hotspot.affirmationIndex = index;
-                    hotspot.affirmationId = affirmations[index].id;
+                    const a = document.createElement('a');
+                    a.href = data.fullAudio.downloadUrl;
+                    a.download = `my-affirmations-${new Date().toISOString().split('T')[0]}.wav`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
                     
-                    // Initialize play count for this affirmation
-                    window.affirmationState.playCount[affirmations[index].id] = 0;
+                    console.log('✅ Download started!');
                     
-                    console.log(`   ✅ Hotspot ${index + 1}: "${affirmations[index].text.substring(0, 40)}..." [0/2 plays]`);
+                    // Show success message
+                    downloadBtn.innerHTML = `
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white" style="margin-right: 8px;">
+                            <path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
+                        </svg>
+                        Download Started!
+                    `;
+                    downloadBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                    
+                    setTimeout(() => {
+                        downloadBtn.style.opacity = '0';
+                        setTimeout(() => downloadBtn.remove(), 300);
+                    }, 3000);
                 } else {
-                    console.log(`   ⚠️ Hotspot ${index}: No affirmation available (index: ${index}, total: ${affirmations.length})`);
+                    console.error('❌ No download URL available');
+                    console.log('   - fullAudio:', data.fullAudio);
+                    alert('Sorry, unable to download affirmations. Please try again.');
                 }
             });
             
-            console.log('✅ Hotspot sounds replaced with affirmations (play-twice enabled)');
-            console.log('🎯 Final hotspot states:', hotspots.map((h, i) => ({
-                index: i,
-                sound: h.sound,
-                hasAffirmation: !!h.affirmationText
-            })));
+            document.body.appendChild(downloadBtn);
+            
+            // Add pulse animation if not already in page
+            if (!document.getElementById('download-pulse-style')) {
+                const style = document.createElement('style');
+                style.id = 'download-pulse-style';
+                style.textContent = `
+                    @keyframes pulse {
+                        0%, 100% { transform: translateX(-50%) scale(1); }
+                        50% { transform: translateX(-50%) scale(1.05); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            console.log('✅ Download button added to page');
         }
         
         // Show ready message
         function showReadyMessage() {
+            console.log('✨ Showing "Your Journey Awaits" message...');
+            
+            // CRITICAL: Stop/hide the default intro sequence if it exists
+            if (window.app && window.app.player && window.app.player.introSequence) {
+                console.log('🛑 Hiding default intro sequence');
+                window.app.player.introSequence.hide();
+            }
+            
+            // CRITICAL: Pause the video if it's playing
+            if (window.app && window.app.player && window.app.player.videoManager) {
+                const video = window.app.player.videoManager.getCurrentVideo();
+                if (video && !video.paused) {
+                    console.log('⏸️ Pausing video until user clicks Begin Journey');
+                    video.pause();
+                }
+            }
+            
             const overlay = document.createElement('div');
             overlay.className = 'affirmation-ready-overlay';
             overlay.style.cssText = `
@@ -732,7 +1207,7 @@
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                z-index: 9999;
+                z-index: 99999;
                 opacity: 0;
                 transition: opacity 0.3s ease;
             `;
@@ -751,7 +1226,7 @@
                     <p style="color: rgba(255, 255, 255, 0.7); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem;">
                         Discover the glowing hotspots in this immersive 360° experience to hear your unique messages.
                     </p>
-                    <button onclick="this.closest('.affirmation-ready-overlay').remove(); document.getElementById('playBtn').click();" 
+                    <button id="begin-journey-btn"
                             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 1.25rem 3rem; border-radius: 12px; font-size: 1.2rem; font-weight: 600; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);">
                         Begin Journey ✨
                     </button>
@@ -759,6 +1234,37 @@
             `;
             
             document.body.appendChild(overlay);
+            
+            // Add click handler to start the experience
+            const beginBtn = overlay.querySelector('#begin-journey-btn');
+            beginBtn.onclick = function() {
+                console.log('🚀 User clicked Begin Journey - starting experience');
+                
+                // Remove overlay
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 300);
+                
+                // Start/resume the video
+                if (window.app && window.app.player && window.app.player.videoManager) {
+                    const video = window.app.player.videoManager.getCurrentVideo();
+                    if (video) {
+                        console.log('▶️ Starting video playback');
+                        video.play().catch(err => {
+                            console.error('❌ Error playing video:', err);
+                        });
+                    }
+                }
+                
+                // Track event
+                if (typeof gtag !== 'undefined') {
+                    gtag('event', 'affirmation_journey_started', {
+                        emotional_tone: window.affirmationState.userResponses.emotionalTone,
+                        focus_area: window.affirmationState.userResponses.focusArea
+                    });
+                }
+            };
+            
+            // Fade in
             setTimeout(() => overlay.style.opacity = '1', 10);
         }
         
@@ -938,10 +1444,51 @@
         
         // Start initialization when page loads
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', waitForApp);
+            document.addEventListener('DOMContentLoaded', checkAffirmationData);
         } else {
-            waitForApp();
+            checkAffirmationData();
         }
+        
+        // CRITICAL: Log immediately on page load
+        console.log('🚀 ========================================');
+        console.log('🚀 AFFIRMATION1.HTML PAGE LOADED');
+        console.log('🚀 ========================================');
+        console.log('📂 Checking sessionStorage immediately...');
+        const immediateCheck = sessionStorage.getItem('affirmationData');
+        console.log('   - sessionStorage.affirmationData exists:', !!immediateCheck);
+        console.log('   - sessionStorage.affirmationData length:', immediateCheck?.length || 0);
+        console.log('   - All sessionStorage keys:', Object.keys(sessionStorage));
+        if (immediateCheck) {
+            try {
+                const parsed = JSON.parse(immediateCheck);
+                console.log('✅ Data found! Preview:', {
+                    affirmationCount: parsed.affirmations?.length,
+                    hasFullAudio: !!parsed.fullAudio,
+                    timestamp: parsed.timestamp
+                });
+                
+                // CRITICAL: Extract video path from experience data and set it BEFORE app.js uses it
+                if (parsed.experience && parsed.experience.videoSrc) {
+                    // Use path as-is from gallery (already correct for pages inside public_html/)
+                    let videoPath = parsed.experience.videoSrc;
+                    console.log('🎥 Setting video path from experience data:', videoPath);
+                    sessionStorage.setItem('selectedVideo', videoPath);
+                    sessionStorage.setItem('selectedTitle', parsed.experience.title || 'Affirmation Journey');
+                    console.log('   ✅ Video path set in sessionStorage');
+                } else {
+                    console.warn('⚠️ No videoSrc in experience data, using default');
+                }
+            } catch (e) {
+                console.error('❌ Invalid JSON:', e);
+            }
+        } else {
+            console.error('❌ NO DATA IN SESSIONSTORAGE ON PAGE LOAD!');
+            console.log('🔍 This means either:');
+            console.log('   1. Data was never stored on gallery page');
+            console.log('   2. SessionStorage was cleared during navigation');
+            console.log('   3. We are on a different domain/port');
+        }
+        console.log('🚀 ========================================');
     </script>
     
     <!-- PWA Service Worker Registration -->

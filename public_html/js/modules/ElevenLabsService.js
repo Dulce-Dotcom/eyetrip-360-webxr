@@ -10,7 +10,7 @@ export class ElevenLabsService {
         this.baseUrl = 'https://api.elevenlabs.io/v1';
         
         // DEBUG MODE - Set to true for testing without API calls
-        this.TEST_MODE = false;
+        this.TEST_MODE = false;  // ← DISABLED - Using real ElevenLabs API now
         
         // Cache for generated audio to avoid regeneration
         this.audioCache = new Map();
@@ -216,6 +216,7 @@ export class ElevenLabsService {
                 text: testText,
                 audioBuffer: decodedBuffer,
                 url: url,
+                blob: blob,  // ← ADD: Store the blob itself
                 startTime: 0,
                 endTime: decodedBuffer.duration,
                 tone: responses.emotionalTone,
@@ -234,7 +235,8 @@ export class ElevenLabsService {
                     buffer: decodedBuffer,
                     blob: fullBlob,
                     url: fullUrl,
-                    duration: decodedBuffer.duration
+                    duration: decodedBuffer.duration,
+                    rawData: audioBuffer  // ← ADD: Store the raw ArrayBuffer
                 },
                 metadata: {
                     tone: responses.emotionalTone,
@@ -274,17 +276,35 @@ export class ElevenLabsService {
     /**
      * Generate mock affirmations for testing
      */
-    generateMockAffirmations(responses) {
+    async generateMockAffirmations(responses) {
         console.log('🧪 Generating mock affirmations...');
+        
+        // Create a simple test audio (sine wave beep)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const duration = 3;
+        const sampleRate = audioContext.sampleRate;
+        const numSamples = duration * sampleRate;
+        const audioBuffer = audioContext.createBuffer(1, numSamples, sampleRate);
+        const channelData = audioBuffer.getChannelData(0);
+        
+        // Generate 440Hz tone
+        for (let i = 0; i < numSamples; i++) {
+            channelData[i] = Math.sin(2 * Math.PI * 440 * i / sampleRate) * 0.3;
+        }
+        
+        // Convert to blob
+        const blob = await this.audioBufferToBlob(audioBuffer);
+        const url = URL.createObjectURL(blob);
         
         const mockAffirmations = [
             {
                 id: 1,
-                text: "You are amazing and worthy of love.",
-                audioBuffer: null,
-                url: 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEA...',
+                text: "TEST: You are amazing and worthy of love.",
+                audioBuffer: audioBuffer,
+                url: url,
+                blob: blob,  // Include the blob
                 startTime: 0,
-                endTime: 3,
+                endTime: duration,
                 tone: responses.emotionalTone,
                 mood: responses.currentMood,
                 focus: responses.focusArea,
@@ -297,10 +317,10 @@ export class ElevenLabsService {
         return {
             affirmations: mockAffirmations,
             fullAudio: {
-                buffer: null,
-                blob: null,
-                url: null,
-                duration: 3
+                buffer: audioBuffer,
+                blob: blob,
+                url: url,
+                duration: duration
             },
             metadata: {
                 tone: responses.emotionalTone,
