@@ -1245,24 +1245,30 @@
     <!-- Mobile-Only Performance Script (Does not affect Desktop/VR) -->
     <script src="js/mobile-performance.js"></script>
     
-    <!-- Wallet Connection Widget (Gallery Only) -->
-    <div class="wallet-widget">
-        <button id="walletConnectBtn" onclick="handleWalletConnect()">
-            🦊 Connect MetaMask
-        </button>
-        
-        <div id="walletInfo">
-            <div class="wallet-info-row">
-                <span class="wallet-info-label">Address:</span>
-                <span class="wallet-info-value" id="walletAddress">-</span>
-            </div>
-            <div class="wallet-info-row">
-                <span class="wallet-info-label">Network:</span>
-                <span class="wallet-info-value" id="walletNetwork">-</span>
-            </div>
+    <!-- Wallet Connection Widget (Gallery Only) - Collapsible Slide-out -->
+    <div class="wallet-widget collapsed">
+        <div class="wallet-tab" id="walletTab"></div>
+        <div class="wallet-close" id="walletClose">×</div>
+        <div class="wallet-content">
+            <div class="wallet-title">💎 Web3 Wallet</div>
+            <button id="walletConnectBtn" onclick="handleWalletConnect()">
+                <span>🦊</span>
+                <span>Connect Wallet</span>
+            </button>
             
-            <div class="demo-badge">
-                🎭 DEMO MODE - Active after Chroma Awards
+            <div id="walletInfo">
+                <div class="wallet-info-row">
+                    <span class="wallet-info-label">Address:</span>
+                    <span class="wallet-info-value" id="walletAddress">-</span>
+                </div>
+                <div class="wallet-info-row">
+                    <span class="wallet-info-label">Network:</span>
+                    <span class="wallet-info-value" id="walletNetwork">-</span>
+                </div>
+                
+                <div class="demo-badge">
+                    🎭 DEMO MODE - Active after Chroma Awards
+                </div>
             </div>
         </div>
     </div>
@@ -1270,8 +1276,40 @@
     <!-- Wallet Connection Script -->
     <script src="js/wallet-connect.js"></script>
     <script>
+    // Wallet Widget Collapse/Expand Logic
+    const walletWidget = document.querySelector('.wallet-widget');
+    const walletTab = document.getElementById('walletTab');
+    const walletClose = document.getElementById('walletClose');
+
+    // Toggle collapse state
+    function toggleWallet() {
+        walletWidget.classList.toggle('collapsed');
+    }
+
+    // Expand wallet
+    function expandWallet() {
+        walletWidget.classList.remove('collapsed');
+    }
+
+    // Collapse wallet
+    function collapseWallet() {
+        walletWidget.classList.add('collapsed');
+    }
+
+    // Click on tab to expand
+    walletTab.addEventListener('click', expandWallet);
+
+    // Click on close button to collapse
+    walletClose.addEventListener('click', collapseWallet);
+
+    // Auto-expand when wallet connects
+    const originalHandleWalletConnect = handleWalletConnect;
+    
     async function handleWalletConnect() {
         const btn = document.getElementById('walletConnectBtn');
+        
+        // Always expand when user interacts
+        expandWallet();
         
         if (window.walletManager.isConnected()) {
             // Disconnect
@@ -1279,7 +1317,7 @@
             return;
         }
         
-        btn.innerHTML = '⏳ Connecting...';
+        btn.innerHTML = '<span>⏳</span><span>Connecting...</span>';
         btn.disabled = true;
         
         const result = await window.walletManager.connectWallet();
@@ -1299,7 +1337,7 @@
             }
         } else {
             console.error('❌ Connection failed:', result.error);
-            btn.innerHTML = '🦊 Connect MetaMask';
+            btn.innerHTML = '<span>🦊</span><span>Connect Wallet</span>';
             showNotification('❌ ' + result.error, 'error');
         }
     }
