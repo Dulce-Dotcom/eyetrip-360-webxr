@@ -1937,11 +1937,10 @@ body.high-contrast a {
     inset: 0;
     background:
         linear-gradient(135deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
-        url('../images/EyeTrip-Screenshot1.png');
+        url('../images/EyeTrip-Screenshot3.png');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    animation: backgroundFade 24s ease-in-out infinite;
     opacity: 0.95;
     z-index: 0;
 }
@@ -1949,29 +1948,6 @@ body.high-contrast a {
 .affirmation-survey-overlay > * {
     position: relative;
     z-index: 1;
-}
-
-@keyframes backgroundFade {
-    0%, 100% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot1.png');
-    }
-    25% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot2.png');
-    }
-    50% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot3.png');
-    }
-    75% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot4.png');
-    }
 }
 
 .affirmation-survey-overlay.visible {
@@ -2497,7 +2473,7 @@ body.high-contrast a {
     height: 100%;
     background: 
         linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-        url('../images/EyeTrip-Screenshot1.png');
+        url('../images/EyeTrip-Screenshot4.png');
     background-size: cover;
     background-position: center;
     backdrop-filter: blur(8px);
@@ -2507,30 +2483,6 @@ body.high-contrast a {
     z-index: 10001;
     opacity: 0;
     transition: opacity 0.3s ease;
-    animation: backgroundFade 20s ease-in-out infinite;
-}
-
-@keyframes backgroundFade {
-    0%, 100% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot1.png');
-    }
-    25% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot2.png');
-    }
-    50% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot3.png');
-    }
-    75% {
-        background-image: 
-            linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-            url('../images/EyeTrip-Screenshot4.png');
-    }
 }
 
 .progress-card {
