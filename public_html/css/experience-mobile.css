@@ -1,0 +1,222 @@
+/* Mobile Responsive Styles for VR Experience Pages */
+/* Shared across video1-4.html and affirmation pages */
+
+@media (max-width: 768px) {
+    /* Top Bar / Header */
+    .md-top-bar {
+        padding: 0.5rem 0.75rem !important;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+    
+    .md-title {
+        font-size: 0.9rem !important;
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .md-title img {
+        height: 30px !important;
+        margin-right: 8px !important;
+    }
+    
+    .md-title span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    /* Buttons */
+    .md-button, button {
+        padding: 8px !important;
+        min-width: 40px !important;
+        min-height: 44px; /* Touch-friendly */
+    }
+    
+    .material-icons {
+        font-size: 20px !important;
+    }
+    
+    /* Controls Bar */
+    #controls {
+        padding: 0.75rem 0.5rem !important;
+        gap: 0.5rem !important;
+        flex-wrap: wrap;
+        justify-content: center;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+    
+    #controls button {
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        min-width: auto !important;
+        white-space: nowrap;
+    }
+    
+    #controls .material-icons {
+        font-size: 18px !important;
+    }
+    
+    /* Volume slider on mobile */
+    #mainVolume {
+        max-width: 80px !important;
+    }
+    
+    /* Modals */
+    .modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 90vh;
+        overflow-y: auto;
+        padding: 1.25rem !important;
+        margin: 1rem;
+    }
+    
+    .modal h2 {
+        font-size: 1.3rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+    
+    .modal p, .modal ul {
+        font-size: 0.9rem !important;
+        line-height: 1.5 !important;
+    }
+    
+    .modal button {
+        padding: 0.75rem 1.5rem !important;
+        font-size: 0.95rem !important;
+    }
+    
+    /* Video List Menu */
+    #videoList {
+        width: 90% !important;
+        max-width: 300px !important;
+        max-height: 70vh;
+        overflow-y: auto;
+    }
+    
+    /* Gallery Grid in modals */
+    .gallery-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+        padding: 0 0.25rem;
+    }
+    
+    .gallery-item {
+        margin-bottom: 0.5rem;
+    }
+    
+    .gallery-thumb {
+        height: 150px !important;
+        object-fit: cover;
+    }
+    
+    /* Canvas Container */
+    #canvas-container, #container {
+        width: 100vw !important;
+        height: 100vh !important;
+        position: fixed;
+        top: 0;
+        left: 0;
+    }
+    
+    canvas {
+        width: 100% !important;
+        height: 100% !important;
+        touch-action: none; /* Prevent default touch behaviors */
+    }
+    
+    /* Progress Bar */
+    #videoProgressBar {
+        height: 4px !important;
+    }
+    
+    /* Achievement Notifications */
+    .achievement-notification {
+        max-width: 90% !important;
+        padding: 0.75rem !important;
+        font-size: 0.85rem !important;
+    }
+    
+    /* Hotspot Labels */
+    .hotspot-label {
+        font-size: 0.8rem !important;
+        padding: 0.25rem 0.5rem !important;
+        max-width: 150px !important;
+    }
+    
+    /* Mini-map */
+    .mini-map {
+        width: 80px !important;
+        height: 80px !important;
+        bottom: 60px !important;
+        right: 10px !important;
+    }
+    
+    /* VR Menu */
+    .vr-menu {
+        max-width: 90% !important;
+    }
+    
+    /* Hide desktop hover effects on touch devices */
+    @media (hover: none) {
+        .gallery-thumb:hover,
+        .gallery-item:hover,
+        button:hover {
+            transform: none !important;
+            box-shadow: none !important;
+        }
+        
+        /* Show active/pressed state instead */
+        button:active,
+        .md-button:active {
+            transform: scale(0.95) !important;
+            opacity: 0.8;
+        }
+    }
+    
+    /* Landscape orientation on mobile */
+    @media (orientation: landscape) and (max-height: 500px) {
+        .md-top-bar {
+            padding: 0.25rem 0.5rem !important;
+        }
+        
+        #controls {
+            padding: 0.5rem !important;
+            gap: 0.25rem !important;
+        }
+        
+        #controls button {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.75rem !important;
+        }
+    }
+    
+    /* Performance optimizations for mobile */
+    * {
+        -webkit-tap-highlight-color: rgba(0, 0, 0, 0.1);
+    }
+    
+    body {
+        overflow: hidden; /* Prevent scrolling during experience */
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Tablet (portrait) specific adjustments */
+@media (min-width: 769px) and (max-width: 1024px) and (orientation: portrait) {
+    .md-top-bar {
+        padding: 0.75rem 1rem !important;
+    }
+    
+    #controls {
+        padding: 1rem !important;
+    }
+    
+    .modal-content {
+        width: 80% !important;
+        max-width: 600px !important;
+    }
+}

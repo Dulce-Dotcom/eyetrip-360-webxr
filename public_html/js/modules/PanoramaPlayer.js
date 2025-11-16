@@ -162,19 +162,91 @@ export class PanoramaPlayer {
 
     // Create renderer and enable WebXR
     setupRenderer() {
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setClearColor(0x000000, 0); // Transparent background
-        this.renderer.setPixelRatio(window.devicePixelRatio);
-        this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.xr.enabled = true;
-        // Fix brightness/gamma for VR headsets (Meta Quest)
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 0.85; // Reduce brightness slightly
-        this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-        this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
-        this.renderer.domElement.style.transition = 'opacity 0.5s ease';
-        this.container.appendChild(this.renderer.domElement);
-        this.renderer.setAnimationLoop(this.animate.bind(this));
+        try {
+            // Check WebGL support before creating renderer
+            const canvas = document.createElement('canvas');
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+            
+            if (!gl) {
+                console.error('[PanoramaPlayer] WebGL not supported on this device');
+                this.showWebGLError();
+                return;
+            }
+            
+            // Mobile-friendly renderer settings
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const rendererConfig = {
+                antialias: !isMobile, // Disable antialiasing on mobile for performance
+                alpha: true,
+                powerPreference: isMobile ? 'default' : 'high-performance',
+                precision: isMobile ? 'mediump' : 'highp',
+                stencil: false, // Disable stencil buffer to save memory on mobile
+                depth: true
+            };
+            
+            this.renderer = new THREE.WebGLRenderer(rendererConfig);
+            this.renderer.setClearColor(0x000000, 0); // Transparent background
+            
+            // Set pixel ratio - cap at 2 for mobile to prevent memory issues
+            const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio;
+            this.renderer.setPixelRatio(pixelRatio);
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.xr.enabled = true;
+            
+            // Fix brightness/gamma for VR headsets (Meta Quest)
+            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            this.renderer.toneMappingExposure = 0.85; // Reduce brightness slightly
+            this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
+            this.renderer.domElement.style.transition = 'opacity 0.5s ease';
+            this.container.appendChild(this.renderer.domElement);
+            this.renderer.setAnimationLoop(this.animate.bind(this));
+            
+            console.log(`[PanoramaPlayer] Renderer initialized (${isMobile ? 'Mobile' : 'Desktop'} mode, pixelRatio: ${pixelRatio})`);
+        } catch (error) {
+            console.error('[PanoramaPlayer] Error initializing renderer:', error);
+            this.showWebGLError();
+        }
+    }
+    
+    // Show user-friendly error message when WebGL fails
+    showWebGLError() {
+        const errorDiv = document.createElement('div');
+        errorDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 0, 0, 0.9);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 90%;
+            width: 400px;
+            text-align: center;
+            z-index: 10000;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        `;
+        errorDiv.innerHTML = `
+            <h3 style="margin: 0 0 1rem 0;">⚠️ WebGL Not Available</h3>
+            <p style="margin: 0 0 1rem 0; font-size: 0.95rem;">
+                This experience requires WebGL support, which is not available on your device or browser.
+            </p>
+            <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">
+                Try using a different browser or updating your current one.
+            </p>
+            <button onclick="window.history.back()" style="
+                margin-top: 1.5rem;
+                padding: 0.75rem 1.5rem;
+                background: white;
+                color: #ff0000;
+                border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+            ">← Go Back</button>
+        `;
+        document.body.appendChild(errorDiv);
     }
 
     // Create sphere and apply video texture (or fallback)
