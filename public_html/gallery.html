@@ -69,6 +69,17 @@
             border-bottom: 1px solid rgba(240, 248, 255, 0.1);
         }
 
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin: 0;
+            color: #f0f8ff;
+        }
+
         .logo img {
             height: 50px;
             width: auto;
@@ -320,6 +331,20 @@
                 flex-wrap: wrap;
             }
 
+            .header-title {
+                font-size: 1.3rem;
+                position: static;
+                transform: none;
+                width: 100%;
+                text-align: center;
+                order: 3;
+                margin-top: 0.75rem;
+            }
+
+            .logo {
+                order: 1;
+            }
+
             .mobile-menu-toggle {
                 display: block;
                 background: none;
@@ -330,6 +355,7 @@
                 padding: 0.5rem;
                 border-radius: 8px;
                 transition: all 0.3s ease;
+                order: 2;
             }
 
             .nav-links {
@@ -474,6 +500,39 @@
             }
         }
 
+        /* Tablet / iPad Landscape (769px - 1024px) */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .header-title {
+                font-size: 1.6rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+                padding: 0 1rem;
+            }
+
+            .gallery-container {
+                padding: 5rem 1.5rem 2rem;
+            }
+
+            .sound-hunt-section h2,
+            .affirmation-section h2 {
+                font-size: 2.2rem !important;
+            }
+
+            .sound-hunt-section p,
+            .affirmation-section p {
+                font-size: 1.1rem !important;
+            }
+
+            .filter-bar {
+                padding: 1rem;
+                gap: 1rem;
+            }
+        }
+
+        /* Larger Tablets / Small Desktops (769px - 1200px) */
         @media (min-width: 769px) and (max-width: 1200px) {
             .gallery-grid {
                 grid-template-columns: repeat(2, 1fr);
@@ -487,6 +546,7 @@
         <a href="index.html" class="logo">
             <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTripVR">
         </a>
+        <h1 class="header-title">VR Video Gallery</h1>
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
         <div class="nav-links" id="navLinks">
             <a href="gallery.html">Gallery</a>
@@ -522,14 +582,12 @@
     </script>
 
     <div class="gallery-container">
-        <h1 class="page-title">VR Video Gallery</h1>
-        
         <!-- AFFIRMATION EXPERIENCES SECTION (MOVED TO TOP) -->
         <div class="affirmation-section" style="margin-top: 2rem; margin-bottom: 5rem; padding: 0 2rem;">
             <div style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; font-weight: 700;">
+                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; font-weight: 700; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);">
                     <span style="margin-right: 0.5rem;">✨</span>
-                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">Affirmation Experiences</span>
+                    <span style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">Affirmation Experiences</span>
                 </h2>
                 <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
                     Personalized affirmation journeys powered by <strong>ElevenLabs AI</strong>. Each experience generates unique voice affirmations based on your emotional state and intentions.
@@ -606,19 +664,6 @@
             </style>
         </div>
 
-        <!-- Filter Bar -->
-        <div class="filter-bar" style="margin: 3rem auto 2rem; max-width: 1400px;">
-            <div class="filter-group">
-                <label>Status:</label>
-                <button class="filter-btn active" data-filter="all" onclick="filterGallery('all')">All</button>
-                <button class="filter-btn" data-filter="completed" onclick="filterGallery('completed')">✓ Completed</button>
-                <button class="filter-btn" data-filter="incomplete" onclick="filterGallery('incomplete')">In Progress</button>
-            </div>
-            <div class="search-group">
-                <input type="search" id="searchInput" placeholder="🔍 Search experiences..." oninput="searchGallery()">
-            </div>
-        </div>
-
         <!-- SOUND HUNT EXPERIENCES SECTION -->
         <div class="sound-hunt-section" style="margin-top: 3rem; padding: 0 2rem;">
             <div style="text-align: center; margin-bottom: 3rem;">
@@ -629,6 +674,19 @@
                 <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
                     Explore immersive 360° worlds and discover hidden sound hotspots. Find all the audio treasures in each unique environment.
                 </p>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" style="margin: 3rem auto 2rem; max-width: 1400px;">
+            <div class="filter-group">
+                <label>Status:</label>
+                <button class="filter-btn active" data-filter="all" onclick="filterGallery('all')">All</button>
+                <button class="filter-btn" data-filter="completed" onclick="filterGallery('completed')">✓ Completed</button>
+                <button class="filter-btn" data-filter="incomplete" onclick="filterGallery('incomplete')">In Progress</button>
+            </div>
+            <div class="search-group">
+                <input type="search" id="searchInput" placeholder="🔍 Search experiences..." oninput="searchGallery()">
             </div>
         </div>
         
@@ -1351,7 +1409,7 @@
         <div class="wallet-tab" id="walletTab"></div>
         <div class="wallet-close" id="walletClose">×</div>
         <div class="wallet-content">
-            <div class="wallet-title">💎 Web3 Wallet</div>
+            <div class="wallet-title"><span style="-webkit-text-fill-color: initial;">💎</span> Web3 Wallet</div>
             <button id="walletConnectBtn" onclick="handleWalletConnect()">
                 <span>🦊</span>
                 <span>Connect Wallet</span>

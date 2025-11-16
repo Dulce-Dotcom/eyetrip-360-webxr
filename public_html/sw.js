@@ -1,4 +1,4 @@
-const CACHE_NAME = 'eyetrip-vr-v2';
+const CACHE_NAME = 'eyetrip-vr-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -55,8 +55,12 @@ self.addEventListener('activate', event => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
-  // Skip video files - always fetch from network
-  if (event.request.url.includes('/assets/videos/')) {
+  // Skip video files and large assets - always fetch from network
+  if (event.request.url.includes('/assets/videos/') || 
+      event.request.url.includes('/original-videos/') ||
+      event.request.url.endsWith('.mp4') ||
+      event.request.url.endsWith('.webm')) {
+    event.respondWith(fetch(event.request));
     return;
   }
   
@@ -83,9 +87,20 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME)
             .then(cache => {
               cache.put(event.request, responseToCache);
+            })
+            .catch(err => {
+              // Silently fail cache writes - don't block the response
+              console.warn('[Service Worker] Cache write failed:', err);
             });
           
           return response;
+        }).catch(err => {
+          console.error('[Service Worker] Fetch failed:', err);
+          // Return offline page or error response
+          return new Response('Network error', {
+            status: 408,
+            headers: { 'Content-Type': 'text/plain' }
+          });
         });
       })
   );

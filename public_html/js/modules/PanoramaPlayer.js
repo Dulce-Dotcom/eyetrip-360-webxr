@@ -1500,11 +1500,31 @@ export class PanoramaPlayer {
         }
     }
 
-    // Mute/unmute audio for experience video
+    // Mute/unmute audio for experience video AND all hotspot sounds
     toggleMute() {
         if (this.video) {
             this.video.muted = !this.video.muted;
             this.isMuted = this.video.muted;
+            
+            // Also mute/unmute all hotspot sounds
+            if (this.hotspotManager && this.hotspotManager.hotspots) {
+                this.hotspotManager.hotspots.forEach(hotspot => {
+                    if (hotspot.audio) {
+                        if (hotspot.isRegularAudio) {
+                            // HTML5 Audio element
+                            hotspot.audio.muted = this.isMuted;
+                        } else {
+                            // THREE.Audio
+                            if (this.isMuted) {
+                                hotspot.audio.setVolume(0);
+                            } else {
+                                hotspot.audio.setVolume(1.0);
+                            }
+                        }
+                    }
+                });
+                console.log(`🔊 ${this.isMuted ? 'Muted' : 'Unmuted'} all sounds (video + ${this.hotspotManager.hotspots.length} hotspots)`);
+            }
         }
     }
     

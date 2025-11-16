@@ -80,28 +80,15 @@
     // ============================================
     
     if (isIOS || isSafari) {
-        // Clean up on page hide (iOS back/forward cache)
-        window.addEventListener('pagehide', function() {
-            console.log('🧹 Cleaning up resources for iOS cache');
-            
-            // Clean up videos
-            document.querySelectorAll('video').forEach(v => {
-                v.pause();
-                v.src = '';
-                v.load();
-            });
-            
-            // Clear any large data structures
-            if (window.affirmationState) {
-                console.log('🧹 Clearing affirmation state');
-            }
-        });
+        // REMOVED: pagehide cleanup was causing WebGL context loss on page navigation
+        // The browser will handle cleanup when truly unloading
         
-        // Handle visibility change
+        // Handle visibility change - only pause, don't destroy
         document.addEventListener('visibilitychange', function() {
             if (document.hidden) {
-                console.log('📱 Page hidden - pausing resources');
+                console.log('📱 Page hidden - pausing videos only');
                 document.querySelectorAll('video').forEach(v => v.pause());
+                // DO NOT clear WebGL context - let it persist
             }
         });
     }

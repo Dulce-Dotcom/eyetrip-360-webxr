@@ -50,6 +50,17 @@
             border-bottom: 1px solid rgba(240, 248, 255, 0.1);
         }
 
+        .header-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin: 0;
+            color: #f0f8ff;
+        }
+
         .logo img {
             height: 50px;
             width: auto;
@@ -229,6 +240,20 @@
                 flex-wrap: wrap;
             }
 
+            .header-title {
+                font-size: 1.3rem;
+                position: static;
+                transform: none;
+                width: 100%;
+                text-align: center;
+                order: 3;
+                margin-top: 0.75rem;
+            }
+
+            .logo {
+                order: 1;
+            }
+
             .mobile-menu-toggle {
                 display: block;
                 background: none;
@@ -239,6 +264,7 @@
                 padding: 0.5rem;
                 border-radius: 8px;
                 transition: all 0.3s ease;
+                order: 2;
             }
 
             .nav-links {
@@ -290,6 +316,36 @@
                 max-width: 300px;
             }
         }
+
+        /* Tablet / iPad (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .header-title {
+                font-size: 1.6rem;
+            }
+
+            .about-container {
+                padding: 6rem 2.5rem 2rem;
+                max-width: 700px;
+            }
+
+            .content-section {
+                padding: 2.5rem;
+            }
+
+            .content-section h2 {
+                font-size: 1.8rem;
+            }
+
+            .content-section p {
+                font-size: 1.05rem;
+                line-height: 1.7;
+            }
+
+            .btn {
+                padding: 0.9rem 1.8rem;
+                font-size: 1.05rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -298,6 +354,7 @@
         <a href="index.html" class="logo">
             <img src="images/eyetripimagesvr-wide.svg?v=2" alt="EyeTripVR">
         </a>
+        <h1 class="header-title">About EyeTrip VR</h1>
         <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
         <div class="nav-links" id="navLinks">
             <a href="gallery.html">Gallery</a>
@@ -333,8 +390,6 @@
     </script>
 
     <div class="about-container">
-        <h1 class="page-title">About EyeTrip VR</h1>
-        
         <div class="content-section">
             <h2>🌐 Our Vision</h2>
             <p>

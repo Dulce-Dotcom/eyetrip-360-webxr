@@ -446,7 +446,8 @@
             -webkit-backdrop-filter: blur(10px);
             border-radius: 20px;
             margin: 20px auto;
-            max-width: 800px;
+            max-width: 1400px;
+            width: 90%;
             transform: translateZ(0);
             will-change: transform;
         }
@@ -561,6 +562,44 @@
             .social-btn svg {
                 width: 18px;
                 height: 18px;
+            }
+        }
+
+        /* Tablet / iPad (768px - 1024px) */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            .logo-strip {
+                height: 80px;
+            }
+
+            .landing-container {
+                padding: 2rem 2rem;
+            }
+
+            .logo img {
+                max-width: 500px;
+            }
+
+            .tagline {
+                font-size: 1.8rem;
+                letter-spacing: 4px;
+            }
+
+            .description {
+                font-size: 1.1rem;
+                max-width: 650px;
+            }
+
+            .social-sharing {
+                padding: 20px 30px;
+            }
+
+            .social-buttons {
+                gap: 12px;
+            }
+
+            .social-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
             }
         }
     </style>
