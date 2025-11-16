@@ -117,7 +117,17 @@ export class PerformanceMonitor {
         const content = document.getElementById('perf-content');
         const toggle = document.getElementById('perf-toggle');
         const title = document.getElementById('perf-title');
-        this.isCollapsed = false;
+        this.isCollapsed = true; // Start collapsed
+        
+        // Set initial collapsed state
+        content.style.display = 'none';
+        title.style.opacity = '0';
+        this.overlay.style.transform = 'translateX(calc(100% - 35px))';
+        this.overlay.style.minWidth = '35px';
+        this.overlay.style.borderRadius = '8px 0 0 8px';
+        header.style.padding = '10px 8px';
+        header.style.justifyContent = 'center';
+        toggle.textContent = '▶';
         
         header.addEventListener('click', () => {
             this.isCollapsed = !this.isCollapsed;

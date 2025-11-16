@@ -868,43 +868,72 @@
                     throw new Error('Invalid affirmation data: no affirmations found');
                 }
                 
-                if (!data.affirmations[0].audioDataBase64) {
-                    console.error('❌ Affirmations missing audioDataBase64 field!');
-                    console.log('📦 First affirmation structure:', data.affirmations[0]);
-                    throw new Error('Invalid affirmation data: audioDataBase64 field missing');
+                if (!data.fullAudio || !data.fullAudio.audioDataBase64) {
+                    console.error('❌ Full audio missing audioDataBase64 field!');
+                    throw new Error('Invalid affirmation data: full audio missing');
                 }
                 
-                // Convert base64 back to Audio elements
-                console.log('🔄 Converting base64 to playable Audio elements...');
+                // Convert full audio base64 to blob and create Audio element
+                console.log('🔄 Converting full audio base64 to Audio element...');
+                
+                const fullAudioBase64 = data.fullAudio.audioDataBase64;
+                const base64Data = fullAudioBase64.includes(',') 
+                    ? fullAudioBase64.split(',')[1] 
+                    : fullAudioBase64;
+                
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let j = 0; j < binaryString.length; j++) {
+                    bytes[j] = binaryString.charCodeAt(j);
+                }
+                
+                const audioBlob = new Blob([bytes], { type: 'audio/mpeg' });
+                const fullAudioUrl = URL.createObjectURL(audioBlob);
+                
+                console.log(`   ✅ Full audio: ${Math.round(audioBlob.size / 1024)}KB, duration: ${data.fullAudio.duration}s`);
+                
+                // Create Audio elements for each affirmation that play segments of the full audio
+                console.log('🔄 Creating audio segments for each affirmation...');
                 
                 for (let i = 0; i < data.affirmations.length; i++) {
                     const aff = data.affirmations[i];
                     
-                    if (aff.audioDataBase64) {
-                        // Remove data URL prefix if present
-                        const base64Data = aff.audioDataBase64.includes(',') 
-                            ? aff.audioDataBase64.split(',')[1] 
-                            : aff.audioDataBase64;
-                        
-                        // Decode base64 to binary
-                        const binaryString = atob(base64Data);
-                        const bytes = new Uint8Array(binaryString.length);
-                        for (let j = 0; j < binaryString.length; j++) {
-                            bytes[j] = binaryString.charCodeAt(j);
+                    // Create a NEW Audio element for each affirmation (not shared)
+                    const audio = new Audio(fullAudioUrl);
+                    audio.volume = 1.5; // Louder volume (150%)
+                    audio.loop = false;
+                    audio.preload = 'auto';
+                    
+                    // Store segment info with slight trim at the end to avoid overlap
+                    audio.segmentStart = aff.startTime;
+                    audio.segmentEnd = aff.endTime - 0.1; // Trim 100ms from end to avoid next segment
+                    audio.isSegmentAudio = true;
+                    
+                    // Override play() to always start at segment beginning
+                    const originalPlay = audio.play.bind(audio);
+                    audio.play = async function() {
+                        console.log(`▶️ Playing segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
+                        this.currentTime = this.segmentStart;
+                        return originalPlay();
+                    };
+                    
+                    // Stop at segment end
+                    audio.addEventListener('timeupdate', function() {
+                        if (this.currentTime >= this.segmentEnd) {
+                            console.log(`⏹️ Reached segment end at ${this.currentTime.toFixed(2)}s, stopping`);
+                            this.pause();
+                            this.currentTime = this.segmentStart; // Reset for next play
                         }
-                        
-                        // Create blob and Audio element
-                        const blob = new Blob([bytes], { type: 'audio/wav' });
-                        const audioUrl = URL.createObjectURL(blob);
-                        
-                        // Create Audio element WITHOUT loop (play once only)
-                        aff.audio = new Audio(audioUrl);
-                        aff.audio.volume = 1.0;
-                        aff.audio.loop = false; // Play once only
-                        aff.audio.preload = 'auto';
-                        
-                        console.log(`   ✅ Affirmation ${aff.id}: Audio element created (${Math.round(blob.size / 1024)}KB, loop enabled)`);
-                    }
+                    });
+                    
+                    // Seek to start when metadata loads
+                    audio.addEventListener('loadedmetadata', () => {
+                        audio.currentTime = aff.startTime;
+                    });
+                    
+                    aff.audio = audio;
+                    
+                    console.log(`   ✅ Affirmation ${aff.id}: Audio segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
                 }
                 
                 // Convert full audio for download

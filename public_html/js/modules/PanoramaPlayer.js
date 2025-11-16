@@ -599,6 +599,15 @@ export class PanoramaPlayer {
                 // Extract video name from URL for hotspot configuration
                 const videoName = url.split('/').pop().split('.')[0];
                 this.currentVideoName = videoName; // Store for progress tracking
+                
+                // Check if we're in affirmation mode and need to use custom affirmation sounds
+                const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
+                if (isAffirmationMode) {
+                    console.log('🎤 Affirmation mode detected - loading custom affirmation hotspots');
+                    // This will be populated by affirmation1.html's loadAffirmationData()
+                    // For now, create default hotspots and they'll be replaced
+                }
+                
                 this.hotspotManager.createHotspotsForVideo(videoName);
                 
                 // Setup discovery UI
@@ -1551,20 +1560,23 @@ export class PanoramaPlayer {
         const isMobile = isIOS || isAndroid || window.innerWidth < 768;
         const hasVR = navigator.xr !== undefined;
         
+        // Check if in affirmation mode
+        const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
+        
         // Determine appropriate instructions
         let instructions = {
-            title: "Welcome to EyeTrip VR",
-            icon: "🎨",
+            title: isAffirmationMode ? "Welcome to Your Affirmation Journey" : "Welcome to EyeTrip VR",
+            icon: isAffirmationMode ? "✨" : "🎨",
             controls: "",
-            goal: "Find hidden sounds scattered throughout the experience"
+            goal: isAffirmationMode ? "Find glowing affirmations scattered throughout the experience" : "Find hidden sounds scattered throughout the experience"
         };
         
         if (isMobile) {
-            instructions.icon = "📱";
-            instructions.controls = "Swipe to explore • Tap glowing orbs to discover sounds";
+            instructions.icon = isAffirmationMode ? "✨" : "📱";
+            instructions.controls = isAffirmationMode ? "Swipe to explore • Tap glowing orbs to hear affirmations" : "Swipe to explore • Tap glowing orbs to discover sounds";
         } else {
-            instructions.icon = "🖱️";
-            instructions.controls = "Drag to look around • Click glowing orbs to discover sounds";
+            instructions.icon = isAffirmationMode ? "✨" : "🖱️";
+            instructions.controls = isAffirmationMode ? "Drag to look around • Click glowing orbs to hear affirmations" : "Drag to look around • Click glowing orbs to discover sounds";
         }
         
         if (hasVR) {
@@ -1931,8 +1943,11 @@ export class PanoramaPlayer {
         totalSpan.id = 'total-count';
         totalSpan.textContent = this.hotspotManager ? this.hotspotManager.totalHotspots : '10';
         
+        // Check if in affirmation mode
+        const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
+        
         // Build the UI - Use textContent to avoid destroying DOM nodes
-        const labelText = document.createTextNode('🎵 Hidden Sounds: ');
+        const labelText = document.createTextNode(isAffirmationMode ? '✨ Affirmations Found: ' : '🎵 Hidden Sounds: ');
         const slashText = document.createTextNode('/');
         
         discoveryUI.appendChild(labelText);
@@ -2056,10 +2071,14 @@ export class PanoramaPlayer {
             z-index: 10002;
             animation: scaleIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
         `;
+        
+        // Check if in affirmation mode
+        const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
+        
         message.innerHTML = `
             <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
-            <div>All Sounds Found!</div>
-            <div style="font-size: 20px; margin-top: 16px; color: #fff;">You discovered all hidden sounds!</div>
+            <div>${isAffirmationMode ? 'All Affirmations Discovered!' : 'All Sounds Found!'}</div>
+            <div style="font-size: 20px; margin-top: 16px; color: #fff;">${isAffirmationMode ? 'You found all your personalized affirmations!' : 'You discovered all hidden sounds!'}</div>
         `;
         document.body.appendChild(message);
         

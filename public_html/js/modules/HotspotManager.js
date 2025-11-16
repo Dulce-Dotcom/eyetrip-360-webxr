@@ -653,8 +653,11 @@ export class HotspotManager {
                 window.trackVREvent('all_hotspots_completed', 'all_discovered', this.totalHotspots);
             }
             // Achievement: Completionist (found all sounds in one experience)
+            // Delay achievement popup until after sound title disappears (6 seconds)
             if (window.achievements) {
-                window.achievements.unlock('completionist');
+                setTimeout(() => {
+                    window.achievements.unlock('completionist');
+                }, 6000);
             }
             
             // Fade out the last hotspot audio after 20 seconds

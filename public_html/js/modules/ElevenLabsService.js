@@ -26,6 +26,9 @@ export class ElevenLabsService {
         // Progress callback for UI updates
         this.onProgress = null;
         
+        // AudioContext will be created lazily on first use (during user gesture)
+        this.audioContext = null;
+        
         // Voice IDs for different emotional tones
         this.voiceIds = {
             calming: 'EXAVITQu4vr4xnSDxMaL',      // Sarah - calm, soothing
@@ -37,6 +40,18 @@ export class ElevenLabsService {
         // Affirmation library: 4 tones × 4 focus areas = 16 combinations
         // Each combination has 10 affirmations
         this.affirmationLibrary = this.buildAffirmationLibrary();
+    }
+    
+    /**
+     * Get or create AudioContext (must be called during user gesture)
+     */
+    getAudioContext() {
+        if (!this.audioContext) {
+            console.log('🎼 Creating AudioContext during user interaction...');
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('🎼 AudioContext created, state:', this.audioContext.state);
+        }
+        return this.audioContext;
     }
     
     /**
@@ -129,30 +144,74 @@ export class ElevenLabsService {
                 console.warn('⚠️ First 20 bytes:', new Uint8Array(audioBuffer.slice(0, 20)));
             }
             
-            // Step 5: Decode audio
+            // Step 5: Decode audio using AudioContext (created during user gesture)
             this.updateProgress('Decoding audio...', 70);
-            console.log('🎼 Creating audio context...');
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.log('🎼 Getting audio context...');
+            const audioContext = this.getAudioContext();
             console.log('🎼 Audio context state:', audioContext.state);
             
             if (audioContext.state === 'suspended') {
                 console.log('🎵 Resuming suspended audio context...');
-                await audioContext.resume();
-                console.log('🎵 Audio context resumed, new state:', audioContext.state);
+                try {
+                    await audioContext.resume();
+                    console.log('🎵 Audio context resumed, new state:', audioContext.state);
+                } catch (resumeError) {
+                    console.error('❌ Failed to resume audio context:', resumeError);
+                    throw new Error('Could not resume audio context: ' + resumeError.message);
+                }
             }
             
+            // Verify audio context is ready
+            if (audioContext.state !== 'running') {
+                console.error('❌ Audio context is not running! State:', audioContext.state);
+                throw new Error('Audio context is not in running state: ' + audioContext.state);
+            }
+            
+            console.log('✅ Audio context is running and ready');
             console.log('🎼 Decoding audio data...');
             console.log('🎼 Buffer to decode:', audioBuffer.byteLength, 'bytes');
+            console.log('🎼 Creating copy of buffer for decode...');
+            
+            // Create a copy to avoid potential issues
+            const bufferCopy = audioBuffer.slice(0);
+            console.log('🎼 Buffer copy created:', bufferCopy.byteLength, 'bytes');
             
             let decodedBuffer;
             try {
-                // Set a timeout for decoding
-                const decodePromise = audioContext.decodeAudioData(audioBuffer.slice(0));
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Decode timeout after 10 seconds')), 10000);
+                console.log('🎼 Starting decode process...');
+                console.log('🎼 Calling audioContext.decodeAudioData()...');
+                const startTime = Date.now();
+                
+                // Set a longer timeout for decoding (30 seconds for 10 affirmations)
+                const decodePromise = audioContext.decodeAudioData(bufferCopy).then(buffer => {
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                    console.log(`✅ Decode completed in ${elapsed}s`);
+                    return buffer;
+                }).catch(err => {
+                    console.error('❌ decodeAudioData promise rejected:', err);
+                    throw err;
                 });
                 
+                console.log('🎼 Decode promise created, setting up timeout...');
+                
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => {
+                        const elapsed = ((Date.now() - startTime) / 1000).toFixed(2);
+                        console.error(`❌ Decode timeout after ${elapsed}s`);
+                        reject(new Error(`Decode timeout after ${elapsed} seconds`));
+                    }, 30000); // 30 second timeout
+                });
+                
+                // Add progress updates during decode
+                const progressInterval = setInterval(() => {
+                    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                    console.log(`⏳ Still decoding... ${elapsed}s elapsed`);
+                    this.updateProgress(`Decoding audio... ${elapsed}s`, 70 + Math.min(15, parseInt(elapsed)));
+                }, 2000);
+                
                 decodedBuffer = await Promise.race([decodePromise, timeoutPromise]);
+                clearInterval(progressInterval);
+                
                 console.log(`✅ Audio decoded successfully!`);
                 console.log(`   Duration: ${decodedBuffer.duration.toFixed(2)}s`);
                 console.log(`   Channels: ${decodedBuffer.numberOfChannels}`);
@@ -314,8 +373,11 @@ export class ElevenLabsService {
         const endSample = Math.floor(endTime * sampleRate);
         const segmentLength = endSample - startSample;
         
+        // Use the AudioContext
+        const audioContext = this.getAudioContext();
+        
         // Create a new buffer for the segment
-        const segmentBuffer = new AudioContext().createBuffer(
+        const segmentBuffer = audioContext.createBuffer(
             audioBuffer.numberOfChannels,
             segmentLength,
             sampleRate
@@ -340,8 +402,8 @@ export class ElevenLabsService {
     async generateMockAffirmations(responses) {
         console.log('🧪 Generating mock affirmations...');
         
-        // Create a simple test audio (sine wave beep)
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        // Use existing audio context
+        const audioContext = this.getAudioContext();
         const duration = 3;
         const sampleRate = audioContext.sampleRate;
         const numSamples = duration * sampleRate;
@@ -471,40 +533,6 @@ export class ElevenLabsService {
             size: this.audioCache.size,
             keys: Array.from(this.audioCache.keys())
         };
-    }
-    
-    /**
-     * Extract a segment from an audio buffer
-     * @param {AudioContext} audioContext 
-     * @param {AudioBuffer} sourceBuffer 
-     * @param {number} startTime 
-     * @param {number} endTime 
-     * @returns {AudioBuffer}
-     */
-    extractAudioSegment(audioContext, sourceBuffer, startTime, endTime) {
-        const sampleRate = sourceBuffer.sampleRate;
-        const startSample = Math.floor(startTime * sampleRate);
-        const endSample = Math.floor(endTime * sampleRate);
-        const segmentLength = endSample - startSample;
-        
-        // Create new buffer for this segment
-        const segmentBuffer = audioContext.createBuffer(
-            sourceBuffer.numberOfChannels,
-            segmentLength,
-            sampleRate
-        );
-        
-        // Copy the audio data for this segment
-        for (let channel = 0; channel < sourceBuffer.numberOfChannels; channel++) {
-            const sourceData = sourceBuffer.getChannelData(channel);
-            const segmentData = segmentBuffer.getChannelData(channel);
-            
-            for (let i = 0; i < segmentLength; i++) {
-                segmentData[i] = sourceData[startSample + i];
-            }
-        }
-        
-        return segmentBuffer;
     }
     
     /**

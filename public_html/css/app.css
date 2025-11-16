@@ -1046,15 +1046,15 @@ body.high-contrast a {
 }
 
 .intro-logo-container {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
     opacity: 0;
     transform: translateY(30px) scale(0.9);
 }
 
 .intro-logo {
-    height: 100px;
+    height: 70px;
     width: auto;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     filter: drop-shadow(0 0 20px rgba(205, 0, 255, 0.5));
     animation: logoGlow 3s ease-in-out infinite;
 }
@@ -1069,11 +1069,11 @@ body.high-contrast a {
 }
 
 .intro-subtitle {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     color: rgba(255, 255, 255, 0.8);
     margin: 0;
     font-weight: 300;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
 }
 
 .intro-instructions {
@@ -1081,8 +1081,8 @@ body.high-contrast a {
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 16px;
-    padding: 30px;
-    margin: 25px 0;
+    padding: 20px 25px;
+    margin: 15px 0;
     opacity: 0;
     transform: translateY(20px);
 }
@@ -1091,16 +1091,16 @@ body.high-contrast a {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
-    margin: 20px 0;
-    font-size: 1.1rem;
+    gap: 12px;
+    margin: 12px 0;
+    font-size: 1rem;
     opacity: 0;
     transform: translateX(-20px);
 }
 
 .instruction-icon {
-    font-size: 2rem;
-    min-width: 50px;
+    font-size: 1.5rem;
+    min-width: 40px;
     text-align: center;
 }
 
@@ -1118,8 +1118,8 @@ body.high-contrast a {
 .instruction-highlight {
     background: rgba(0, 0, 0, 0.9);
     border-radius: 12px;
-    padding: 16px 24px;
-    margin-top: 20px;
+    padding: 12px 18px;
+    margin-top: 15px;
     border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
@@ -1336,8 +1336,8 @@ body.high-contrast a {
     background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 20px;
-    padding: 40px;
-    max-width: 600px;
+    padding: 30px;
+    max-width: 550px;
     width: 90%;
     text-align: center;
     backdrop-filter: blur(10px);
@@ -1356,12 +1356,12 @@ body.high-contrast a {
 }
 
 .ending-header {
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .ending-icon {
-    font-size: 4rem;
-    margin-bottom: 20px;
+    font-size: 3rem;
+    margin-bottom: 12px;
     animation: float 3s ease-in-out infinite;
 }
 
@@ -1371,23 +1371,23 @@ body.high-contrast a {
 }
 
 .ending-title {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: white;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
 }
 
 .ending-subtitle {
-    font-size: 1.1rem;
+    font-size: 1rem;
     color: rgba(255, 255, 255, 0.7);
 }
 
 .ending-stats {
     display: flex;
     justify-content: center;
-    gap: 40px;
-    margin: 30px 0;
-    padding: 20px;
+    gap: 30px;
+    margin: 20px 0;
+    padding: 18px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
 }
@@ -1397,41 +1397,82 @@ body.high-contrast a {
 }
 
 .stat-value {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: bold;
     color: #00eeff;
     margin-bottom: 5px;
 }
 
 .stat-label {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.6);
     text-transform: uppercase;
     letter-spacing: 1px;
 }
 
+.ending-download {
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+}
+
+.ending-btn.download {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 14px 28px;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.ending-btn.download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+}
+
+.ending-btn.download .btn-icon {
+    font-size: 1.2rem;
+}
+
+.download-hint {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin: 0;
+}
+
 .ending-recommendations {
-    margin: 30px 0;
+    margin: 20px 0;
 }
 
 .ending-recommendations h3 {
-    font-size: 1.3rem;
+    font-size: 1.1rem;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
 }
 
 .rec-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-top: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .rec-card {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 12px;
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -1440,31 +1481,37 @@ body.high-contrast a {
 .rec-card:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(0, 238, 255, 0.5);
-    transform: translateY(-5px);
+    transform: translateY(-3px);
+}
+
+.rec-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
 
 .rec-title {
-    font-size: 0.9rem;
+    font-size: 0.8rem;
     color: white;
-    margin-bottom: 10px;
     font-weight: 500;
 }
 
 .rec-icon {
-    font-size: 2rem;
+    font-size: 1.8rem;
 }
 
 .ending-actions {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     justify-content: center;
-    margin-top: 30px;
+    margin-top: 20px;
 }
 
 .ending-btn {
-    padding: 15px 30px;
+    padding: 12px 24px;
     border-radius: 8px;
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -1495,19 +1542,20 @@ body.high-contrast a {
 /* Mobile responsive */
 @media (max-width: 768px) {
     .ending-card {
-        padding: 30px 20px;
+        padding: 25px 18px;
     }
     
     .ending-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
     
     .ending-icon {
-        font-size: 3rem;
+        font-size: 2.5rem;
     }
     
     .ending-stats {
         gap: 20px;
+        padding: 15px;
     }
     
     .stat-value {
@@ -1516,7 +1564,7 @@ body.high-contrast a {
     
     .rec-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 10px;
+        gap: 8px;
     }
     
     .ending-actions {
@@ -1525,6 +1573,11 @@ body.high-contrast a {
     
     .ending-btn {
         width: 100%;
+    }
+    
+    .ending-btn.download {
+        width: 100%;
+        justify-content: center;
     }
 }
 

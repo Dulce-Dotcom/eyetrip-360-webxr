@@ -64,10 +64,13 @@ class VideoStreamManager {
     }
 
     /**
-     * Get the base URL for video assets
+     * Get base URL for video files
      */
     getVideoBaseURL() {
-        return window.location.origin + '/assets/videos/processed/';
+        // Use relative path from the current page location
+        const currentPath = window.location.pathname;
+        const basePath = currentPath.substring(0, currentPath.lastIndexOf('/') + 1);
+        return basePath + 'assets/videos/processed/';
     }
 
     /**

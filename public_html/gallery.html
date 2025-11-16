@@ -432,8 +432,9 @@
         <!-- AFFIRMATION EXPERIENCES SECTION (MOVED TO TOP) -->
         <div class="affirmation-section" style="margin-top: 2rem; margin-bottom: 5rem; padding: 0 2rem;">
             <div style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; text-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">
-                    ✨ Affirmation Experiences
+                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; font-weight: 700;">
+                    <span style="margin-right: 0.5rem;">✨</span>
+                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);">Affirmation Experiences</span>
                 </h2>
                 <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
                     Personalized affirmation journeys powered by <strong>ElevenLabs AI</strong>. Each experience generates unique voice affirmations based on your emotional state and intentions.
@@ -444,86 +445,78 @@
                 </div>
             </div>
 
-            <div class="gallery-grid" id="affirmationGrid">
-                <!-- Affirmation Experience 1: Matrix Caracas -->
-                <div class="video-card affirmation-card" data-video-id="affirmation_1" data-affirmation-id="1" data-video-src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4" data-title="Affirmation Journey: Matrix Caracas" onclick="startAffirmationExperience(1, 'Matrix Caracas', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4')">
-                    <img src="assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_thumb.jpg?v=2" alt="Affirmation Journey: Matrix Caracas" class="video-thumbnail">
-                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-                        ✨ AI Powered
+            <div id="affirmationGrid" style="display: flex; justify-content: center; margin: 0 auto; max-width: 1400px; padding: 0 2rem;">
+                <!-- Single Personalized Affirmation Journey Card -->
+                <div class="video-card affirmation-card" onclick="startAffirmationExperience()" style="cursor: pointer; width: 100%;">
+                    <div style="position: relative; overflow: hidden; border-radius: 12px;">
+                        <!-- Animated gradient background -->
+                        <div style="
+                            position: absolute;
+                            width: 100%;
+                            height: 140px;
+                            background: linear-gradient(135deg, 
+                                rgba(102, 126, 234, 0.9), 
+                                rgba(118, 75, 162, 0.9), 
+                                rgba(255, 107, 107, 0.9));
+                            background-size: 200% 200%;
+                            animation: gradientShift 8s ease infinite;
+                        "></div>
+                        
+                        <!-- Overlay content -->
+                        <div style="
+                            position: relative;
+                            height: 140px;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            text-align: center;
+                            z-index: 1;
+                        ">
+                            <div style="font-size: 28px; font-weight: bold; text-shadow: 0 2px 8px rgba(0,0,0,0.3); margin-bottom: 8px;">✨ Personalized Affirmation Journey</div>
+                            <div style="font-size: 16px; opacity: 0.95; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">AI-Powered • Tailored to Your Emotions</div>
+                        </div>
                     </div>
+                    
                     <div class="video-info">
-                        <h3 class="video-title">✨ Affirmation Journey: Matrix Caracas</h3>
-                        <div class="video-duration">🕐 4:17 • 10 Affirmations</div>
+                        <h3 class="video-title" style="font-size: 1.5rem;">✨ Your Personalized Journey</h3>
+                        <div class="video-duration">🎤 ElevenLabs AI • 🎨 4 Unique Videos • ✨ 10 Affirmations</div>
                         <p class="video-description">
-                            Urban soundscape paired with personalized AI-generated affirmations. Your unique journey through digital transformation and self-discovery.
+                            Take a quick 3-question survey to generate AI affirmations tailored to your emotional needs. 
+                            Experience them in an immersive 360° environment selected just for you based on your mood and intentions.
                         </p>
-                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            ✨ Create My Journey
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Affirmation Experience 2: Scraptangle -->
-                <div class="video-card affirmation-card" data-video-id="affirmation_2" data-affirmation-id="2" data-video-src="assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4" data-title="Affirmation Journey: Scraptangle" onclick="startAffirmationExperience(2, 'Scraptangle', 'assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_1080p.mp4')">
-                    <img src="assets/videos/processed/Scraptangle_latlong_05b_offsetOverture1/Scraptangle_latlong_05b_offsetOverture1_thumb.jpg?v=2" alt="Affirmation Journey: Scraptangle" class="video-thumbnail">
-                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-                        ✨ AI Powered
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">✨ Affirmation Journey: Scraptangle</h3>
-                        <div class="video-duration">🕐 5:36 • 10 Affirmations</div>
-                        <p class="video-description">
-                            Find beauty in chaos with personalized affirmations. Transform your perspective through rust and renewal.
+                        <p class="video-description" style="margin-top: 1rem; font-style: italic; opacity: 0.9;">
+                            <strong>How it works:</strong> Answer questions about your emotional state → AI generates personalized affirmations → 
+                            We select the perfect 360° video to match your vibe → Find and discover your affirmations hidden in the experience → Download your full affirmation audio
                         </p>
-                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            ✨ Create My Journey
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Affirmation Experience 3: Shroom Zoom -->
-                <div class="video-card affirmation-card" data-video-id="affirmation_3" data-affirmation-id="3" data-video-src="assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_1080p.mp4" data-title="Affirmation Journey: Shroom Zoom" onclick="startAffirmationExperience(3, 'Shroom Zoom', 'assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_1080p.mp4')">
-                    <img src="assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_thumb.jpg?v=2" alt="Affirmation Journey: Shroom Zoom" class="video-thumbnail">
-                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-                        ✨ AI Powered
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">✨ Affirmation Journey: Shroom Zoom</h3>
-                        <div class="video-duration">🕐 5:23 • 10 Affirmations</div>
-                        <p class="video-description">
-                            Nature's wisdom paired with healing affirmations. Grow and expand your consciousness organically.
-                        </p>
-                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            ✨ Create My Journey
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Affirmation Experience 4: Stumpy Waves -->
-                <div class="video-card affirmation-card" data-video-id="affirmation_4" data-affirmation-id="4" data-video-src="assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_1080p.mp4" data-title="Affirmation Journey: Stumpy Waves" onclick="startAffirmationExperience(4, 'Stumpy Waves', 'assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_1080p.mp4')">
-                    <img src="assets/videos/processed/stumpy_latlong_01_waves_61Mbps-003/stumpy_latlong_01_waves_61Mbps-003_thumb.jpg?v=2" alt="Affirmation Journey: Stumpy Waves" class="video-thumbnail">
-                    <div class="affirmation-badge" style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);">
-                        ✨ AI Powered
-                    </div>
-                    <div class="video-info">
-                        <h3 class="video-title">✨ Affirmation Journey: Stumpy Waves</h3>
-                        <div class="video-duration">🕐 5:25 • 10 Affirmations</div>
-                        <p class="video-description">
-                            Grounding affirmations rooted in nature's resilience. Flow through life's changes with steady strength.
-                        </p>
-                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2);">
-                            ✨ Create My Journey
+                        <button class="play-button" style="background: linear-gradient(135deg, #667eea, #764ba2); font-size: 1.1rem; padding: 0.75rem 2rem;">
+                            ✨ Start Your Journey
                         </button>
                     </div>
                 </div>
             </div>
+            
+            <style>
+                @keyframes gradientShift {
+                    0% { background-position: 0% 50%; }
+                    50% { background-position: 100% 50%; }
+                    100% { background-position: 0% 50%; }
+                }
+                
+                .affirmation-card:hover > div:first-child > div:first-child {
+                    transform: scale(1.05);
+                    transition: transform 0.5s ease;
+                }
+            </style>
         </div>
 
         <!-- SOUND HUNT EXPERIENCES SECTION -->
         <div class="sound-hunt-section" style="margin-top: 3rem; padding: 0 2rem;">
             <div style="text-align: center; margin-bottom: 3rem;">
-                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; background: linear-gradient(135deg, #cd00ff 0%, #ff6ec7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 700; text-shadow: 0 4px 12px rgba(205, 0, 255, 0.3);">
-                    🎯 Sound Hunt Experiences
+                <h2 style="font-size: 2.8rem; margin-bottom: 1rem; font-weight: 700;">
+                    <span style="margin-right: 0.5rem;">🎯</span>
+                    <span style="background: linear-gradient(135deg, #cd00ff 0%, #ff6ec7 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 4px 12px rgba(205, 0, 255, 0.3);">Sound Hunt Experiences</span>
                 </h2>
                 <p style="color: rgba(240, 248, 255, 0.85); max-width: 700px; margin: 0 auto; font-size: 1.2rem; line-height: 1.6;">
                     Explore immersive 360° worlds and discover hidden sound hotspots. Find all the audio treasures in each unique environment.
@@ -766,17 +759,21 @@
         
         console.log('✅ Affirmation services created');
         
-        // Function called when user clicks an affirmation card
-        window.startAffirmationExperience = function(id, title, videoSrc) {
-            console.log(`🎯 Starting affirmation experience: ${title} (ID: ${id})`);
+        // Function called when user clicks the ONE affirmation card
+        window.startAffirmationExperience = function() {
+            console.log('🎯 Starting personalized affirmation experience');
             
-            // Store the experience details
-            window.affirmationState.currentExperience = {
-                id: id,
-                title: title,
-                videoSrc: videoSrc,
-                targetPage: `affirmation${id}.html`
-            };
+            // IMPORTANT: Create and activate AudioContext IMMEDIATELY during the click
+            // This ensures browser allows audio without user gesture issues
+            console.log('🎼 Pre-creating audio context during click...');
+            const ctx = window.affirmationState.elevenlabs.getAudioContext();
+            if (ctx.state === 'suspended') {
+                ctx.resume().then(() => {
+                    console.log('🎵 Audio context activated on click');
+                }).catch(err => {
+                    console.warn('⚠️ Could not activate audio context on click:', err);
+                });
+            }
             
             console.log('📋 Showing survey...');
             
@@ -787,6 +784,25 @@
                 try {
                     // Hide survey first
                     window.affirmationState.survey.hide();
+                    
+                    // SELECT VIDEO BASED ON SURVEY RESPONSES
+                    const videoName = selectVideoForMood(responses);
+                    console.log(`🎥 Selected video: ${videoName} based on mood`);
+                    
+                    // Build video path
+                    const videoPath = `assets/videos/processed/${videoName}/${videoName}_1080p.mp4`;
+                    const videoTitle = getVideoTitle(videoName, responses);
+                    
+                    // Store the experience details
+                    window.affirmationState.currentExperience = {
+                        id: 'personalized',
+                        title: videoTitle,
+                        videoSrc: videoPath,
+                        videoName: videoName,
+                        targetPage: 'affirmation1.html'
+                    };
+                    
+                    console.log('🎬 Experience:', window.affirmationState.currentExperience);
                     
                     // Show progress overlay
                     const progressOverlay = showProgressOverlay();
@@ -800,28 +816,69 @@
                     console.log('🎤 Starting OPTIMIZED ElevenLabs generation (single MP3)...');
                     console.log('📋 Survey responses:', responses);
                     
+                    // Connect progress callback to our progress overlay
+                    window.affirmationState.elevenlabs.setProgressCallback((message, percent) => {
+                        console.log(`📊 Progress: ${percent}% - ${message}`);
+                        const statusEl = progressOverlay.querySelector('.progress-status');
+                        const progressBar = progressOverlay.querySelector('.progress-bar');
+                        if (statusEl) statusEl.textContent = message;
+                        if (progressBar) progressBar.style.width = `${percent}%`;
+                    });
+                    
                     const result = await window.affirmationState.elevenlabs.generateAffirmations(responses);
                     
                     console.log(`✅ Generated ${result.affirmations.length} affirmations from single MP3`);
                     console.log(`🎼 Full audio: ${result.fullAudio.duration.toFixed(2)}s`);
-                    console.log(`📦 Sample affirmation URL:`, result.affirmations[0]?.url);
+                    console.log(`📦 Sample affirmation:`, {
+                        id: result.affirmations[0]?.id,
+                        text: result.affirmations[0]?.text.substring(0, 50) + '...',
+                        hasBlob: !!result.affirmations[0]?.blob,
+                        blobSize: result.affirmations[0]?.blob?.size
+                    });
                     
                     // Step 3: Processing audio
                     updateProgress(progressOverlay, 3, 'Processing and splitting audio clips...');
                     await new Promise(resolve => setTimeout(resolve, 500));
                     
                     // Step 4: Store in sessionStorage for the video page
+                    // OPTIMIZED: Only store text + full audio (not individual clips to save space)
                     updateProgress(progressOverlay, 4, 'Preparing your experience...');
+                    
+                    console.log('🔄 Converting full audio to base64 for storage...');
+                    
+                    // Only store affirmation texts (no audio data - we'll use full audio)
+                    const affirmationsData = result.affirmations.map(aff => ({
+                        id: aff.id,
+                        text: aff.text,
+                        startTime: aff.startTime,
+                        endTime: aff.endTime,
+                        duration: aff.duration,
+                        playCount: 0,
+                        found: false
+                    }));
+                    
+                    console.log(`   📝 Stored ${affirmationsData.length} affirmation texts`);
+                    
+                    // Convert ONLY full audio to base64
+                    if (!result.fullAudio.blob) {
+                        console.error('❌ Full audio missing blob!');
+                        throw new Error('Full audio has no blob data');
+                    }
+                    
+                    const fullAudioBase64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(result.fullAudio.blob);
+                    });
+                    
+                    console.log(`   ✅ Full audio: ${Math.round(fullAudioBase64.length / 1024)}KB base64 data`);
+                    
                     const dataToStore = {
                         responses: responses,
-                        affirmations: result.affirmations.map(a => ({
-                            id: a.id,
-                            text: a.text,
-                            url: a.url,
-                            playCount: 0  // Track plays (max 2 per session)
-                        })),
+                        affirmations: affirmationsData,
                         fullAudio: {
-                            url: result.fullAudio.url,
+                            audioDataBase64: fullAudioBase64,  // Store base64
                             duration: result.fullAudio.duration
                         },
                         metadata: result.metadata,
@@ -829,16 +886,33 @@
                         timestamp: Date.now()
                     };
                     
-                    console.log('💾 Storing affirmation data in sessionStorage');
-                    console.log('📦 Data size:', JSON.stringify(dataToStore).length, 'characters');
+                    console.log('💾 Storing affirmation data in sessionStorage...');
+                    console.log(`📦 Data structure:`, {
+                        responsesKeys: Object.keys(dataToStore.responses),
+                        affirmationCount: dataToStore.affirmations.length,
+                        hasFullAudio: !!dataToStore.fullAudio.audioDataBase64,
+                        experienceId: dataToStore.experience.id,
+                        dataSize: JSON.stringify(dataToStore).length
+                    });
+                    
                     sessionStorage.setItem('affirmationData', JSON.stringify(dataToStore));
                     
                     // Verify storage worked
                     const stored = sessionStorage.getItem('affirmationData');
                     if (stored) {
-                        console.log('✅ sessionStorage verified - data saved successfully');
+                        console.log('✅ sessionStorage.setItem() successful');
+                        console.log('📊 Verification:');
+                        console.log('   - Storage exists:', !!stored);
+                        console.log('   - Storage size:', stored.length, 'characters');
+                        console.log('   - Can parse:', (() => { try { JSON.parse(stored); return true; } catch(e) { return false; }})());
+                        
+                        // Double check it's accessible
+                        const doubleCheck = sessionStorage.getItem('affirmationData');
+                        console.log('   - Double-check exists:', !!doubleCheck);
+                        console.log('   - Same data:', stored === doubleCheck);
                     } else {
-                        console.error('❌ sessionStorage failed - data not saved!');
+                        console.error('❌ sessionStorage.setItem() FAILED!');
+                        console.error('   This is a critical error - data was not saved!');
                         throw new Error('Failed to save affirmation data to sessionStorage');
                     }
                     
@@ -846,9 +920,28 @@
                     updateProgress(progressOverlay, 5, 'All set! Launching your journey...');
                     await new Promise(resolve => setTimeout(resolve, 800));
                     
+                    // FINAL CHECK before redirect
+                    console.log('🔍 FINAL CHECK BEFORE REDIRECT:');
+                    const finalCheck = sessionStorage.getItem('affirmationData');
+                    console.log('   - sessionStorage still has data:', !!finalCheck);
+                    console.log('   - Data length:', finalCheck?.length || 0);
+                    
                     // Redirect to the affirmation video page
-                    console.log(`🚀 Redirecting to ${window.affirmationState.currentExperience.targetPage}`);
-                    window.location.href = window.affirmationState.currentExperience.targetPage;
+                    const targetPage = window.affirmationState.currentExperience.targetPage;
+                    console.log(`🚀 ========================================`);
+                    console.log(`🚀 REDIRECTING NOW`);
+                    console.log(`� ========================================`);
+                    console.log(`   - From: ${window.location.href}`);
+                    console.log(`   - To: ${targetPage}`);
+                    console.log(`   - Full URL will be: ${window.location.origin}/${targetPage}`);
+                    console.log(`   - sessionStorage has data: ${!!sessionStorage.getItem('affirmationData')}`);
+                    console.log(`🚀 ========================================`);
+                    
+                    // Use setTimeout to ensure all console logs are flushed
+                    setTimeout(() => {
+                        console.log(`⏰ Executing redirect to ${targetPage} NOW...`);
+                        window.location.href = targetPage;
+                    }, 100);
                     
                 } catch (error) {
                     console.error('❌ Error generating affirmations:', error);
@@ -1009,6 +1102,60 @@
         }
         
         console.log('✅ Affirmation system ready - startAffirmationExperience() is now global');
+        
+        // Helper: Select video based on survey responses
+        function selectVideoForMood(responses) {
+            const { emotionalTone, currentMood, focusArea } = responses;
+            
+            // Video mapping based on video characteristics:
+            // matrixCaracasSphere_1 - Hypnotic & upbeat (calming/peaceful)
+            // Scraptangle_latlong_05b_offsetOverture1 - Hypnotic & low/groovy (grounding)
+            // ShroomZoomLatlong_12 - Chaos & trancey/progressive (energizing/stressed)
+            // stumpy_latlong_01_waves_61Mbps-003 - Funky & electric/trippy (energizing/playful)
+            
+            const videoMap = {
+                // CALMING - Matrix Caracas (hypnotic & upbeat)
+                'calming-anxious': 'matrixCaracasSphere_1',
+                'calming-stressed': 'matrixCaracasSphere_1',
+                'calming-peaceful': 'matrixCaracasSphere_1',
+                'calming-sad': 'matrixCaracasSphere_1',
+                
+                // GROUNDING - Scraptangle (hypnotic & low/groovy)
+                'grounding-anxious': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-stressed': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-peaceful': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-sad': 'Scraptangle_latlong_05b_offsetOverture1',
+                
+                // ENERGIZING + stressed/anxious - Shroom Zoom (chaos & trancey)
+                'energizing-stressed': 'ShroomZoomLatlong_12',
+                'energizing-anxious': 'ShroomZoomLatlong_12',
+                
+                // ENERGIZING + peaceful/happy - Stumpy Waves (funky & trippy)
+                'energizing-peaceful': 'stumpy_latlong_01_waves_61Mbps-003',
+                'energizing-sad': 'stumpy_latlong_01_waves_61Mbps-003' // Uplift sad mood with funky vibes
+            };
+            
+            const key = `${emotionalTone}-${currentMood}`;
+            const selectedVideo = videoMap[key] || 'matrixCaracasSphere_1'; // Fallback to Matrix Caracas
+            
+            console.log(`🎯 Mood mapping: ${key} → ${selectedVideo}`);
+            console.log(`   Emotional Tone: ${emotionalTone}`);
+            console.log(`   Current Mood: ${currentMood}`);
+            console.log(`   Focus Area: ${focusArea}`);
+            
+            return selectedVideo;
+        }
+        
+        // Helper: Get descriptive title for selected video
+        function getVideoTitle(videoName, responses) {
+            const titles = {
+                'matrixCaracasSphere_1': `Calming Journey - ${responses.focusArea}`,
+                'Scraptangle_latlong_05b_offsetOverture1': `Grounding Journey - ${responses.focusArea}`,
+                'ShroomZoomLatlong_12': `Energizing Journey - ${responses.focusArea}`,
+                'stumpy_latlong_01_waves_61Mbps-003': `Uplifting Journey - ${responses.focusArea}`
+            };
+            return titles[videoName] || 'Personalized Journey';
+        }
         
         // Add click listeners to affirmation cards as backup
         document.addEventListener('DOMContentLoaded', () => {

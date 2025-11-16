@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Affirmation Flow</title>
+</head>
+<body>
+    <h1>Affirmation Flow Test</h1>
+    <button id="testBtn">Test Complete Flow</button>
+    <pre id="log" style="background: #000; color: #0f0; padding: 20px; font-family: monospace;"></pre>
+
+    <script type="module">
+        import { ElevenLabsService } from './js/modules/ElevenLabsService.js';
+        
+        const log = document.getElementById('log');
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            log.textContent += args.join(' ') + '\n';
+            log.scrollTop = log.scrollHeight;
+        };
+
+        document.getElementById('testBtn').addEventListener('click', async () => {
+            try {
+                log.textContent = '';
+                console.log('=== STARTING AFFIRMATION FLOW TEST ===\n');
+                
+                // Step 1: Generate affirmations
+                console.log('Step 1: Creating ElevenLabsService...');
+                const service = new ElevenLabsService();
+                console.log('TEST_MODE:', service.TEST_MODE);
+                
+                const responses = {
+                    emotionalTone: 'calming',
+                    currentMood: 'anxious',
+                    focusArea: 'self-love'
+                };
+                
+                console.log('\nStep 2: Generating affirmations...');
+                const result = await service.generateAffirmations(responses);
+                console.log('Generated:', result.affirmations.length, 'affirmations');
+                console.log('Sample text:', result.affirmations[0].text);
+                console.log('Has blob:', !!result.affirmations[0].blob);
+                console.log('Blob size:', result.affirmations[0].blob?.size, 'bytes');
+                
+                // Step 3: Convert to base64
+                console.log('\nStep 3: Converting blob to base64...');
+                const blob = result.affirmations[0].blob;
+                const base64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(blob);
+                });
+                console.log('Base64 length:', base64.length, 'chars');
+                console.log('Base64 preview:', base64.substring(0, 100) + '...');
+                
+                // Step 4: Store in sessionStorage
+                console.log('\nStep 4: Storing in sessionStorage...');
+                const dataToStore = {
+                    responses: responses,
+                    affirmations: [{
+                        id: 1,
+                        text: result.affirmations[0].text,
+                        audioData: base64,
+                        playCount: 0
+                    }],
+                    fullAudio: {
+                        audioData: base64,
+                        duration: result.fullAudio.duration
+                    },
+                    metadata: result.metadata,
+                    timestamp: Date.now()
+                };
+                sessionStorage.setItem('affirmationData', JSON.stringify(dataToStore));
+                console.log('Stored in sessionStorage');
+                
+                // Step 5: Verify storage
+                console.log('\nStep 5: Verifying storage...');
+                const stored = sessionStorage.getItem('affirmationData');
+                console.log('Retrieved from sessionStorage:', !!stored);
+                console.log('Stored data size:', stored.length, 'chars');
+                
+                const parsed = JSON.parse(stored);
+                console.log('Parsed successfully:', !!parsed);
+                console.log('Has affirmations:', !!parsed.affirmations);
+                console.log('Affirmation count:', parsed.affirmations.length);
+                console.log('First affirmation has audioData:', !!parsed.affirmations[0].audioData);
+                
+                // Step 6: Convert back to blob
+                console.log('\nStep 6: Converting base64 back to blob...');
+                const base64Data = parsed.affirmations[0].audioData.split(',')[1];
+                const binaryData = atob(base64Data);
+                const arrayBuffer = new Uint8Array(binaryData.length);
+                for (let i = 0; i < binaryData.length; i++) {
+                    arrayBuffer[i] = binaryData.charCodeAt(i);
+                }
+                const newBlob = new Blob([arrayBuffer], { type: 'audio/wav' });
+                const newUrl = URL.createObjectURL(newBlob);
+                console.log('New blob URL:', newUrl);
+                console.log('New blob size:', newBlob.size, 'bytes');
+                
+                // Step 7: Test playback
+                console.log('\nStep 7: Testing audio playback...');
+                const audio = new Audio(newUrl);
+                audio.play();
+                console.log('Audio playing...');
+                
+                console.log('\n=== TEST COMPLETE - AUDIO SHOULD BE PLAYING ===');
+                
+            } catch (error) {
+                console.log('\n❌ ERROR:', error.message);
+                console.log('Stack:', error.stack);
+            }
+        });
+    </script>
+</body>
+</html>
