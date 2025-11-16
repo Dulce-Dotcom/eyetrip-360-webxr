@@ -66,16 +66,12 @@
         (function checkBrowserCompatibility() {
             const warnings = [];
             
-            // Check WebGL support
+            // Check WebGL support - DON'T create context (Safari iOS has strict context limits)
             if (!window.WebGLRenderingContext) {
                 warnings.push('WebGL is not supported');
-            } else {
-                const canvas = document.createElement('canvas');
-                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-                if (!gl) {
-                    warnings.push('WebGL context could not be created');
-                }
             }
+            // NOTE: Context creation test removed - Safari iOS loses contexts when multiple are created
+            // The actual renderer will handle WebGL initialization
             
             // Check for basic ES6 support
             try {

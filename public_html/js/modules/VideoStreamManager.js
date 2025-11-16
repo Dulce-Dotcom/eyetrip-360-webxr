@@ -51,16 +51,9 @@ class VideoStreamManager {
             this.currentQuality = '1080p';
         }
         
-        // Check GPU capabilities
-        const canvas = document.createElement('canvas');
-        const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
-        if (gl) {
-            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
-            if (debugInfo) {
-                const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
-                console.log(`🎮 GPU: ${renderer}`);
-            }
-        }
+        // REMOVED: GPU capabilities check that was creating extra WebGL contexts
+        // Safari iOS has strict limits on concurrent contexts - let PanoramaPlayer handle it
+        console.log('🎮 GPU detection skipped to preserve WebGL contexts');
     }
 
     /**
