@@ -1916,12 +1916,7 @@ body.high-contrast a {
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
-    /* Animated rotating background images */
-    background: 
-        linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.5)),
-        url('../images/EyeTrip-Screenshot1.png');
-    background-size: cover;
-    background-position: center;
+    background: rgba(4, 6, 20, 0.9);
     backdrop-filter: blur(8px) !important;
     display: flex !important;
     align-items: center !important;
@@ -1929,10 +1924,31 @@ body.high-contrast a {
     z-index: 999999 !important;
     opacity: 0 !important;
     transition: opacity 0.3s ease !important;
-    overflow-y: auto !important;
     padding: 1rem !important;
     pointer-events: auto !important;
-    animation: backgroundFade 20s ease-in-out infinite;
+    overflow: hidden !important;
+    isolation: isolate;
+    will-change: opacity;
+}
+
+.affirmation-survey-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(135deg, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55)),
+        url('../images/EyeTrip-Screenshot1.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    animation: backgroundFade 24s ease-in-out infinite;
+    opacity: 0.95;
+    z-index: 0;
+}
+
+.affirmation-survey-overlay > * {
+    position: relative;
+    z-index: 1;
 }
 
 @keyframes backgroundFade {
@@ -1992,6 +2008,7 @@ body.high-contrast a {
         rgba(102, 126, 234, 0.5) 0%, 
         rgba(118, 75, 162, 0.5) 50%,
         rgba(102, 126, 234, 0.5) 100%);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;

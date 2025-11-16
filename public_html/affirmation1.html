@@ -906,12 +906,10 @@
                         audio.loop = false;
                         audio.preload = 'auto';
                         
-                        // Lock volume at 1.0 - prevent any external changes
-                        Object.defineProperty(audio, 'volume', {
-                            get: function() { return 1.0; },
-                            set: function(val) { 
-                                // Force volume to always be 1.0
-                                HTMLMediaElement.prototype.__lookupSetter__('volume').call(this, 1.0);
+                        // Force volume back to 1.0 if anything tries to change it
+                        audio.addEventListener('volumechange', () => {
+                            if (Math.abs(audio.volume - 1.0) > 0.001) {
+                                audio.volume = 1.0;
                             }
                         });
                         
