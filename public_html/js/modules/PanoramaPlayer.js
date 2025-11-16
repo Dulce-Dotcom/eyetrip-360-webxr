@@ -27,6 +27,7 @@ export class PanoramaPlayer {
     this.lastVRMode = false; // Track VR mode changes
     this.texture = null;
     this.isPlaying = false;
+    this.isContextLost = false; // Track WebGL context loss (Safari iOS)
     this.hotspotManager = null; // Will be initialized when video loads
     this.miniMap = null; // Mini-map navigation aid
     this.hotspotsInitialized = false; // Prevent double initialization
@@ -262,6 +263,30 @@ export class PanoramaPlayer {
             this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
             this.renderer.domElement.style.transition = 'opacity 0.5s ease';
             this.container.appendChild(this.renderer.domElement);
+            
+            // Add WebGL context loss/restoration handlers (critical for Safari iOS)
+            const canvas = this.renderer.domElement;
+            canvas.addEventListener('webglcontextlost', (event) => {
+                event.preventDefault();
+                console.warn('[PanoramaPlayer] ⚠️ WebGL context lost - preventing default behavior');
+                this.isContextLost = true;
+                // Stop animation loop
+                if (this.renderer && this.renderer.setAnimationLoop) {
+                    this.renderer.setAnimationLoop(null);
+                }
+            }, false);
+            
+            canvas.addEventListener('webglcontextrestored', () => {
+                console.log('[PanoramaPlayer] ✅ WebGL context restored - reinitializing');
+                this.isContextLost = false;
+                // Reinitialize renderer and scene
+                this.setupRenderer();
+                // Restart animation loop
+                if (this.renderer && this.renderer.setAnimationLoop) {
+                    this.renderer.setAnimationLoop(this.animate.bind(this));
+                }
+            }, false);
+            
             this.renderer.setAnimationLoop(this.animate.bind(this));
             
             // Final summary
@@ -904,6 +929,12 @@ export class PanoramaPlayer {
 
     // Animation loop: update camera, handle XR controllers
     animate() {
+        // Skip rendering if WebGL context is lost
+        if (this.isContextLost) {
+            console.warn('[PanoramaPlayer] Skipping frame - WebGL context lost');
+            return;
+        }
+        
         if (!this.camera) return;
         
         // Simple VR mode detection
