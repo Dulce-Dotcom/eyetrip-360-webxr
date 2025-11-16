@@ -167,8 +167,12 @@ export class PanoramaPlayer {
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             
-            // Safari iOS specific settings - very conservative
+            console.log(`[PanoramaPlayer] Initializing renderer - Mobile: ${isMobile}, Safari: ${isSafari}`);
+            
+            // Safari iOS specific settings - very conservative and minimal
             const rendererConfig = {
+                canvas: undefined, // Let Three.js create its own canvas
+                context: undefined, // Let Three.js create the WebGL context
                 antialias: !isMobile, // Disable antialiasing on mobile for performance
                 alpha: true,
                 powerPreference: (isMobile || isSafari) ? 'low-power' : 'high-performance',
@@ -176,15 +180,23 @@ export class PanoramaPlayer {
                 depth: true,
                 logarithmicDepthBuffer: false, // Can cause issues on some mobile devices
                 preserveDrawingBuffer: false,
-                failIfMajorPerformanceCaveat: false // Don't fail on Safari iOS
+                failIfMajorPerformanceCaveat: false // CRITICAL: Don't fail on Safari iOS
             };
             
+            console.log('[PanoramaPlayer] Creating WebGLRenderer with config:', rendererConfig);
             this.renderer = new THREE.WebGLRenderer(rendererConfig);
             
             // Check if renderer was created successfully
             if (!this.renderer || !this.renderer.domElement) {
-                throw new Error('WebGLRenderer creation failed');
+                throw new Error('WebGLRenderer creation failed - renderer or domElement is null');
             }
+            
+            const gl = this.renderer.getContext();
+            if (!gl) {
+                throw new Error('WebGL context is null after renderer creation');
+            }
+            
+            console.log('[PanoramaPlayer] WebGL context created successfully');
             
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             
@@ -203,9 +215,10 @@ export class PanoramaPlayer {
             this.container.appendChild(this.renderer.domElement);
             this.renderer.setAnimationLoop(this.animate.bind(this));
             
-            console.log(`[PanoramaPlayer] Renderer initialized (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, pixelRatio: ${pixelRatio})`);
+            console.log(`[PanoramaPlayer] ✅ Renderer initialized successfully (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, pixelRatio: ${pixelRatio})`);
         } catch (error) {
-            console.error('[PanoramaPlayer] Error initializing renderer:', error);
+            console.error('[PanoramaPlayer] ❌ Error initializing renderer:', error);
+            console.error('[PanoramaPlayer] Error stack:', error.stack);
             this.showWebGLError(error);
         }
     }
