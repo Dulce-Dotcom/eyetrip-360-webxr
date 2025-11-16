@@ -169,30 +169,10 @@ export class PanoramaPlayer {
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
             
-            // CRITICAL: Pre-check WebGL availability on Safari iOS
-            if (isIOS && isSafari) {
-                console.log('[PanoramaPlayer] 🍎 Safari iOS - checking WebGL availability first');
-                const testCanvas = document.createElement('canvas');
-                const testGL = testCanvas.getContext('webgl', { failIfMajorPerformanceCaveat: false }) || 
-                               testCanvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: false });
-                
-                if (!testGL) {
-                    throw new Error('Safari iOS: WebGL is not available. Please check Settings > Safari > Advanced > WebGL is enabled');
-                }
-                
-                // Clean up test context immediately
-                const loseContext = testGL.getExtension('WEBGL_lose_context');
-                if (loseContext) {
-                    loseContext.loseContext();
-                }
-                testCanvas.width = 0;
-                testCanvas.height = 0;
-                
-                console.log('[PanoramaPlayer] ✅ Safari iOS: WebGL is available');
-                
-                // Give Safari a moment to clean up the test context
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
+            // REMOVED: Pre-check creates a test context that causes the main context to fail
+            // Safari iOS is so strict that even creating/destroying a test context 
+            // exhausts the WebGL context limit momentarily
+            // Solution: Trust that WebGL is available and let THREE.js handle errors
             
             // Detect iOS version for WebGL 2.0 capability
             let iosVersion = null;
@@ -328,21 +308,16 @@ export class PanoramaPlayer {
             console.error('[PanoramaPlayer] Error message:', error.message);
             console.error('[PanoramaPlayer] Error stack:', error.stack);
             
-            // Try to get more details about WebGL availability
-            if (typeof window !== 'undefined') {
-                const testCanvas = document.createElement('canvas');
-                console.log('[PanoramaPlayer] Testing WebGL availability:');
-                console.log('  - WebGLRenderingContext exists:', !!window.WebGLRenderingContext);
-                console.log('  - WebGL2RenderingContext exists:', !!window.WebGL2RenderingContext);
-                
-                const testGL = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
-                console.log('  - Can create webgl context:', !!testGL);
-                
-                if (testGL) {
-                    console.log('  - WebGL version:', testGL.getParameter(testGL.VERSION));
-                    console.log('  - Vendor:', testGL.getParameter(testGL.VENDOR));
-                }
-            }
+            // REMOVED: Testing WebGL availability here creates ANOTHER context
+            // Safari iOS will lose it immediately after the main context already failed
+            // This makes the error logs confusing and doesn't provide useful info
+            
+            // Just log basic info without creating contexts
+            console.log('[PanoramaPlayer] WebGL Context Info:');
+            console.log('  - WebGLRenderingContext exists:', !!window.WebGLRenderingContext);
+            console.log('  - WebGL2RenderingContext exists:', !!window.WebGL2RenderingContext);
+            console.log('  - Safari iOS has strict WebGL context limits (typically 4-8 max)');
+            console.log('  - Check Settings > Safari > Advanced > WebGL is enabled');
             
             this.showWebGLError(error);
         }
