@@ -179,76 +179,24 @@ export class PanoramaPlayer {
             
             console.log(`[PanoramaPlayer] Device Info - Mobile: ${isMobile}, Safari: ${isSafari}, iOS: ${isIOS}${iosVersion ? ` v${iosVersion}` : ''}`);
             
-            // Determine WebGL version support
-            // iOS 15+ supports WebGL 2.0, iOS 18+ (iPhone 15) fully optimized
-            const supportsWebGL2 = !isIOS || (iosVersion && iosVersion >= 15);
-            const useWebGL2 = supportsWebGL2 && !isMobile; // Use WebGL 2 on desktop, WebGL 1 on mobile for safety
-            
-            console.log(`[PanoramaPlayer] WebGL Strategy: ${useWebGL2 ? 'WebGL 2.0' : 'WebGL 1.0'} (iOS ${iosVersion || 'N/A'}, supports WebGL2: ${supportsWebGL2})`);
-            
-            // For iOS, create canvas and WebGL context manually with safe settings
-            let canvas, context;
-            if (isIOS) {
-                console.log('[PanoramaPlayer] iOS detected - creating WebGL context manually');
-                canvas = document.createElement('canvas');
-                
-                const contextAttributes = {
-                    alpha: true,
-                    antialias: false, // Disable for mobile performance
-                    depth: true,
-                    stencil: false,
-                    preserveDrawingBuffer: false,
-                    powerPreference: 'default',
-                    failIfMajorPerformanceCaveat: false,
-                    desynchronized: false
-                };
-                
-                // Try WebGL 2.0 first for iOS 15+
-                if (supportsWebGL2) {
-                    console.log('[PanoramaPlayer] Attempting WebGL 2.0 context for iOS 15+');
-                    context = canvas.getContext('webgl2', contextAttributes);
-                    
-                    if (context) {
-                        console.log('[PanoramaPlayer] ✅ WebGL 2.0 context created successfully on iOS');
-                    }
-                }
-                
-                // Fallback to WebGL 1.0 if WebGL 2.0 fails or not supported
-                if (!context) {
-                    console.log('[PanoramaPlayer] Falling back to WebGL 1.0');
-                    context = canvas.getContext('webgl', contextAttributes) ||
-                             canvas.getContext('experimental-webgl', contextAttributes);
-                }
-                
-                if (!context) {
-                    throw new Error('Cannot create WebGL context on Safari iOS. WebGL may be disabled in Settings → Safari → Advanced → WebGL');
-                }
-                
-                const webglVersion = context instanceof WebGL2RenderingContext ? '2.0' : '1.0';
-                console.log(`[PanoramaPlayer] iOS WebGL ${webglVersion} context created:`, {
-                    version: context.getParameter(context.VERSION),
-                    vendor: context.getParameter(context.VENDOR),
-                    renderer: context.getParameter(context.RENDERER),
-                    maxTextureSize: context.getParameter(context.MAX_TEXTURE_SIZE)
-                });
-            }
-            
-            // Renderer configuration - optimized per platform
+            // iOS: Let Three.js handle context creation completely
+            // This avoids all the shader precision and context creation issues
             const rendererConfig = {
-                canvas: canvas, // Undefined for desktop (Three.js creates), defined for iOS
-                context: context, // Undefined for desktop, pre-created for iOS
-                antialias: !isMobile, // Enable antialiasing on desktop/VR for quality
+                antialias: !isMobile, // Enable antialiasing only on desktop/VR
                 alpha: true,
                 premultipliedAlpha: true,
-                powerPreference: isMobile ? 'default' : 'high-performance', // High performance for desktop/VR
+                powerPreference: isMobile ? 'default' : 'high-performance',
                 stencil: false,
                 depth: true,
                 logarithmicDepthBuffer: false,
                 preserveDrawingBuffer: false,
-                failIfMajorPerformanceCaveat: false // Critical for compatibility
+                failIfMajorPerformanceCaveat: false, // CRITICAL: Don't fail if GPU is slow
+                precision: isMobile ? 'mediump' : 'highp' // Use medium precision on mobile
             };
             
-            console.log('[PanoramaPlayer] Creating THREE.WebGLRenderer', isIOS ? 'with pre-created iOS context' : 'with auto context (Desktop/VR)');
+            console.log('[PanoramaPlayer] Creating THREE.WebGLRenderer (letting Three.js handle context)');
+            console.log('[PanoramaPlayer] Config:', rendererConfig);
+            
             this.renderer = new THREE.WebGLRenderer(rendererConfig);
             
             // Validate renderer creation
@@ -261,19 +209,25 @@ export class PanoramaPlayer {
                 throw new Error('WebGL context is null after renderer creation');
             }
             
-            // Log WebGL version being used
+            // Log WebGL version and capabilities
             const finalWebGLVersion = gl instanceof WebGL2RenderingContext ? '2.0' : '1.0';
-            console.log(`[PanoramaPlayer] ✅ THREE.js using WebGL ${finalWebGLVersion}`);
+            console.log(`[PanoramaPlayer] ✅ WebGL ${finalWebGLVersion} context created by Three.js`);
+            console.log(`[PanoramaPlayer] Capabilities:`, {
+                version: gl.getParameter(gl.VERSION),
+                vendor: gl.getParameter(gl.VENDOR),
+                renderer: gl.getParameter(gl.RENDERER),
+                maxTextureSize: gl.getParameter(gl.MAX_TEXTURE_SIZE)
+            });
             
             // Renderer setup
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             
-            // Pixel ratio configuration - optimized per platform
+            // Pixel ratio configuration - conservative for mobile
             let pixelRatio = window.devicePixelRatio;
             if (isIOS) {
-                // iOS: Use 1x to prevent context loss, unless iOS 18+ where 2x is safe
-                pixelRatio = (iosVersion && iosVersion >= 18) ? Math.min(pixelRatio, 2) : 1;
-                console.log(`[PanoramaPlayer] iOS pixel ratio set to ${pixelRatio} (iOS ${iosVersion})`);
+                // iOS: Start with 1x for stability, can increase to 2x for iOS 18+ if stable
+                pixelRatio = 1;
+                console.log(`[PanoramaPlayer] iOS pixel ratio set to ${pixelRatio} for stability`);
             } else if (isMobile) {
                 // Android: Cap at 2x
                 pixelRatio = Math.min(pixelRatio, 2);
@@ -320,7 +274,26 @@ export class PanoramaPlayer {
             
         } catch (error) {
             console.error('[PanoramaPlayer] ❌ Error initializing renderer:', error);
+            console.error('[PanoramaPlayer] Error name:', error.name);
+            console.error('[PanoramaPlayer] Error message:', error.message);
             console.error('[PanoramaPlayer] Error stack:', error.stack);
+            
+            // Try to get more details about WebGL availability
+            if (typeof window !== 'undefined') {
+                const testCanvas = document.createElement('canvas');
+                console.log('[PanoramaPlayer] Testing WebGL availability:');
+                console.log('  - WebGLRenderingContext exists:', !!window.WebGLRenderingContext);
+                console.log('  - WebGL2RenderingContext exists:', !!window.WebGL2RenderingContext);
+                
+                const testGL = testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+                console.log('  - Can create webgl context:', !!testGL);
+                
+                if (testGL) {
+                    console.log('  - WebGL version:', testGL.getParameter(testGL.VERSION));
+                    console.log('  - Vendor:', testGL.getParameter(testGL.VENDOR));
+                }
+            }
+            
             this.showWebGLError(error);
         }
     }
