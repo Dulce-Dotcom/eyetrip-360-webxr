@@ -542,8 +542,47 @@ function initializeApp() {
     // Mark as initializing
     document.body.setAttribute('data-app-initialized', 'true');
     
-    console.log('Creating new App instance...');
-    window.app = new App();
+    // SAFARI iOS FIX: Add small delay to let WebGL contexts from polyfills settle
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS && isSafari) {
+        console.log('🍎 Safari iOS detected - waiting for optimal conditions');
+        
+        const startApp = () => {
+            console.log('✅ Starting App instance');
+            window.app = new App();
+        };
+        
+        // If page is hidden, wait for it to become visible
+        if (document.hidden) {
+            console.log('⏸️ Page is hidden - waiting for visibility before WebGL init');
+            const visibilityHandler = () => {
+                if (!document.hidden) {
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                    console.log('✅ Page now visible - initializing in 500ms');
+                    setTimeout(startApp, 500);
+                }
+            };
+            document.addEventListener('visibilitychange', visibilityHandler);
+            
+            // Fallback timeout in case visibility never changes
+            setTimeout(() => {
+                if (document.hidden) {
+                    console.log('⏰ Timeout reached - initializing anyway');
+                    document.removeEventListener('visibilitychange', visibilityHandler);
+                    startApp();
+                }
+            }, 5000);
+        } else {
+            // Page is visible, just add small delay
+            console.log('✅ Page visible - adding 500ms delay for WebGL stability');
+            setTimeout(startApp, 500);
+        }
+    } else {
+        console.log('Creating new App instance...');
+        window.app = new App();
+    }
 }
 
 // Only run once when DOM is ready
