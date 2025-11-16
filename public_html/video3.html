@@ -57,9 +57,19 @@
     <!-- WebXR Polyfill for broader support - load first -->
     <script src="https://unpkg.com/webxr-polyfill@latest/build/webxr-polyfill.min.js"></script>
     <script>
-        // Initialize WebXR polyfill immediately
+        // Initialize WebXR polyfill - SKIP on Safari iOS to preserve WebGL contexts
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        
         if (window.WebXRPolyfill) {
-            console.log('WebXR Polyfill loaded and initialized');
+            if (isIOS && isSafari) {
+                console.log('🍎 WebXR Polyfill SKIPPED on Safari iOS - preserving WebGL contexts');
+                // Don't initialize polyfill on Safari iOS - it creates test contexts that exhaust the limit
+                // Safari iOS 15+ has native WebXR support anyway
+            } else {
+                console.log('WebXR Polyfill loaded and initialized');
+                new WebXRPolyfill();
+            }
         }
         
         // Browser compatibility check
