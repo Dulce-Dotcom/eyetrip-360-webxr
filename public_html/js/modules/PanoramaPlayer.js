@@ -86,7 +86,7 @@ export class PanoramaPlayer {
         console.log('🎥 [PanoramaPlayer] Setting up scene, camera, renderer...');
         this.setupScene();
         this.setupCamera();
-        this.setupRenderer();
+        await this.setupRenderer();
         this.createSphere();
         this.setupEventListeners();
         this.setupVRButton();
@@ -162,12 +162,37 @@ export class PanoramaPlayer {
     }
 
     // Create renderer and enable WebXR
-    setupRenderer() {
+    async setupRenderer() {
         try {
             // Device detection
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
             const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
+            // CRITICAL: Pre-check WebGL availability on Safari iOS
+            if (isIOS && isSafari) {
+                console.log('[PanoramaPlayer] 🍎 Safari iOS - checking WebGL availability first');
+                const testCanvas = document.createElement('canvas');
+                const testGL = testCanvas.getContext('webgl', { failIfMajorPerformanceCaveat: false }) || 
+                               testCanvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: false });
+                
+                if (!testGL) {
+                    throw new Error('Safari iOS: WebGL is not available. Please check Settings > Safari > Advanced > WebGL is enabled');
+                }
+                
+                // Clean up test context immediately
+                const loseContext = testGL.getExtension('WEBGL_lose_context');
+                if (loseContext) {
+                    loseContext.loseContext();
+                }
+                testCanvas.width = 0;
+                testCanvas.height = 0;
+                
+                console.log('[PanoramaPlayer] ✅ Safari iOS: WebGL is available');
+                
+                // Give Safari a moment to clean up the test context
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
             
             // Detect iOS version for WebGL 2.0 capability
             let iosVersion = null;
@@ -276,11 +301,11 @@ export class PanoramaPlayer {
                 }
             }, false);
             
-            canvas.addEventListener('webglcontextrestored', () => {
+            canvas.addEventListener('webglcontextrestored', async () => {
                 console.log('[PanoramaPlayer] ✅ WebGL context restored - reinitializing');
                 this.isContextLost = false;
                 // Reinitialize renderer and scene
-                this.setupRenderer();
+                await this.setupRenderer();
                 // Restart animation loop
                 if (this.renderer && this.renderer.setAnimationLoop) {
                     this.renderer.setAnimationLoop(this.animate.bind(this));

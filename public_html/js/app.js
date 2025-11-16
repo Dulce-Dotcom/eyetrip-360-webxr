@@ -560,8 +560,9 @@ function initializeApp() {
             const visibilityHandler = () => {
                 if (!document.hidden) {
                     document.removeEventListener('visibilitychange', visibilityHandler);
-                    console.log('✅ Page now visible - initializing in 500ms');
-                    setTimeout(startApp, 500);
+                    console.log('✅ Page now visible - initializing in 1500ms');
+                    // Longer delay to ensure any cached contexts are cleared
+                    setTimeout(startApp, 1500);
                 }
             };
             document.addEventListener('visibilitychange', visibilityHandler);
@@ -575,9 +576,10 @@ function initializeApp() {
                 }
             }, 5000);
         } else {
-            // Page is visible, just add small delay
-            console.log('✅ Page visible - adding 500ms delay for WebGL stability');
-            setTimeout(startApp, 500);
+            // Page is visible, add longer delay for Safari to clear any phantom contexts
+            console.log('✅ Page visible - adding 1500ms delay for WebGL stability');
+            // Increased from 500ms to 1500ms to give Safari more time
+            setTimeout(startApp, 1500);
         }
     } else {
         console.log('Creating new App instance...');
