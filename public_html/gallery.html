@@ -445,7 +445,7 @@
                 </div>
             </div>
 
-            <div id="affirmationGrid" style="display: flex; justify-content: center; margin: 0 auto; max-width: 1400px; padding: 0 2rem;">
+            <div id="affirmationGrid" style="display: flex; justify-content: center; margin: 0 auto; max-width: 1400px;">
                 <!-- Single Personalized Affirmation Journey Card -->
                 <div class="video-card affirmation-card" onclick="startAffirmationExperience()" style="cursor: pointer; width: 100%;">
                     <div style="position: relative; overflow: hidden; border-radius: 12px;">
@@ -963,64 +963,50 @@
         function showProgressOverlay() {
             const overlay = document.createElement('div');
             overlay.className = 'affirmation-progress-overlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
-                backdrop-filter: blur(30px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10001;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            `;
+            // No inline styles - use CSS classes instead
             
             overlay.innerHTML = `
-                <div style="text-align: center; max-width: 600px; padding: 3rem;">
-                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">🎤</div>
-                    <h2 style="font-size: 2.2rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
+                <div class="progress-card">
+                    <div class="progress-icon">🎤</div>
+                    <h2 class="progress-title">
                         Crafting Your Personalized Affirmations
                     </h2>
-                    <p class="progress-status" style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; line-height: 1.6; margin-bottom: 2rem; min-height: 60px;">
+                    <p class="progress-status">
                         Initializing...
                     </p>
                     
                     <!-- Progress Bar -->
-                    <div style="width: 100%; max-width: 400px; margin: 0 auto 2rem; background: rgba(255, 255, 255, 0.1); border-radius: 20px; overflow: hidden; height: 8px;">
-                        <div class="progress-bar" style="height: 100%; width: 0%; background: linear-gradient(90deg, #667eea 0%, #764ba2 100%); transition: width 0.5s ease; border-radius: 20px;"></div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" style="width: 0%;"></div>
                     </div>
                     
                     <!-- Step Indicators -->
-                    <div style="display: flex; justify-content: space-between; max-width: 400px; margin: 0 auto 2rem;">
-                        <div class="step-indicator" data-step="1" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">1</div>
-                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Select</div>
+                    <div class="step-indicators">
+                        <div class="step-indicator" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Select</div>
                         </div>
-                        <div class="step-indicator" data-step="2" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">2</div>
-                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Generate</div>
+                        <div class="step-indicator" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Generate</div>
                         </div>
-                        <div class="step-indicator" data-step="3" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">3</div>
-                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Process</div>
+                        <div class="step-indicator" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Process</div>
                         </div>
-                        <div class="step-indicator" data-step="4" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">4</div>
-                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Prepare</div>
+                        <div class="step-indicator" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Prepare</div>
                         </div>
-                        <div class="step-indicator" data-step="5" style="flex: 1; padding: 0.5rem; opacity: 0.4; transition: all 0.3s ease;">
-                            <div style="width: 30px; height: 30px; border-radius: 50%; background: rgba(255, 255, 255, 0.2); margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem;">5</div>
-                            <div style="font-size: 0.7rem; color: rgba(255, 255, 255, 0.6);">Launch</div>
+                        <div class="step-indicator" data-step="5">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Launch</div>
                         </div>
                     </div>
                     
-                    <div class="loading-spinner" style="width: 50px; height: 50px; margin: 0 auto; border: 3px solid rgba(255, 255, 255, 0.1); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <div class="loading-spinner"></div>
                     
-                    <p style="color: rgba(255, 255, 255, 0.5); font-size: 0.9rem; margin-top: 2rem; font-style: italic;">
+                    <p class="progress-footer">
                         Using AI to create unique voice affirmations just for you
                     </p>
                 </div>
@@ -1049,56 +1035,15 @@
                 progressBar.style.width = `${progress}%`;
             }
             
-            // Update step indicators
-            indicators.forEach((indicator, index) => {
+            // Update step indicators - activate current and previous steps
+            indicators.forEach((indicator) => {
                 const indicatorStep = parseInt(indicator.getAttribute('data-step'));
                 if (indicatorStep <= step) {
-                    indicator.style.opacity = '1';
-                    const circle = indicator.querySelector('div:first-child');
-                    if (circle) {
-                        circle.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-                        circle.style.transform = 'scale(1.1)';
-                    }
+                    indicator.classList.add('active');
                 } else {
-                    indicator.style.opacity = '0.4';
+                    indicator.classList.remove('active');
                 }
             });
-        }
-        
-        // Show transition message (kept for backup, but now using progress overlay)
-        function showTransitionMessage() {
-            const overlay = document.createElement('div');
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98));
-                backdrop-filter: blur(30px);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                z-index: 10001;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-            `;
-            
-            overlay.innerHTML = `
-                <div style="text-align: center; max-width: 600px; padding: 3rem;">
-                    <div style="font-size: 5rem; margin-bottom: 1.5rem; animation: pulse 2s ease-in-out infinite;">✨</div>
-                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700;">
-                        Your Affirmations Are Ready!
-                    </h2>
-                    <p style="color: rgba(255, 255, 255, 0.8); font-size: 1.2rem; line-height: 1.6; margin-bottom: 2rem;">
-                        Launching your personalized immersive experience...
-                    </p>
-                    <div class="loading-spinner" style="width: 60px; height: 60px; margin: 0 auto; border: 4px solid rgba(255, 255, 255, 0.1); border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                </div>
-            `;
-            
-            document.body.appendChild(overlay);
-            setTimeout(() => overlay.style.opacity = '1', 10);
         }
         
         console.log('✅ Affirmation system ready - startAffirmationExperience() is now global');
@@ -1108,40 +1053,88 @@
             const { emotionalTone, currentMood, focusArea } = responses;
             
             // Video mapping based on video characteristics:
-            // matrixCaracasSphere_1 - Hypnotic & upbeat (calming/peaceful)
-            // Scraptangle_latlong_05b_offsetOverture1 - Hypnotic & low/groovy (grounding)
-            // ShroomZoomLatlong_12 - Chaos & trancey/progressive (energizing/stressed)
-            // stumpy_latlong_01_waves_61Mbps-003 - Funky & electric/trippy (energizing/playful)
+            // matrixCaracasSphere_1 - Hypnotic & upbeat (calming, peaceful, meditative)
+            // Scraptangle_latlong_05b_offsetOverture1 - Hypnotic & low/groovy (grounding, steady)
+            // ShroomZoomLatlong_12 - Chaos & trancey/progressive (energizing, intense, transformative)
+            // stumpy_latlong_01_waves_61Mbps-003 - Funky & electric/trippy (uplifting, joyful, playful)
             
             const videoMap = {
-                // CALMING - Matrix Caracas (hypnotic & upbeat)
+                // CALMING combinations - Matrix Caracas (hypnotic & upbeat)
                 'calming-anxious': 'matrixCaracasSphere_1',
                 'calming-stressed': 'matrixCaracasSphere_1',
-                'calming-peaceful': 'matrixCaracasSphere_1',
+                'calming-tired': 'matrixCaracasSphere_1',
                 'calming-sad': 'matrixCaracasSphere_1',
+                'calming-peaceful': 'matrixCaracasSphere_1',
+                'calming-restless': 'matrixCaracasSphere_1',
+                'calming-motivated': 'matrixCaracasSphere_1',
+                'calming-hopeful': 'matrixCaracasSphere_1',
                 
-                // GROUNDING - Scraptangle (hypnotic & low/groovy)
+                // GROUNDING combinations - Scraptangle (hypnotic & low/groovy)
                 'grounding-anxious': 'Scraptangle_latlong_05b_offsetOverture1',
                 'grounding-stressed': 'Scraptangle_latlong_05b_offsetOverture1',
-                'grounding-peaceful': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-tired': 'Scraptangle_latlong_05b_offsetOverture1',
                 'grounding-sad': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-peaceful': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-restless': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-motivated': 'Scraptangle_latlong_05b_offsetOverture1',
+                'grounding-hopeful': 'Scraptangle_latlong_05b_offsetOverture1',
                 
-                // ENERGIZING + stressed/anxious - Shroom Zoom (chaos & trancey)
-                'energizing-stressed': 'ShroomZoomLatlong_12',
-                'energizing-anxious': 'ShroomZoomLatlong_12',
+                // ENERGIZING combinations - Shroom Zoom for intense, Stumpy for positive
+                'energizing-anxious': 'ShroomZoomLatlong_12', // Chaos helps release anxiety
+                'energizing-stressed': 'ShroomZoomLatlong_12', // Intense to match stress
+                'energizing-tired': 'stumpy_latlong_01_waves_61Mbps-003', // Funky to energize
+                'energizing-sad': 'stumpy_latlong_01_waves_61Mbps-003', // Uplift sadness
+                'energizing-peaceful': 'stumpy_latlong_01_waves_61Mbps-003', // Playful energy
+                'energizing-restless': 'ShroomZoomLatlong_12', // Match restless energy
+                'energizing-motivated': 'stumpy_latlong_01_waves_61Mbps-003', // Support momentum
+                'energizing-hopeful': 'stumpy_latlong_01_waves_61Mbps-003', // Celebrate hope
                 
-                // ENERGIZING + peaceful/happy - Stumpy Waves (funky & trippy)
-                'energizing-peaceful': 'stumpy_latlong_01_waves_61Mbps-003',
-                'energizing-sad': 'stumpy_latlong_01_waves_61Mbps-003' // Uplift sad mood with funky vibes
+                // UPLIFTING combinations - Stumpy Waves (funky & trippy)
+                'uplifting-anxious': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-stressed': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-tired': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-sad': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-peaceful': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-restless': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-motivated': 'stumpy_latlong_01_waves_61Mbps-003',
+                'uplifting-hopeful': 'stumpy_latlong_01_waves_61Mbps-003',
+                
+                // MEDITATIVE combinations - Matrix Caracas (hypnotic & serene)
+                'meditative-anxious': 'matrixCaracasSphere_1',
+                'meditative-stressed': 'matrixCaracasSphere_1',
+                'meditative-tired': 'matrixCaracasSphere_1',
+                'meditative-sad': 'matrixCaracasSphere_1',
+                'meditative-peaceful': 'matrixCaracasSphere_1',
+                'meditative-restless': 'matrixCaracasSphere_1',
+                'meditative-motivated': 'matrixCaracasSphere_1',
+                'meditative-hopeful': 'matrixCaracasSphere_1',
+                
+                // TRANSFORMATIVE combinations - Shroom Zoom (chaos & evolution)
+                'transformative-anxious': 'ShroomZoomLatlong_12',
+                'transformative-stressed': 'ShroomZoomLatlong_12',
+                'transformative-tired': 'ShroomZoomLatlong_12',
+                'transformative-sad': 'ShroomZoomLatlong_12',
+                'transformative-peaceful': 'ShroomZoomLatlong_12',
+                'transformative-restless': 'ShroomZoomLatlong_12',
+                'transformative-motivated': 'ShroomZoomLatlong_12',
+                'transformative-hopeful': 'ShroomZoomLatlong_12'
             };
             
             const key = `${emotionalTone}-${currentMood}`;
             const selectedVideo = videoMap[key] || 'matrixCaracasSphere_1'; // Fallback to Matrix Caracas
             
-            console.log(`🎯 Mood mapping: ${key} → ${selectedVideo}`);
-            console.log(`   Emotional Tone: ${emotionalTone}`);
-            console.log(`   Current Mood: ${currentMood}`);
-            console.log(`   Focus Area: ${focusArea}`);
+            console.log('🎯 ========================================');
+            console.log('🎯 VIDEO SELECTION DEBUG');
+            console.log('🎯 ========================================');
+            console.log('📋 Full responses object:', JSON.stringify(responses, null, 2));
+            console.log('🎵 Emotional Tone:', emotionalTone);
+            console.log('💭 Current Mood:', currentMood);
+            console.log('🎯 Focus Area:', focusArea);
+            console.log('🔑 Lookup key:', key);
+            console.log('🗺️  Key exists in map?', key in videoMap);
+            console.log(`📹 Video selected: ${selectedVideo}`);
+            console.log(`✅ From map? ${videoMap[key] ? 'YES' : 'NO (using fallback)'}`);
+            console.log('🎯 ========================================');
             
             return selectedVideo;
         }
@@ -1149,9 +1142,9 @@
         // Helper: Get descriptive title for selected video
         function getVideoTitle(videoName, responses) {
             const titles = {
-                'matrixCaracasSphere_1': `Calming Journey - ${responses.focusArea}`,
+                'matrixCaracasSphere_1': `${responses.emotionalTone.charAt(0).toUpperCase() + responses.emotionalTone.slice(1)} Journey - ${responses.focusArea}`,
                 'Scraptangle_latlong_05b_offsetOverture1': `Grounding Journey - ${responses.focusArea}`,
-                'ShroomZoomLatlong_12': `Energizing Journey - ${responses.focusArea}`,
+                'ShroomZoomLatlong_12': `Transformative Journey - ${responses.focusArea}`,
                 'stumpy_latlong_01_waves_61Mbps-003': `Uplifting Journey - ${responses.focusArea}`
             };
             return titles[videoName] || 'Personalized Journey';

@@ -898,42 +898,66 @@
                 for (let i = 0; i < data.affirmations.length; i++) {
                     const aff = data.affirmations[i];
                     
-                    // Create a NEW Audio element for each affirmation (not shared)
-                    const audio = new Audio(fullAudioUrl);
-                    audio.volume = 1.5; // Louder volume (150%)
-                    audio.loop = false;
-                    audio.preload = 'auto';
-                    
-                    // Store segment info with slight trim at the end to avoid overlap
-                    audio.segmentStart = aff.startTime;
-                    audio.segmentEnd = aff.endTime - 0.1; // Trim 100ms from end to avoid next segment
-                    audio.isSegmentAudio = true;
-                    
-                    // Override play() to always start at segment beginning
-                    const originalPlay = audio.play.bind(audio);
-                    audio.play = async function() {
-                        console.log(`▶️ Playing segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
-                        this.currentTime = this.segmentStart;
-                        return originalPlay();
-                    };
-                    
-                    // Stop at segment end
-                    audio.addEventListener('timeupdate', function() {
-                        if (this.currentTime >= this.segmentEnd) {
-                            console.log(`⏹️ Reached segment end at ${this.currentTime.toFixed(2)}s, stopping`);
-                            this.pause();
-                            this.currentTime = this.segmentStart; // Reset for next play
-                        }
-                    });
-                    
-                    // Seek to start when metadata loads
-                    audio.addEventListener('loadedmetadata', () => {
-                        audio.currentTime = aff.startTime;
-                    });
-                    
-                    aff.audio = audio;
-                    
-                    console.log(`   ✅ Affirmation ${aff.id}: Audio segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
+                    try {
+                        // Create a NEW Audio element for each affirmation (not shared)
+                        const audio = new Audio(fullAudioUrl);
+                        // ALWAYS set volume to maximum for affirmations (force reset)
+                        audio.volume = 1.0;
+                        audio.loop = false;
+                        audio.preload = 'auto';
+                        
+                        // Lock volume at 1.0 - prevent any external changes
+                        Object.defineProperty(audio, 'volume', {
+                            get: function() { return 1.0; },
+                            set: function(val) { 
+                                // Force volume to always be 1.0
+                                HTMLMediaElement.prototype.__lookupSetter__('volume').call(this, 1.0);
+                            }
+                        });
+                        
+                        // Store segment info - minimal start delay, larger end trim
+                        audio.segmentStart = aff.startTime + 0.05; // Start only 50ms after (reduced from 150ms)
+                        audio.segmentEnd = aff.endTime - 0.4; // End 400ms before (increased from 300ms)
+                        audio.isSegmentAudio = true;
+                        
+                        // Override play() to always start at segment beginning
+                        const originalPlay = audio.play.bind(audio);
+                        audio.play = async function() {
+                            console.log(`▶️ Playing segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
+                            
+                            // Wait for metadata to be loaded before seeking
+                            if (this.readyState < 1) {
+                                console.log('⏳ Waiting for metadata to load...');
+                                await new Promise(resolve => {
+                                    this.addEventListener('loadedmetadata', resolve, { once: true });
+                                });
+                            }
+                            
+                            // Now safe to set currentTime
+                            this.currentTime = this.segmentStart;
+                            return originalPlay();
+                        };
+                        
+                        // Stop at segment end
+                        audio.addEventListener('timeupdate', function() {
+                            if (this.currentTime >= this.segmentEnd) {
+                                console.log(`⏹️ Reached segment end at ${this.currentTime.toFixed(2)}s, stopping`);
+                                this.pause();
+                                // Don't reset currentTime here - let play() handle it
+                            }
+                        });
+                        
+                        // Don't seek until play() is called - this prevents IndexSizeError
+                        // The play() override above will handle seeking to segmentStart
+                        
+                        aff.audio = audio;
+                        
+                        console.log(`   ✅ Affirmation ${aff.id}: Audio segment ${aff.startTime.toFixed(2)}s - ${audio.segmentEnd.toFixed(2)}s`);
+                    } catch (audioError) {
+                        console.error(`❌ Error creating audio for affirmation ${i}:`, audioError);
+                        console.error('   Affirmation data:', aff);
+                        throw audioError;
+                    }
                 }
                 
                 // Convert full audio for download
@@ -970,7 +994,15 @@
             } catch (error) {
                 console.error('❌ Error loading affirmation data:', error);
                 console.error('Stack trace:', error.stack);
-                alert('Error loading your affirmations. Please try again.');
+                console.error('Error type:', error.constructor.name);
+                console.error('Error message:', error.message);
+                
+                // More helpful error message
+                const errorMsg = error.message.includes('audio') 
+                    ? 'Error processing audio data. Please try generating affirmations again.'
+                    : 'Error loading your affirmations. Please try again.';
+                
+                alert(errorMsg + '\n\nYou will be redirected to start over.');
                 window.location.href = 'gallery.html';
             }
         }

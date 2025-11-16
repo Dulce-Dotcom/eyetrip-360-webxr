@@ -54,6 +54,11 @@ export class PanoramaPlayer {
     this.raycaster = new THREE.Raycaster();
     this.mouse = new THREE.Vector2();
     this.lastMouseMoveTime = 0; // Track when mouse last moved
+        
+        // Detect Safari for performance optimizations
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        this.safariMouseMoveThrottle = 0; // Throttle counter for Safari
+        console.log('🔍 PanoramaPlayer - Safari detected:', this.isSafari);
     
     // Initialize video stream manager for adaptive quality
     this.videoManager = new VideoStreamManager();
@@ -1164,6 +1169,19 @@ export class PanoramaPlayer {
         });
 
         dom.addEventListener('mousemove', (event) => {
+            // Safari optimization: throttle mouse move updates to every 3rd frame
+            if (this.isSafari) {
+                this.safariMouseMoveThrottle = (this.safariMouseMoveThrottle || 0) + 1;
+                if (this.safariMouseMoveThrottle % 3 !== 0) {
+                    // Still update rotation but skip heavy operations
+                    if (isUserInteracting) {
+                        this.lon = (onPointerDownMouseX - event.clientX) * mouseSensitivity + onPointerDownLon;
+                        this.lat = (event.clientY - onPointerDownMouseY) * mouseSensitivity + onPointerDownLat;
+                    }
+                    return;
+                }
+            }
+            
             if (isUserInteracting) {
                 // Use adaptive sensitivity based on device
                 this.lon = (onPointerDownMouseX - event.clientX) * mouseSensitivity + onPointerDownLon;
@@ -2052,61 +2070,74 @@ export class PanoramaPlayer {
     
     // Show completion message
     showCompletionMessage() {
-        const message = document.createElement('div');
-        message.className = 'completion-message';
-        message.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.95);
-            color: #ffd700;
-            padding: 40px 60px;
-            border-radius: 16px;
-            font-size: 32px;
-            font-weight: bold;
-            text-align: center;
-            border: 3px solid #ffd700;
-            box-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-            z-index: 10002;
-            animation: scaleIn 0.5s ease, fadeOut 0.5s ease 4.5s forwards;
-        `;
-        
-        // Check if in affirmation mode
-        const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
-        
-        message.innerHTML = `
-            <div style="font-size: 48px; margin-bottom: 16px;">✨</div>
-            <div>${isAffirmationMode ? 'All Affirmations Discovered!' : 'All Sounds Found!'}</div>
-            <div style="font-size: 20px; margin-top: 16px; color: #fff;">${isAffirmationMode ? 'You found all your personalized affirmations!' : 'You discovered all hidden sounds!'}</div>
-        `;
-        document.body.appendChild(message);
-        
-        // Add scale-in animation if not already added
-        if (!document.querySelector('#completion-keyframes')) {
-            const style = document.createElement('style');
-            style.id = 'completion-keyframes';
-            style.textContent = `
-                @keyframes scaleIn {
-                    from {
-                        transform: translate(-50%, -50%) scale(0);
-                        opacity: 0;
-                    }
-                    to {
-                        transform: translate(-50%, -50%) scale(1);
-                        opacity: 1;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        // Remove message after animation
+        // Delay showing completion message by 5.5 seconds to wait for last title to disappear
         setTimeout(() => {
-            if (message.parentNode) {
-                message.parentNode.removeChild(message);
+            const message = document.createElement('div');
+            message.className = 'completion-message';
+            message.style.cssText = `
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.85);
+                backdrop-filter: blur(8px);
+                color: #4CAF50;
+                padding: 16px 20px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 500;
+                text-align: left;
+                border: 1px solid rgba(76, 175, 80, 0.3);
+                box-shadow: 0 2px 12px rgba(76, 175, 80, 0.3);
+                z-index: 10002;
+                animation: slideInRight 0.4s ease, fadeOutRight 0.4s ease 4.5s forwards;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            `;
+            
+            // Check if in affirmation mode
+            const isAffirmationMode = sessionStorage.getItem('isAffirmationMode') === 'true';
+            
+            message.innerHTML = `
+                <div style="font-size: 20px; margin-bottom: 6px;">✨ ${isAffirmationMode ? 'All Affirmations Discovered!' : 'All Sounds Found!'}</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.8);">${isAffirmationMode ? 'You found all your personalized affirmations!' : 'You discovered all hidden sounds!'}</div>
+            `;
+            document.body.appendChild(message);
+            
+            // Add animations if not already added
+            if (!document.querySelector('#completion-keyframes')) {
+                const style = document.createElement('style');
+                style.id = 'completion-keyframes';
+                style.textContent = `
+                    @keyframes slideInRight {
+                        from {
+                            transform: translateX(20px);
+                            opacity: 0;
+                        }
+                        to {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                    }
+                    @keyframes fadeOutRight {
+                        from {
+                            transform: translateX(0);
+                            opacity: 1;
+                        }
+                        to {
+                            transform: translateX(20px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
             }
-        }, 5000);
+            
+            // Remove message after animation
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 5000);
+        }, 5500); // Delay by 5.5 seconds to wait for last affirmation title (5s display + 0.5s fade)
     }
 
     dispose() {

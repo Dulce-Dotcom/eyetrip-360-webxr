@@ -11,6 +11,10 @@ export class HotspotManager {
         this.camera = camera;
         this.video = video;
         
+        // Detect Safari for performance optimizations
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        console.log('🔍 Browser detection - Safari:', this.isSafari);
+        
         this.hotspots = [];
         this.discoveredHotspots = new Set();
         this.activeHotspots = [];
@@ -195,18 +199,17 @@ export class HotspotManager {
      * Create visual mesh for hotspot
      */
     createHotspotVisual(hotspot) {
-        // Main sphere with highly metallic PBR material and intense emissive glow
-        const geometry = new THREE.SphereGeometry(this.hotspotRadius, 64, 64); // Higher poly for smoothness
+        // Main sphere with elegant, ethereal look - darker and more sophisticated
+        const geometry = new THREE.SphereGeometry(this.hotspotRadius, 32, 32); // Optimized poly count
         const material = new THREE.MeshStandardMaterial({
             color: hotspot.color,
             emissive: hotspot.color,
-            emissiveIntensity: 5.0, // Much brighter emissive
-            metalness: 1.0, // Maximum metallic
-            roughness: 0.1, // Very shiny/glossy
+            emissiveIntensity: 0.8, // Subtle, not blown out
+            metalness: 0.3, // Less metallic, more ethereal
+            roughness: 0.4, // Slight roughness for depth
             transparent: true,
-            opacity: 1.0, // Fully opaque for better visibility
-            side: THREE.DoubleSide,
-            envMapIntensity: 2.0 // Enhanced environment reflections
+            opacity: 0.85, // Slightly transparent for ethereal look
+            side: THREE.DoubleSide
         });
         hotspot.mesh = new THREE.Mesh(geometry, material);
         hotspot.mesh.position.copy(hotspot.position);
@@ -214,32 +217,33 @@ export class HotspotManager {
         hotspot.mesh.userData.hotspot = hotspot;
         this.scene.add(hotspot.mesh);
         
-        // Create multiple glow layers for blur effect
+        // Create multiple glow layers for soft blur effect
         hotspot.glowLayers = [];
-        const layerCount = 4;
+        // Safari optimization: reduce glow layers from 3 to 2
+        const layerCount = this.isSafari ? 2 : 3;
         
         for (let i = 0; i < layerCount; i++) {
-            const scale = 1.5 + (i * 0.3); // 1.5x, 1.8x, 2.1x, 2.4x
-            const opacity = 0.5 - (i * 0.1); // 0.5, 0.4, 0.3, 0.2
+            const scale = 1.4 + (i * 0.4); // 1.4x, 1.8x, 2.2x
+            const opacity = 0.35 - (i * 0.12); // 0.35, 0.23, 0.11 - more subtle
             
-            const glowGeometry = new THREE.SphereGeometry(this.hotspotRadius * scale, 32, 32);
+            const glowGeometry = new THREE.SphereGeometry(this.hotspotRadius * scale, 24, 24);
             const glowMaterial = new THREE.MeshStandardMaterial({
                 color: hotspot.color,
                 emissive: hotspot.color,
-                emissiveIntensity: 4.0 - (i * 0.5), // Decreasing intensity
+                emissiveIntensity: 1.2 - (i * 0.3), // Gentle glow
                 transparent: true,
                 opacity: opacity,
                 side: THREE.DoubleSide,
                 metalness: 0,
                 roughness: 1,
-                depthWrite: false, // Important for transparency
-                blending: THREE.AdditiveBlending // Additive blending for glow effect
+                depthWrite: false,
+                blending: THREE.AdditiveBlending
             });
             
             const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial);
             glowMesh.position.copy(hotspot.position);
             glowMesh.visible = false;
-            glowMesh.renderOrder = -1 - i; // Render behind main mesh
+            glowMesh.renderOrder = -1 - i;
             
             this.scene.add(glowMesh);
             hotspot.glowLayers.push(glowMesh);
@@ -248,14 +252,14 @@ export class HotspotManager {
         // Keep reference to first layer as main glow
         hotspot.glowMesh = hotspot.glowLayers[0];
         
-        // Add point light to make orb glow and illuminate surroundings
-        const pointLight = new THREE.PointLight(hotspot.color, 3.0, 10); // Bright light
+        // Subtle point light - not too bright
+        const pointLight = new THREE.PointLight(hotspot.color, 1.2, 8);
         pointLight.position.copy(hotspot.position);
         pointLight.visible = false;
         hotspot.pointLight = pointLight;
         this.scene.add(pointLight);
         
-        // Particle ring effect with PBR
+        // Particle ring effect - always create for consistency
         this.createHotspotParticles(hotspot);
     }
     
@@ -263,24 +267,24 @@ export class HotspotManager {
      * Create particle ring around hotspot with PBR materials
      */
     createHotspotParticles(hotspot) {
-        const particleCount = 32; // More particles for denser, more beautiful ring
+        // Safari optimization: reduce particles from 24 to 12
+        const particleCount = this.isSafari ? 12 : 24;
         const particles = new THREE.Group();
         
         for (let i = 0; i < particleCount; i++) {
             const angle = (i / particleCount) * Math.PI * 2;
-            const radius = this.hotspotRadius * 2.8;
+            const radius = this.hotspotRadius * 2.5;
             
-            // Create highly metallic glowing particles
-            const particleGeometry = new THREE.SphereGeometry(0.15, 16, 16); // Slightly larger
+            // Create elegant, darker particles
+            const particleGeometry = new THREE.SphereGeometry(0.12, 12, 12); // Smaller, optimized
             const particleMaterial = new THREE.MeshStandardMaterial({
                 color: hotspot.color,
                 emissive: hotspot.color,
-                emissiveIntensity: 3.5, // Much brighter
-                metalness: 1.0, // Maximum metallic
-                roughness: 0.05, // Ultra shiny
+                emissiveIntensity: 1.5, // Subtle glow
+                metalness: 0.2,
+                roughness: 0.3,
                 transparent: true,
-                opacity: 0.98,
-                envMapIntensity: 2.0 // Enhanced reflections
+                opacity: 0.75 // More transparent
             });
             const particle = new THREE.Mesh(particleGeometry, particleMaterial);
             
@@ -393,6 +397,9 @@ export class HotspotManager {
             this.activeHotspots.push(hotspot);
         }
         
+        // Play appearance sound immediately when orb spawns
+        this.playAppearanceSound();
+        
         console.log(`✨ Hotspot appeared: ${hotspot.label} at ${hotspot.time}s`);
     }
     
@@ -422,61 +429,67 @@ export class HotspotManager {
      * Animate hotspot (pulsing, rotation)
      */
     animateHotspot(hotspot, deltaTime) {
+        // Safari optimization: throttle animation updates to every other frame
+        if (this.isSafari) {
+            this.safariAnimationCounter = (this.safariAnimationCounter || 0) + 1;
+            if (this.safariAnimationCounter % 2 !== 0) return;
+        }
+        
         const time = Date.now() * 0.001 * this.pulseSpeed;
         
         // Check proximity to camera view
         const proximityLevel = this.checkProximity(hotspot);
         
-        // Pulsing scale with more dramatic effect when in view
-        const baseScale = proximityLevel > 0 ? 1.2 : 1.0; // Larger when camera looking near it
-        const scale = baseScale + Math.sin(time * 2) * 0.3;
+        // Gentle, elegant pulsing - more subtle
+        const baseScale = proximityLevel > 0 ? 1.15 : 1.0; // Slight size increase when in view
+        const scale = baseScale + Math.sin(time * 1.5) * 0.15; // Slower, smaller pulse
         hotspot.mesh.scale.setScalar(scale);
         
-        // Pulse emissive intensity (brighter when in proximity)
-        const baseIntensity = proximityLevel > 0 ? 7.0 : 5.0;
-        hotspot.mesh.material.emissiveIntensity = baseIntensity + Math.sin(time * 3) * 2.0;
+        // Subtle emissive pulse - darker, more ethereal
+        const baseIntensity = proximityLevel > 0 ? 1.2 : 0.8;
+        hotspot.mesh.material.emissiveIntensity = baseIntensity + Math.sin(time * 2) * 0.4;
         
-        // Animate all glow layers for blur effect
+        // Animate all glow layers for soft ethereal blur
         if (hotspot.glowLayers) {
             hotspot.glowLayers.forEach((layer, i) => {
-                const layerScale = (baseScale + Math.sin(time * 1.5 + i * 0.2) * 0.3) * (proximityLevel > 0 ? 1.3 : 1.0);
+                const layerScale = (baseScale + Math.sin(time * 1.2 + i * 0.3) * 0.15) * (proximityLevel > 0 ? 1.2 : 1.0);
                 layer.scale.setScalar(layerScale);
                 
-                // Each layer pulses slightly offset for more organic blur
-                const baseOpacity = (0.5 - (i * 0.1)) * (proximityLevel > 0 ? 1.5 : 1.0);
-                layer.material.opacity = baseOpacity + Math.sin(time * 2 + i * 0.3) * 0.1;
-                layer.material.emissiveIntensity = (4.0 - i * 0.5) + Math.sin(time * 2.5 + i * 0.2) * 1.0 + (proximityLevel * 2);
+                // Gentle opacity pulse
+                const baseOpacity = (0.35 - (i * 0.12)) * (proximityLevel > 0 ? 1.3 : 1.0);
+                layer.material.opacity = baseOpacity + Math.sin(time * 1.5 + i * 0.4) * 0.08;
+                layer.material.emissiveIntensity = (1.2 - i * 0.3) + Math.sin(time * 2 + i * 0.3) * 0.4 + (proximityLevel * 0.5);
                 
                 // Billboard effect
                 layer.lookAt(this.camera.position);
             });
         }
         
-        // Pulse point light intensity (brighter when in proximity)
+        // Subtle light pulse
         if (hotspot.pointLight) {
-            hotspot.pointLight.intensity = (3.0 + proximityLevel * 2.0) + Math.sin(time * 2) * 1.5;
+            hotspot.pointLight.intensity = (1.2 + proximityLevel * 0.8) + Math.sin(time * 1.8) * 0.5;
         }
         
-        // Rotate particle ring around Y axis (like Saturn's rings)
+        // Smooth particle ring rotation - always visible and consistent
         if (hotspot.particles) {
-            hotspot.particles.rotation.y += deltaTime * 1.5; // Smooth horizontal rotation
+            hotspot.particles.rotation.y += deltaTime * 1.2; // Elegant rotation
             
-            // Pulse particle emissive intensity for all particles
+            // Gentle particle pulse - all particles animate together
             hotspot.particles.children.forEach((particle, i) => {
                 const offset = (i / hotspot.particles.children.length) * Math.PI * 2;
                 
-                // Pulse particle brightness
-                particle.material.emissiveIntensity = 4.0 + Math.sin(time * 4 + offset) * 2.0;
+                // Subtle brightness pulse
+                particle.material.emissiveIntensity = 1.5 + Math.sin(time * 3 + offset) * 0.8;
                 
-                // Slight scale pulse for sparkle effect
-                const particleScale = 1 + Math.sin(time * 5 + offset * 2) * 0.15;
+                // Slight scale pulse for life
+                const particleScale = 1 + Math.sin(time * 4 + offset * 1.5) * 0.12;
                 particle.scale.setScalar(particleScale);
             });
         }
         
         // Billboard effect - always face camera
         hotspot.mesh.lookAt(this.camera.position);
-        hotspot.glowMesh.lookAt(this.camera.position);
+        if (hotspot.glowMesh) hotspot.glowMesh.lookAt(this.camera.position);
     }
     
     /**
@@ -541,9 +554,9 @@ export class HotspotManager {
             oscillator.frequency.value = 800; // High pitched chime
             oscillator.type = 'sine';
             
-            // Quick fade in/out envelope
+            // Quick fade in/out envelope - LOUDER volume
             gainNode.gain.setValueAtTime(0, context.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.2, context.currentTime + 0.05); // Fade in
+            gainNode.gain.linearRampToValueAtTime(0.8, context.currentTime + 0.05); // Fade in (increased from 0.2 to 0.8)
             gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 0.3); // Fade out
             
             oscillator.start(context.currentTime);
@@ -551,6 +564,38 @@ export class HotspotManager {
             
             console.log('🔔 Proximity audio cue played');
         }
+    }
+    
+    /**
+     * Play sound when orb first appears
+     */
+    playAppearanceSound() {
+        if (!this.audioListener) return;
+        
+        const context = this.audioListener.context;
+        if (context.state === 'suspended') {
+            context.resume();
+        }
+        
+        // Create a bright, clear notification chime
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        
+        oscillator.frequency.value = 1200; // Higher pitch than proximity sound
+        oscillator.type = 'sine';
+        
+        // Louder, clearer envelope for appearance
+        gainNode.gain.setValueAtTime(0, context.currentTime);
+        gainNode.gain.linearRampToValueAtTime(1.0, context.currentTime + 0.02); // Quick attack
+        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5); // Gentle decay
+        
+        oscillator.start(context.currentTime);
+        oscillator.stop(context.currentTime + 0.5);
+        
+        console.log('✨ Orb appearance sound played');
     }
     
     /**
@@ -594,9 +639,18 @@ export class HotspotManager {
             window.trackVREvent('hotspot_discovered', hotspot.label, this.discoveredHotspots.size);
         }
         
-        // Achievement: First Discovery (unlock on first hotspot)
-        if (this.discoveredHotspots.size === 1 && window.achievements) {
-            window.achievements.unlock('first_discovery');
+        // Achievement: Check all milestones independently (no else if!)
+        const count = this.discoveredHotspots.size;
+        if (window.achievements) {
+            if (count === 1) {
+                window.achievements.unlock('first_discovery');
+            }
+            if (count === 5) {
+                window.achievements.unlock('halfway_there');
+            }
+            if (count === 8) {
+                window.achievements.unlock('sound_collector');
+            }
         }
         
         // Stop previous looping audio
@@ -679,7 +733,7 @@ export class HotspotManager {
         const notification = document.createElement('div');
         notification.className = 'hotspot-discovery-notification';
         notification.innerHTML = `
-            <div class="sound-name">🎵 ${soundName}</div>
+            <div class="sound-name">🎵 ${soundName} 🎵</div>
         `;
         
         document.body.appendChild(notification);
@@ -687,11 +741,11 @@ export class HotspotManager {
         // Animate in
         setTimeout(() => notification.classList.add('show'), 100);
         
-        // Animate out and remove after 3 seconds
+        // Animate out and remove after 5 seconds (longer display time)
         setTimeout(() => {
             notification.classList.remove('show');
             setTimeout(() => notification.remove(), 500);
-        }, 3000);
+        }, 5000);
     }
     
     /**

@@ -52,20 +52,30 @@ export class AffirmationSurvey {
                             <span class="option-label">Calming & Peaceful</span>
                             <span class="option-desc">Soothing, slow, gentle</span>
                         </button>
-                        <button class="option-btn" data-key="emotionalTone" data-value="energizing">
-                            <span class="option-icon">⚡</span>
-                            <span class="option-label">Energizing & Confident</span>
-                            <span class="option-desc">Strong, upbeat, assertive</span>
-                        </button>
-                        <button class="option-btn" data-key="emotionalTone" data-value="compassionate">
-                            <span class="option-icon">💖</span>
-                            <span class="option-label">Compassionate & Loving</span>
-                            <span class="option-desc">Warm, caring, gentle</span>
-                        </button>
                         <button class="option-btn" data-key="emotionalTone" data-value="grounding">
                             <span class="option-icon">🏔️</span>
-                            <span class="option-label">Grounding & Empowering</span>
-                            <span class="option-desc">Steady, firm, reassuring</span>
+                            <span class="option-label">Grounding & Steady</span>
+                            <span class="option-desc">Stable, firm, reassuring</span>
+                        </button>
+                        <button class="option-btn" data-key="emotionalTone" data-value="energizing">
+                            <span class="option-icon">⚡</span>
+                            <span class="option-label">Energizing & Uplifting</span>
+                            <span class="option-desc">Strong, upbeat, vibrant</span>
+                        </button>
+                        <button class="option-btn" data-key="emotionalTone" data-value="uplifting">
+                            <span class="option-icon">🌟</span>
+                            <span class="option-label">Uplifting & Joyful</span>
+                            <span class="option-desc">Bright, hopeful, inspiring</span>
+                        </button>
+                        <button class="option-btn" data-key="emotionalTone" data-value="meditative">
+                            <span class="option-icon">🧘</span>
+                            <span class="option-label">Meditative & Deep</span>
+                            <span class="option-desc">Contemplative, mindful, serene</span>
+                        </button>
+                        <button class="option-btn" data-key="emotionalTone" data-value="transformative">
+                            <span class="option-icon">🦋</span>
+                            <span class="option-label">Transformative & Bold</span>
+                            <span class="option-desc">Dynamic, powerful, evolving</span>
                         </button>
                     </div>
                 </div>
@@ -76,23 +86,43 @@ export class AffirmationSurvey {
                     <div class="survey-options">
                         <button class="option-btn" data-key="currentMood" data-value="anxious">
                             <span class="option-icon">😰</span>
-                            <span class="option-label">Anxious or Stressed</span>
+                            <span class="option-label">Anxious or Worried</span>
                             <span class="option-desc">Need to calm down</span>
+                        </button>
+                        <button class="option-btn" data-key="currentMood" data-value="stressed">
+                            <span class="option-icon">�</span>
+                            <span class="option-label">Stressed or Overwhelmed</span>
+                            <span class="option-desc">Need relief</span>
                         </button>
                         <button class="option-btn" data-key="currentMood" data-value="tired">
                             <span class="option-icon">😴</span>
-                            <span class="option-label">Tired or Unmotivated</span>
+                            <span class="option-label">Tired or Drained</span>
                             <span class="option-desc">Need energy boost</span>
                         </button>
-                        <button class="option-btn" data-key="currentMood" data-value="uncertain">
+                        <button class="option-btn" data-key="currentMood" data-value="sad">
+                            <span class="option-icon">😢</span>
+                            <span class="option-label">Sad or Down</span>
+                            <span class="option-desc">Need uplifting</span>
+                        </button>
+                        <button class="option-btn" data-key="currentMood" data-value="peaceful">
+                            <span class="option-icon">😌</span>
+                            <span class="option-label">Peaceful & Calm</span>
+                            <span class="option-desc">Want to deepen</span>
+                        </button>
+                        <button class="option-btn" data-key="currentMood" data-value="restless">
                             <span class="option-icon">🤔</span>
-                            <span class="option-label">Uncertain or Lost</span>
+                            <span class="option-label">Restless or Uncertain</span>
                             <span class="option-desc">Need direction</span>
+                        </button>
+                        <button class="option-btn" data-key="currentMood" data-value="motivated">
+                            <span class="option-icon">🔥</span>
+                            <span class="option-label">Motivated & Ready</span>
+                            <span class="option-desc">Ready to grow</span>
                         </button>
                         <button class="option-btn" data-key="currentMood" data-value="hopeful">
                             <span class="option-icon">🌟</span>
-                            <span class="option-label">Hopeful & Motivated</span>
-                            <span class="option-desc">Ready to grow</span>
+                            <span class="option-label">Hopeful & Optimistic</span>
+                            <span class="option-desc">Embracing possibility</span>
                         </button>
                     </div>
                 </div>

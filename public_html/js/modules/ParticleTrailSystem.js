@@ -9,10 +9,15 @@ export class ParticleTrailSystem {
         this.scene = scene;
         this.camera = camera;
         
+        // Detect Safari for performance optimizations
+        this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        console.log('🔍 Browser detection - Safari:', this.isSafari);
+        
         // Particle systems for different icons
         this.particleSystems = [];
         this.trailHistory = []; // Store positions for trail effect
-        this.maxTrailLength = 60; // Reduced from 150 to 60 for VR performance
+        // Optimized trail length: shorter = less lag, more responsive
+        this.maxTrailLength = this.isSafari ? 20 : 35; // Reduced from 30/60
         
         // Animation properties
         this.time = 0;
@@ -162,9 +167,11 @@ export class ParticleTrailSystem {
                         path,
                         (texture) => {
                             clearTimeout(timeout);
-                            // Safari-friendly texture settings
-                            texture.minFilter = THREE.LinearFilter;
+                            // High-quality texture settings for crisp sprites
+                            texture.minFilter = THREE.LinearMipmapLinearFilter;
                             texture.magFilter = THREE.LinearFilter;
+                            texture.anisotropy = 16; // Maximum quality
+                            texture.generateMipmaps = true;
                             resolve(texture);
                         },
                         undefined,
@@ -302,11 +309,14 @@ export class ParticleTrailSystem {
         // Put the processed image data back
         ctx.putImageData(imageData, 0, 0);
         
-        // Create new texture from processed canvas
+        // Create new texture from processed canvas with better filtering
         const processedTexture = new THREE.CanvasTexture(canvas);
+        processedTexture.minFilter = THREE.LinearFilter;
+        processedTexture.magFilter = THREE.LinearFilter;
+        processedTexture.anisotropy = 16; // Maximum anisotropic filtering for clarity
         processedTexture.needsUpdate = true;
         
-        // Optimized shader material with 1-pixel white stroke outline
+        // Cleaner shader material - no stroke, just clean logo
         const planeMaterial = new THREE.ShaderMaterial({
             uniforms: {
                 map: { value: processedTexture },
@@ -333,28 +343,16 @@ export class ParticleTrailSystem {
                     vec2 uv = vUv;
                     vec4 texColor = texture2D(map, uv);
                     
-                    // If fully transparent, check for white stroke outline
-                    if (texColor.a < 0.05) {
-                        // Sample surrounding pixels for edge detection
-                        float strokeWidth = 0.003; // 1 pixel stroke
-                        vec4 n = texture2D(map, uv + vec2(0.0, strokeWidth));
-                        vec4 s = texture2D(map, uv + vec2(0.0, -strokeWidth));
-                        vec4 e = texture2D(map, uv + vec2(strokeWidth, 0.0));
-                        vec4 w = texture2D(map, uv + vec2(-strokeWidth, 0.0));
-                        
-                        // If any neighbor is opaque, draw white stroke
-                        float edge = max(max(n.a, s.a), max(e.a, w.a));
-                        if (edge > 0.3) {
-                            gl_FragColor = vec4(1.0, 1.0, 1.0, edge * opacity * 0.9);
-                            return;
-                        }
+                    // Sharper alpha cutoff for cleaner edges
+                    if (texColor.a < 0.2) {
                         discard;
                     }
                     
-                    // Keep natural color of the logo
+                    // Keep natural logo color - no modifications
                     vec3 finalColor = texColor.rgb;
+                    float finalAlpha = texColor.a * opacity;
                     
-                    gl_FragColor = vec4(finalColor, texColor.a * opacity);
+                    gl_FragColor = vec4(finalColor, finalAlpha);
                 }
             `,
             transparent: true,
@@ -363,14 +361,14 @@ export class ParticleTrailSystem {
             side: THREE.DoubleSide
         });
         
-        // Create a plane mesh instead of sprite (billboarded manually)
-        const planeGeometry = new THREE.PlaneGeometry(1.5, 1.5); // Larger for VR visibility
+        // Larger plane for better visibility and clarity
+        const planeGeometry = new THREE.PlaneGeometry(2.0, 2.0);
         this.dragOverlay = new THREE.Mesh(planeGeometry, planeMaterial);
         this.dragOverlay.visible = false;
         this.dragOverlay.renderOrder = 999; // Render last (on top)
         this.scene.add(this.dragOverlay);
         
-        console.log('🖱️ Drag overlay created with natural yellow color and white glow');
+        console.log('🖱️ Drag overlay created with crisp, clean logo rendering');
     }
     
     /**
@@ -392,20 +390,19 @@ export class ParticleTrailSystem {
             positions[i * 3 + 1] = 0;
             positions[i * 3 + 2] = 0;
             
-            // Color gradient from bright to dim
-            const color = this.psychedelicColors[index % this.psychedelicColors.length];
-            colors[i * 3] = color.r;
-            colors[i * 3 + 1] = color.g;
-            colors[i * 3 + 2] = color.b;
+            // NO color tinting - keep logos natural color
+            colors[i * 3] = 1.0; // White = no color modification
+            colors[i * 3 + 1] = 1.0;
+            colors[i * 3 + 2] = 1.0;
             
             // Larger size at start, progressively smaller toward end (smooth tapering)
             // Use exponential falloff for smooth, natural tapering to the tip
             const normalizedPosition = i / particleCount;
-            const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2); // Stronger exponential for dramatic taper
-            sizes[i] = 3.0 * sizeFalloff; // Reduced from 9.0 to 3.0 for smaller particles
+            const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2); // Smoother taper
+            sizes[i] = 5.0 * sizeFalloff; // Larger particles so full sprite is visible
             
             // Alpha decreases along trail (fade out)
-            alphas[i] = 1 - (i / particleCount);
+            alphas[i] = (1 - normalizedPosition) * 0.95; // Strong visibility throughout
         }
         
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -413,7 +410,7 @@ export class ParticleTrailSystem {
         geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
         geometry.setAttribute('alpha', new THREE.BufferAttribute(alphas, 1));
         
-        // Optimized shader material - no glitch, simple white stroke outline
+        // Optimized shader material - cleaner, crisper logo rendering
         const material = new THREE.ShaderMaterial({
             uniforms: {
                 time: { value: 0 },
@@ -435,13 +432,14 @@ export class ParticleTrailSystem {
                     vAlpha = alpha;
                     
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                    float pointSize = size * 1500.0 / -mvPosition.z;
-                    gl_PointSize = clamp(pointSize, 5.0, 64.0);
+                    // Better size calculation to show full sprite without clipping
+                    float pointSize = size * 2500.0 / -mvPosition.z;
+                    gl_PointSize = clamp(pointSize, 20.0, 140.0); // Larger range for complete visibility
                     gl_Position = projectionMatrix * mvPosition;
                 }
             `,
             fragmentShader: `
-                precision mediump float;
+                precision highp float;
                 
                 uniform sampler2D pointTexture;
                 uniform float time;
@@ -450,29 +448,46 @@ export class ParticleTrailSystem {
                 varying float vAlpha;
                 
                 void main() {
+                    // Flip Y coordinate to fix upside-down texture
                     vec2 uv = vec2(gl_PointCoord.x, 1.0 - gl_PointCoord.y);
+                    
+                    // Sample the texture
                     vec4 texColor = texture2D(pointTexture, uv);
                     
-                    // Simple alpha test - much faster than stroke detection
-                    if (texColor.a < 0.1) {
+                    // Aggressive white background removal
+                    // Check if pixel is mostly white/bright
+                    float brightness = max(max(texColor.r, texColor.g), texColor.b);
+                    if (brightness > 0.75 && texColor.a < 0.9) {
                         discard;
                     }
                     
-                    // Remove white background if present
+                    // Also check for pure white
                     if (texColor.r > 0.9 && texColor.g > 0.9 && texColor.b > 0.9) {
                         discard;
                     }
                     
-                    // Very subtle color shift for performance
-                    vec3 finalColor = texColor.rgb * vColor;
+                    // Sharp alpha cutoff for clean edges
+                    if (texColor.a < 0.3) {
+                        discard;
+                    }
+                    
+                    // Use 100% original texture color - no modifications
+                    vec3 finalColor = texColor.rgb;
                     float finalAlpha = texColor.a * vAlpha;
+                    
+                    // Ensure we have visible color
+                    if (finalAlpha < 0.1) {
+                        discard;
+                    }
                     
                     gl_FragColor = vec4(finalColor, finalAlpha);
                 }
             `,
             transparent: true,
             depthWrite: false,
-            blending: THREE.NormalBlending
+            depthTest: true,
+            blending: THREE.NormalBlending,
+            side: THREE.DoubleSide
         });
         
         const particleSystem = new THREE.Points(geometry, material);
@@ -549,22 +564,26 @@ export class ParticleTrailSystem {
                 this.trailHistory.pop();
             }
             
-            // Update all particle systems
+            // Update all particle systems (all 4 colored logos shown together)
             this.particleSystems.forEach((system, systemIndex) => {
                 if (!system.visible) system.visible = true;
                 
                 const positions = system.geometry.attributes.position.array;
                 const sizes = system.geometry.attributes.size.array;
+                const alphas = system.geometry.attributes.alpha.array;
                 
-                // Update particle positions from trail history
-                for (let i = 0; i < this.trailHistory.length; i++) {
+                // Each system shows the SAME trail positions
+                // This creates a smooth, overlapping rainbow effect
+                for (let i = 0; i < this.trailHistory.length && i < this.maxTrailLength; i++) {
                     const trailPos = this.trailHistory[i];
                     
-                    // Add subtle random offset for organic feel (reduced for smoother trail)
+                    // Small offset per system for slight color separation
+                    const angleOffset = (systemIndex / this.particleSystems.length) * Math.PI * 2;
+                    const offsetAmount = 0.015; // Very small offset
                     const offset = new THREE.Vector3(
-                        (Math.random() - 0.5) * 0.02,
-                        (Math.random() - 0.5) * 0.02,
-                        (Math.random() - 0.5) * 0.02
+                        Math.cos(angleOffset) * offsetAmount,
+                        Math.sin(angleOffset) * offsetAmount,
+                        0
                     );
                     
                     positions[i * 3] = trailPos.x + offset.x;
@@ -574,11 +593,16 @@ export class ParticleTrailSystem {
                     // Smooth exponential size tapering toward the tip
                     const normalizedPosition = i / this.maxTrailLength;
                     const sizeFalloff = Math.pow(1 - normalizedPosition, 2.2);
-                    sizes[i] = 1.5 * sizeFalloff; // Reduced from 4.0 to 1.5 for much smaller particles
+                    sizes[i] = 6.0 * sizeFalloff; // Larger for complete sprite visibility
+                    
+                    // Update alpha for fade
+                    alphas[i] = (1 - normalizedPosition) * 0.9;
                 }
                 
+                // Mark attributes as needing update
                 system.geometry.attributes.position.needsUpdate = true;
                 system.geometry.attributes.size.needsUpdate = true;
+                system.geometry.attributes.alpha.needsUpdate = true;
             });
             
             this.lastPosition.copy(this.currentPosition);
@@ -644,27 +668,21 @@ export class ParticleTrailSystem {
      * Animate particle effects
      */
     animate() {
+        // Safari optimization: throttle animation updates every 3rd frame (not every other)
+        if (this.isSafari) {
+            this.safariFrameCounter = (this.safariFrameCounter || 0) + 1;
+            if (this.safariFrameCounter % 3 !== 0) return;
+        }
+        
         this.time += 0.016; // ~60fps
         
         this.particleSystems.forEach((system, index) => {
             if (system.visible) {
-                // Update shader uniforms (only time, no glitch)
+                // Update shader uniforms (only time)
                 system.material.uniforms.time.value = this.time;
                 
-                // Rotate colors through psychedelic spectrum (less frequent updates for performance)
-                if (Math.floor(this.time * 10) % 10 === 0) { // Update every 10 frames instead of 5
-                    const colors = system.geometry.attributes.color.array;
-                    const colorShift = Math.sin(this.time + index) * 0.5 + 0.5;
-                    const baseColor = this.psychedelicColors[(index + Math.floor(this.time)) % this.psychedelicColors.length];
-                    
-                    for (let i = 0; i < this.maxTrailLength; i++) {
-                        colors[i * 3] = baseColor.r * (0.7 + colorShift * 0.3);
-                        colors[i * 3 + 1] = baseColor.g * (0.7 + colorShift * 0.3);
-                        colors[i * 3 + 2] = baseColor.b * (0.7 + colorShift * 0.3);
-                    }
-                    
-                    system.geometry.attributes.color.needsUpdate = true;
-                }
+                // Skip expensive color rotation for better performance
+                // Colors are set once and remain static
             }
         });
     }

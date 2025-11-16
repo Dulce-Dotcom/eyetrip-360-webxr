@@ -32,9 +32,11 @@ export class ElevenLabsService {
         // Voice IDs for different emotional tones
         this.voiceIds = {
             calming: 'EXAVITQu4vr4xnSDxMaL',      // Sarah - calm, soothing
+            grounding: 'VR6AewLTigWG4xSOukaG',    // Arnold - deep, steady
             energizing: '21m00Tcm4TlvDq8ikWAM',   // Rachel - energetic, confident
-            compassionate: 'AZnzlk1XvdvUeBnXmlld', // Domi - warm, caring
-            grounding: 'VR6AewLTigWG4xSOukaG'     // Arnold - deep, steady
+            uplifting: '21m00Tcm4TlvDq8ikWAM',    // Rachel - energetic, confident (same as energizing)
+            meditative: 'EXAVITQu4vr4xnSDxMaL',   // Sarah - calm, soothing (same as calming)
+            transformative: 'VR6AewLTigWG4xSOukaG' // Arnold - deep, steady (same as grounding)
         };
         
         // Affirmation library: 4 tones × 4 focus areas = 16 combinations
@@ -108,8 +110,9 @@ export class ElevenLabsService {
             // Step 3: Generate ALL 10 affirmations in one combined text
             console.log('🎤 Generating ALL 10 affirmations with ElevenLabs API');
             
-            // Combine all affirmations with pauses between them
-            const combinedText = affirmationTexts.join('... '); // Add pauses between affirmations
+            // Combine all affirmations with LONG pauses between them
+            // Using multiple periods to create longer pauses in TTS
+            const combinedText = affirmationTexts.join('.......... '); // Longer pause between affirmations
             
             this.updateProgress('Generating 10 personalized affirmations...', 30);
             console.log(`📄 Combined text: ${affirmationTexts.length} affirmations`);
@@ -270,40 +273,34 @@ export class ElevenLabsService {
                 return result;
             }
             
-            // Step 6: Split the full audio into 10 individual affirmation clips
-            this.updateProgress('Splitting audio into 10 affirmations...', 90);
+            // Step 6: Create time-based markers for each affirmation (DON'T split audio)
+            this.updateProgress('Preparing affirmations...', 90);
             
             const totalDuration = decodedBuffer.duration;
             const segmentDuration = totalDuration / affirmationTexts.length;
             
-            console.log(`✂️ Splitting audio:`);
+            console.log(`📍 Creating time markers for affirmations:`);
             console.log(`   Total duration: ${totalDuration.toFixed(2)}s`);
             console.log(`   Segments: ${affirmationTexts.length}`);
             console.log(`   Segment duration: ${segmentDuration.toFixed(2)}s`);
             
+            // Convert full audio to blob once
+            const fullBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
+            const fullUrl = URL.createObjectURL(fullBlob);
+            
             const affirmations = [];
             
             for (let i = 0; i < affirmationTexts.length; i++) {
+                // Calculate clean time boundaries (no overlap)
                 const startTime = i * segmentDuration;
                 const endTime = (i + 1) * segmentDuration;
-                
-                // Extract segment from audio buffer
-                const segmentBuffer = await this.extractAudioSegment(
-                    decodedBuffer,
-                    startTime,
-                    endTime
-                );
-                
-                // Convert to blob
-                const blob = await this.audioBufferToBlob(segmentBuffer);
-                const url = URL.createObjectURL(blob);
                 
                 affirmations.push({
                     id: i + 1,
                     text: affirmationTexts[i],
-                    audioBuffer: segmentBuffer,
-                    url: url,
-                    blob: blob,
+                    audioBuffer: null, // We'll play from the full audio using time markers
+                    url: fullUrl, // All use the same full audio URL
+                    blob: fullBlob, // All reference the same blob
                     startTime: startTime,
                     endTime: endTime,
                     duration: segmentDuration,
@@ -311,14 +308,12 @@ export class ElevenLabsService {
                     mood: responses.currentMood,
                     focus: responses.focusArea,
                     playCount: 0,
-                    cached: false
+                    cached: false,
+                    useTimeMarkers: true // Flag to indicate we should use currentTime
                 });
                 
-                console.log(`   ✅ Affirmation ${i + 1}: ${startTime.toFixed(2)}s - ${endTime.toFixed(2)}s`);
+                console.log(`   📍 Affirmation ${i + 1}: ${startTime.toFixed(2)}s - ${endTime.toFixed(2)}s`);
             }
-            
-            const fullBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
-            const fullUrl = URL.createObjectURL(fullBlob);
             
             const result = {
                 affirmations: affirmations, // All 10 affirmations
@@ -617,19 +612,31 @@ export class ElevenLabsService {
                 style: 0.2,
                 use_speaker_boost: true
             },
+            grounding: {
+                stability: 0.75,
+                similarity_boost: 0.8,
+                style: 0.4,
+                use_speaker_boost: true
+            },
             energizing: {
                 stability: 0.5,
                 similarity_boost: 0.75,
                 style: 0.6,
                 use_speaker_boost: true
             },
-            compassionate: {
-                stability: 0.65,
-                similarity_boost: 0.85,
-                style: 0.3,
+            uplifting: {
+                stability: 0.5,
+                similarity_boost: 0.75,
+                style: 0.6,
                 use_speaker_boost: true
             },
-            grounding: {
+            meditative: {
+                stability: 0.7,
+                similarity_boost: 0.8,
+                style: 0.2,
+                use_speaker_boost: true
+            },
+            transformative: {
                 stability: 0.75,
                 similarity_boost: 0.8,
                 style: 0.4,
@@ -705,7 +712,7 @@ export class ElevenLabsService {
     
     /**
      * Build the complete affirmation library
-     * 16 combinations × 10 affirmations = 160 total affirmations
+     * 6 emotional tones × 4 focus areas × 10 affirmations = 240 total affirmations
      */
     buildAffirmationLibrary() {
         return {
@@ -931,6 +938,174 @@ export class ElevenLabsService {
                 "You are grounded in your capacity to endure and overcome.",
                 "You plant your feet and face what comes with courage.",
                 "Your foundation is strong enough to support your growth."
+            ],
+            
+            // UPLIFTING × SELF-LOVE
+            'uplifting_self-love': [
+                "You are amazing, powerful, and absolutely worthy!",
+                "You radiate confidence and self-love today!",
+                "You celebrate who you are with joy and pride!",
+                "You are unstoppable when you believe in yourself!",
+                "Your energy is magnetic and your spirit is bright!",
+                "You honor yourself by showing up fully today!",
+                "You are fierce, fabulous, and unapologetically you!",
+                "You embrace your uniqueness with enthusiasm!",
+                "You are worthy of celebrating yourself every day!",
+                "You shine brightest when you love yourself boldly!"
+            ],
+            
+            // UPLIFTING × CONFIDENCE
+            'uplifting_confidence': [
+                "You are powerful and ready to conquer your goals!",
+                "Today you will show the world what you're made of!",
+                "Your potential is limitless, and you're claiming it now!",
+                "You were born to stand out and make an impact!",
+                "Success flows naturally to you when you take action!",
+                "You trust yourself completely and move forward boldly!",
+                "You are a force of nature, unstoppable and strong!",
+                "Confidence is your superpower, and you're using it today!",
+                "You speak your truth with clarity and conviction!",
+                "You are ready to rise, shine, and absolutely thrive!"
+            ],
+            
+            // UPLIFTING × GRATITUDE
+            'uplifting_gratitude': [
+                "You are bursting with gratitude for all you have!",
+                "Life is amazing, and you celebrate it fully today!",
+                "You attract abundance by appreciating what's already here!",
+                "Every moment is a gift, and you're unwrapping it with joy!",
+                "You are thankful for your strength, energy, and vitality!",
+                "Gratitude fuels your passion and lights your path!",
+                "You radiate appreciation and attract even more blessings!",
+                "You count your wins and celebrate every victory!",
+                "Life is generous with you, and you notice all the good!",
+                "You are grateful, energized, and ready for greatness!"
+            ],
+            
+            // UPLIFTING × RESILIENCE
+            'uplifting_resilience': [
+                "You bounce back stronger from every challenge!",
+                "Obstacles are just opportunities in disguise for you!",
+                "You are unbreakable, unstoppable, and always rising!",
+                "Setbacks fuel your comeback story every single time!",
+                "You transform difficulties into rocket fuel for success!",
+                "You are a warrior, and challenges make you fiercer!",
+                "Nothing can hold you down when you're determined to rise!",
+                "You thrive under pressure and grow through adversity!",
+                "Your resilience is legendary, and you prove it daily!",
+                "You turn struggles into stepping stones to greatness!"
+            ],
+            
+            // MEDITATIVE × SELF-LOVE
+            'meditative_self-love': [
+                "You are enough, exactly as you are in this moment.",
+                "Your worth is inherent and cannot be diminished.",
+                "You deserve peace, love, and gentle kindness.",
+                "Be patient with yourself, you are growing every day.",
+                "Your heart is beautiful, and you are deeply loved.",
+                "You are worthy of rest, care, and tenderness.",
+                "Accept yourself completely, flaws and all.",
+                "You are a precious soul deserving of compassion.",
+                "Your value does not depend on productivity or perfection.",
+                "You are learning to love yourself more each day."
+            ],
+            
+            // MEDITATIVE × CONFIDENCE
+            'meditative_confidence': [
+                "Trust yourself, you know your path forward.",
+                "Your intuition is wise and worth listening to.",
+                "You have everything you need within you right now.",
+                "Believe in your unique journey and timing.",
+                "Your voice matters and deserves to be heard.",
+                "You are capable of making good decisions for yourself.",
+                "Confidence grows from self-acceptance, not perfection.",
+                "You trust your abilities and honor your pace.",
+                "Your quiet strength is powerful and valid.",
+                "You are becoming more confident with each breath."
+            ],
+            
+            // MEDITATIVE × GRATITUDE
+            'meditative_gratitude': [
+                "You are grateful for this peaceful moment of stillness.",
+                "Abundance flows to you in gentle, perfect ways.",
+                "You appreciate the simple beauty around you.",
+                "Gratitude fills your heart with warmth and light.",
+                "You are thankful for your breath and your life.",
+                "Small joys surround you when you pause to notice.",
+                "You receive life's gifts with an open, grateful heart.",
+                "Peace and gratitude expand within you now.",
+                "You are blessed, and you recognize your blessings.",
+                "Thankfulness brings you serenity and contentment."
+            ],
+            
+            // MEDITATIVE × RESILIENCE
+            'meditative_resilience': [
+                "You have survived every difficult day so far.",
+                "You are stronger than you realize, one step at a time.",
+                "Healing unfolds gently in its own perfect timing.",
+                "You bend but do not break, like a willow in the wind.",
+                "Rest is part of resilience, not separate from it.",
+                "You have the courage to begin again, peacefully.",
+                "Challenges pass, and you remain steady at your core.",
+                "You trust the process of your healing and growth.",
+                "Your resilience grows quietly, like roots deepening.",
+                "You are allowed to heal at your own gentle pace."
+            ],
+            
+            // TRANSFORMATIVE × SELF-LOVE
+            'transformative_self-love': [
+                "You are evolving into your most authentic self.",
+                "Your transformation is powerful and unstoppable.",
+                "You embrace change as a path to deeper self-love.",
+                "You are worthy of the magnificent life you're creating.",
+                "Your growth is a testament to your strength and courage.",
+                "You honor who you were while becoming who you're meant to be.",
+                "You are shedding what no longer serves you with grace.",
+                "Your journey of transformation is beautiful and valid.",
+                "You love yourself through every stage of change.",
+                "You are becoming more fully yourself every day."
+            ],
+            
+            // TRANSFORMATIVE × CONFIDENCE
+            'transformative_confidence': [
+                "You are powerful enough to create the life you want.",
+                "Your bold steps forward are reshaping your reality.",
+                "You trust yourself to navigate major life changes.",
+                "You are becoming the confident person you're meant to be.",
+                "Your transformation requires courage, and you have it.",
+                "You believe in your ability to reinvent yourself.",
+                "You are breaking through old limits with strength.",
+                "Your confidence grows with each transformative step.",
+                "You embrace the unknown with trust and determination.",
+                "You are ready to step into your power fully."
+            ],
+            
+            // TRANSFORMATIVE × GRATITUDE
+            'transformative_gratitude': [
+                "You are grateful for the lessons that shaped you.",
+                "You appreciate every experience that led you here.",
+                "Gratitude transforms your perspective and your life.",
+                "You are thankful for the courage to change and grow.",
+                "You recognize the blessings hidden in challenges.",
+                "You appreciate the journey as much as the destination.",
+                "Gratitude fuels your transformation and expansion.",
+                "You are thankful for who you're becoming.",
+                "You celebrate the evolution of your spirit.",
+                "You are grateful for the opportunity to transform."
+            ],
+            
+            // TRANSFORMATIVE × RESILIENCE
+            'transformative_resilience': [
+                "You are becoming stronger through transformation.",
+                "Every challenge refines you into who you're meant to be.",
+                "You embrace change as an opportunity to evolve.",
+                "Your resilience transforms obstacles into breakthroughs.",
+                "You rise from every setback more powerful than before.",
+                "You are forged in fire and emerge unbreakable.",
+                "Transformation requires courage, and you embody it.",
+                "You adapt, evolve, and thrive through all changes.",
+                "Your spirit is both flexible and unshakeable.",
+                "You transform pain into purpose and power."
             ]
         };
     }

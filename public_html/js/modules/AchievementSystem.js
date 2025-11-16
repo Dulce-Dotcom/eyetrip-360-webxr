@@ -13,6 +13,18 @@ export class AchievementSystem {
                 description: 'Found your first hidden sound',
                 unlocked: false
             },
+            'halfway_there': {
+                id: 'halfway_there',
+                title: '🎵 Halfway There',
+                description: 'Collected 5 sounds',
+                unlocked: false
+            },
+            'sound_collector': {
+                id: 'sound_collector',
+                title: '🎶 Sound Collector',
+                description: 'Found 8 sounds',
+                unlocked: false
+            },
             'completionist': {
                 id: 'completionist',
                 title: '✨ Completionist',
@@ -32,6 +44,9 @@ export class AchievementSystem {
                 unlocked: false
             }
         };
+        
+        this.notificationQueue = [];
+        this.isShowingNotification = false;
         
         this.loadProgress();
         console.log('🏆 Achievement System initialized');
@@ -72,11 +87,28 @@ export class AchievementSystem {
      * Show achievement notification
      */
     showNotification(achievement) {
-        // Check if notification already exists
-        if (document.querySelector('.achievement-notification')) {
-            console.log('Notification already showing, queuing this one');
+        // Add to queue
+        this.notificationQueue.push(achievement);
+        
+        // If not currently showing a notification, start processing queue
+        if (!this.isShowingNotification) {
+            this.processNotificationQueue();
+        }
+    }
+    
+    /**
+     * Process notification queue one at a time
+     */
+    processNotificationQueue() {
+        if (this.notificationQueue.length === 0) {
+            this.isShowingNotification = false;
             return;
         }
+        
+        this.isShowingNotification = true;
+        const achievement = this.notificationQueue.shift();
+        
+        console.log(`🔔 Showing achievement notification: ${achievement.title}`);
         
         const notification = document.createElement('div');
         notification.className = 'achievement-notification';
@@ -94,10 +126,14 @@ export class AchievementSystem {
         // Animate in
         setTimeout(() => notification.classList.add('show'), 100);
         
-        // Animate out and remove
+        // Animate out and remove, then process next in queue
         setTimeout(() => {
             notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 300);
+            setTimeout(() => {
+                notification.remove();
+                // Process next notification after a short delay
+                setTimeout(() => this.processNotificationQueue(), 500);
+            }, 300);
         }, 4000);
     }
     
