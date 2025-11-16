@@ -163,28 +163,29 @@ export class PanoramaPlayer {
     // Create renderer and enable WebXR
     setupRenderer() {
         try {
-            // Check WebGL support before creating renderer
-            const canvas = document.createElement('canvas');
-            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-            
-            if (!gl) {
-                console.error('[PanoramaPlayer] WebGL not supported on this device');
-                this.showWebGLError();
-                return;
-            }
-            
             // Mobile-friendly renderer settings
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            // Safari iOS specific settings - very conservative
             const rendererConfig = {
                 antialias: !isMobile, // Disable antialiasing on mobile for performance
                 alpha: true,
-                powerPreference: isMobile ? 'default' : 'high-performance',
-                precision: isMobile ? 'mediump' : 'highp',
+                powerPreference: (isMobile || isSafari) ? 'low-power' : 'high-performance',
                 stencil: false, // Disable stencil buffer to save memory on mobile
-                depth: true
+                depth: true,
+                logarithmicDepthBuffer: false, // Can cause issues on some mobile devices
+                preserveDrawingBuffer: false,
+                failIfMajorPerformanceCaveat: false // Don't fail on Safari iOS
             };
             
             this.renderer = new THREE.WebGLRenderer(rendererConfig);
+            
+            // Check if renderer was created successfully
+            if (!this.renderer || !this.renderer.domElement) {
+                throw new Error('WebGLRenderer creation failed');
+            }
+            
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             
             // Set pixel ratio - cap at 2 for mobile to prevent memory issues
@@ -202,15 +203,15 @@ export class PanoramaPlayer {
             this.container.appendChild(this.renderer.domElement);
             this.renderer.setAnimationLoop(this.animate.bind(this));
             
-            console.log(`[PanoramaPlayer] Renderer initialized (${isMobile ? 'Mobile' : 'Desktop'} mode, pixelRatio: ${pixelRatio})`);
+            console.log(`[PanoramaPlayer] Renderer initialized (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, pixelRatio: ${pixelRatio})`);
         } catch (error) {
             console.error('[PanoramaPlayer] Error initializing renderer:', error);
-            this.showWebGLError();
+            this.showWebGLError(error);
         }
     }
     
     // Show user-friendly error message when WebGL fails
-    showWebGLError() {
+    showWebGLError(error) {
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = `
             position: fixed;
@@ -227,20 +228,38 @@ export class PanoramaPlayer {
             z-index: 10000;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         `;
+        
+        const errorDetails = error ? `<p style="margin: 0.5rem 0; font-size: 0.8rem; opacity: 0.7; font-family: monospace;">${error.message}</p>` : '';
+        
         errorDiv.innerHTML = `
             <h3 style="margin: 0 0 1rem 0;">⚠️ WebGL Not Available</h3>
             <p style="margin: 0 0 1rem 0; font-size: 0.95rem;">
-                This experience requires WebGL support, which is not available on your device or browser.
+                This experience requires WebGL support, which could not be initialized on your device.
             </p>
-            <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">
-                Try using a different browser or updating your current one.
+            ${errorDetails}
+            <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">
+                Try:<br>
+                • Refreshing the page<br>
+                • Checking Safari Settings → Advanced → Experimental Features<br>
+                • Using a different browser or updating your current one
             </p>
-            <button onclick="window.history.back()" style="
-                margin-top: 1.5rem;
+            <button onclick="window.location.reload()" style="
+                margin-top: 1rem;
                 padding: 0.75rem 1.5rem;
                 background: white;
                 color: #ff0000;
                 border: none;
+                border-radius: 8px;
+                font-weight: 600;
+                cursor: pointer;
+                margin-right: 0.5rem;
+            ">🔄 Retry</button>
+            <button onclick="window.history.back()" style="
+                margin-top: 1rem;
+                padding: 0.75rem 1.5rem;
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                border: 1px solid white;
                 border-radius: 8px;
                 font-weight: 600;
                 cursor: pointer;
