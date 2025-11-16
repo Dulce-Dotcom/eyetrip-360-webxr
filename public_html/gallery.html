@@ -416,19 +416,6 @@
     <div class="gallery-container">
         <h1 class="page-title">VR Video Gallery</h1>
         
-        <!-- Filter Bar (MOVED TO TOP) -->
-        <div class="filter-bar">
-            <div class="filter-group">
-                <label>Status:</label>
-                <button class="filter-btn active" data-filter="all" onclick="filterGallery('all')">All</button>
-                <button class="filter-btn" data-filter="completed" onclick="filterGallery('completed')">✓ Completed</button>
-                <button class="filter-btn" data-filter="incomplete" onclick="filterGallery('incomplete')">In Progress</button>
-            </div>
-            <div class="search-group">
-                <input type="search" id="searchInput" placeholder="🔍 Search experiences..." oninput="searchGallery()">
-            </div>
-        </div>
-        
         <!-- AFFIRMATION EXPERIENCES SECTION (MOVED TO TOP) -->
         <div class="affirmation-section" style="margin-top: 2rem; margin-bottom: 5rem; padding: 0 2rem;">
             <div style="text-align: center; margin-bottom: 3rem;">
@@ -509,6 +496,19 @@
                     transition: transform 0.5s ease;
                 }
             </style>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar" style="margin: 3rem auto 2rem; max-width: 1400px;">
+            <div class="filter-group">
+                <label>Status:</label>
+                <button class="filter-btn active" data-filter="all" onclick="filterGallery('all')">All</button>
+                <button class="filter-btn" data-filter="completed" onclick="filterGallery('completed')">✓ Completed</button>
+                <button class="filter-btn" data-filter="incomplete" onclick="filterGallery('incomplete')">In Progress</button>
+            </div>
+            <div class="search-group">
+                <input type="search" id="searchInput" placeholder="🔍 Search experiences..." oninput="searchGallery()">
+            </div>
         </div>
 
         <!-- SOUND HUNT EXPERIENCES SECTION -->
