@@ -90,17 +90,19 @@ export class ElevenLabsService {
             const voiceId = this.voiceIds[responses.emotionalTone];
             console.log(`🎙️ Voice ID: ${voiceId} (${responses.emotionalTone})`);
             
-            // Step 3: TEST WITH SINGLE AFFIRMATION FIRST (to save credits)
-            console.log('⚠️ PHASE 1: Testing with SINGLE affirmation to save credits');
-            const testText = affirmationTexts[0]; // Just first one for testing
+            // Step 3: Generate ALL 10 affirmations in one combined text
+            console.log('🎤 Generating ALL 10 affirmations with ElevenLabs API');
             
-            this.updateProgress('Generating test audio...', 30);
-            console.log(`📄 Test text: "${testText}"`);
-            console.log(`� Text length: ${testText.length} characters`);
+            // Combine all affirmations with pauses between them
+            const combinedText = affirmationTexts.join('... '); // Add pauses between affirmations
+            
+            this.updateProgress('Generating 10 personalized affirmations...', 30);
+            console.log(`📄 Combined text: ${affirmationTexts.length} affirmations`);
+            console.log(`📏 Total text length: ${combinedText.length} characters`);
             
             // Step 4: Generate audio with retry logic
             const audioBuffer = await this.generateAudioWithRetry(
-                testText,
+                combinedText,
                 voiceId,
                 responses.emotionalTone
             );
@@ -160,27 +162,31 @@ export class ElevenLabsService {
                 console.error('❌ Error name:', decodeError.name);
                 console.error('❌ Error message:', decodeError.message);
                 
-                // For testing, we can still return the raw audio without decoding
-                console.log('⚠️ Falling back to raw audio (no splitting)');
+                // Fallback: Return raw audio for each affirmation (no splitting)
+                console.log('⚠️ Falling back to raw audio (no splitting) for all affirmations');
                 
                 const blob = new Blob([audioBuffer], { type: 'audio/mpeg' });
                 const url = URL.createObjectURL(blob);
                 
+                // Create all 10 affirmations with the same full audio
+                const fallbackAffirmations = affirmationTexts.map((text, i) => ({
+                    id: i + 1,
+                    text: text,
+                    audioBuffer: null,
+                    url: url,
+                    blob: blob,
+                    startTime: 0,
+                    endTime: 0,
+                    tone: responses.emotionalTone,
+                    mood: responses.currentMood,
+                    focus: responses.focusArea,
+                    playCount: 0,
+                    cached: false,
+                    rawAudio: true
+                }));
+                
                 const result = {
-                    affirmations: [{
-                        id: 1,
-                        text: testText,
-                        audioBuffer: null,
-                        url: url,
-                        startTime: 0,
-                        endTime: 0,
-                        tone: responses.emotionalTone,
-                        mood: responses.currentMood,
-                        focus: responses.focusArea,
-                        playCount: 0,
-                        cached: false,
-                        rawAudio: true
-                    }],
+                    affirmations: fallbackAffirmations,
                     fullAudio: {
                         buffer: null,
                         blob: blob,
@@ -193,8 +199,8 @@ export class ElevenLabsService {
                         focus: responses.focusArea,
                         voiceId: voiceId,
                         generatedAt: new Date().toISOString(),
-                        testMode: true,
-                        totalAffirmations: 1,
+                        testMode: false,
+                        totalAffirmations: affirmationTexts.length,
                         decodeFailed: true,
                         decodeError: decodeError.message
                     }
@@ -205,32 +211,58 @@ export class ElevenLabsService {
                 return result;
             }
             
-            // Step 6: Create affirmation object (single one for testing)
-            this.updateProgress('Creating affirmation...', 90);
+            // Step 6: Split the full audio into 10 individual affirmation clips
+            this.updateProgress('Splitting audio into 10 affirmations...', 90);
             
-            const blob = await this.audioBufferToBlob(decodedBuffer);
-            const url = URL.createObjectURL(blob);
+            const totalDuration = decodedBuffer.duration;
+            const segmentDuration = totalDuration / affirmationTexts.length;
             
-            const affirmation = {
-                id: 1,
-                text: testText,
-                audioBuffer: decodedBuffer,
-                url: url,
-                blob: blob,  // ← ADD: Store the blob itself
-                startTime: 0,
-                endTime: decodedBuffer.duration,
-                tone: responses.emotionalTone,
-                mood: responses.currentMood,
-                focus: responses.focusArea,
-                playCount: 0,
-                cached: false
-            };
+            console.log(`✂️ Splitting audio:`);
+            console.log(`   Total duration: ${totalDuration.toFixed(2)}s`);
+            console.log(`   Segments: ${affirmationTexts.length}`);
+            console.log(`   Segment duration: ${segmentDuration.toFixed(2)}s`);
+            
+            const affirmations = [];
+            
+            for (let i = 0; i < affirmationTexts.length; i++) {
+                const startTime = i * segmentDuration;
+                const endTime = (i + 1) * segmentDuration;
+                
+                // Extract segment from audio buffer
+                const segmentBuffer = await this.extractAudioSegment(
+                    decodedBuffer,
+                    startTime,
+                    endTime
+                );
+                
+                // Convert to blob
+                const blob = await this.audioBufferToBlob(segmentBuffer);
+                const url = URL.createObjectURL(blob);
+                
+                affirmations.push({
+                    id: i + 1,
+                    text: affirmationTexts[i],
+                    audioBuffer: segmentBuffer,
+                    url: url,
+                    blob: blob,
+                    startTime: startTime,
+                    endTime: endTime,
+                    duration: segmentDuration,
+                    tone: responses.emotionalTone,
+                    mood: responses.currentMood,
+                    focus: responses.focusArea,
+                    playCount: 0,
+                    cached: false
+                });
+                
+                console.log(`   ✅ Affirmation ${i + 1}: ${startTime.toFixed(2)}s - ${endTime.toFixed(2)}s`);
+            }
             
             const fullBlob = new Blob([audioBuffer], { type: 'audio/mpeg' });
             const fullUrl = URL.createObjectURL(fullBlob);
             
             const result = {
-                affirmations: [affirmation], // Single affirmation for testing
+                affirmations: affirmations, // All 10 affirmations
                 fullAudio: {
                     buffer: decodedBuffer,
                     blob: fullBlob,
@@ -244,8 +276,8 @@ export class ElevenLabsService {
                     focus: responses.focusArea,
                     voiceId: voiceId,
                     generatedAt: new Date().toISOString(),
-                    testMode: true,
-                    totalAffirmations: 1
+                    testMode: false,
+                    totalAffirmations: affirmationTexts.length
                 }
             };
             
@@ -271,6 +303,35 @@ export class ElevenLabsService {
             this.updateProgress('Failed: ' + error.message, 0);
             throw error;
         }
+    }
+    
+    /**
+     * Extract a segment from an audio buffer
+     */
+    async extractAudioSegment(audioBuffer, startTime, endTime) {
+        const sampleRate = audioBuffer.sampleRate;
+        const startSample = Math.floor(startTime * sampleRate);
+        const endSample = Math.floor(endTime * sampleRate);
+        const segmentLength = endSample - startSample;
+        
+        // Create a new buffer for the segment
+        const segmentBuffer = new AudioContext().createBuffer(
+            audioBuffer.numberOfChannels,
+            segmentLength,
+            sampleRate
+        );
+        
+        // Copy audio data for each channel
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+            const sourceData = audioBuffer.getChannelData(channel);
+            const segmentData = segmentBuffer.getChannelData(channel);
+            
+            for (let i = 0; i < segmentLength; i++) {
+                segmentData[i] = sourceData[startSample + i];
+            }
+        }
+        
+        return segmentBuffer;
     }
     
     /**
