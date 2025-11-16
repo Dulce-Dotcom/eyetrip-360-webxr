@@ -170,22 +170,48 @@ export class PanoramaPlayer {
             
             console.log(`[PanoramaPlayer] Initializing renderer - Mobile: ${isMobile}, Safari: ${isSafari}, iOS: ${isIOS}`);
             
-            // For Safari iOS, we need to create a canvas first and test WebGL availability
-            if (isIOS || isSafari) {
-                const testCanvas = document.createElement('canvas');
-                const testGL = testCanvas.getContext('webgl2', { failIfMajorPerformanceCaveat: false }) || 
-                              testCanvas.getContext('webgl', { failIfMajorPerformanceCaveat: false }) || 
-                              testCanvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: false });
+            // For Safari iOS, create canvas and WebGL context manually with safe settings
+            let canvas, context;
+            if (isIOS) {
+                console.log('[PanoramaPlayer] iOS detected - creating WebGL context manually');
+                canvas = document.createElement('canvas');
                 
-                if (!testGL) {
-                    console.error('[PanoramaPlayer] Pre-check failed: Cannot create WebGL context on Safari/iOS');
-                    throw new Error('Safari/iOS: WebGL context pre-check failed. This may be a browser limitation or privacy setting.');
+                // Try WebGL contexts with increasingly permissive settings
+                const contextAttributes = {
+                    alpha: true,
+                    antialias: false,
+                    depth: true,
+                    stencil: false,
+                    preserveDrawingBuffer: false,
+                    powerPreference: 'default',
+                    failIfMajorPerformanceCaveat: false,
+                    desynchronized: false
+                };
+                
+                // Try webgl first (WebGL 1.0 is more compatible on iOS)
+                context = canvas.getContext('webgl', contextAttributes);
+                
+                if (!context) {
+                    console.log('[PanoramaPlayer] webgl context failed, trying experimental-webgl');
+                    context = canvas.getContext('experimental-webgl', contextAttributes);
                 }
-                console.log('[PanoramaPlayer] Safari/iOS WebGL pre-check passed');
+                
+                if (!context) {
+                    throw new Error('Cannot create WebGL context on Safari iOS. WebGL may be disabled in Settings → Safari → Advanced → WebGL');
+                }
+                
+                console.log('[PanoramaPlayer] iOS WebGL context created successfully:', {
+                    version: context.getParameter(context.VERSION),
+                    vendor: context.getParameter(context.VENDOR),
+                    renderer: context.getParameter(context.RENDERER),
+                    maxTextureSize: context.getParameter(context.MAX_TEXTURE_SIZE)
+                });
             }
             
-            // Safari iOS specific settings - absolute minimal config
+            // Safari iOS specific settings - use manually created context
             const rendererConfig = {
+                canvas: canvas, // Use our pre-created canvas on iOS
+                context: context, // Use our pre-created context on iOS
                 antialias: false, // Always false for Safari iOS
                 alpha: true,
                 premultipliedAlpha: true,
@@ -194,10 +220,10 @@ export class PanoramaPlayer {
                 depth: true,
                 logarithmicDepthBuffer: false,
                 preserveDrawingBuffer: false,
-                failIfMajorPerformanceCaveat: false // CRITICAL: Don't fail on Safari iOS
+                failIfMajorPerformanceCaveat: false
             };
             
-            console.log('[PanoramaPlayer] Creating WebGLRenderer with minimal config for Safari compatibility');
+            console.log('[PanoramaPlayer] Creating THREE.WebGLRenderer with', isIOS ? 'pre-created context' : 'auto context');
             this.renderer = new THREE.WebGLRenderer(rendererConfig);
             
             // Check if renderer was created successfully
@@ -207,22 +233,18 @@ export class PanoramaPlayer {
             
             const gl = this.renderer.getContext();
             if (!gl) {
-                throw new Error('WebGL context is null after renderer creation. Safari may have blocked WebGL.');
+                throw new Error('WebGL context is null after renderer creation');
             }
             
-            console.log('[PanoramaPlayer] WebGL context created successfully:', {
-                version: gl.getParameter(gl.VERSION),
-                vendor: gl.getParameter(gl.VENDOR),
-                renderer: gl.getParameter(gl.RENDERER)
-            });
+            console.log('[PanoramaPlayer] THREE.js renderer created successfully');
             
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             
-            // Set pixel ratio - always cap at 1 for Safari iOS to avoid memory issues
+            // Set pixel ratio - always 1 for iOS, cap at 2 for other mobile
             let pixelRatio = window.devicePixelRatio;
             if (isIOS) {
                 pixelRatio = 1; // Force 1x on iOS to prevent context loss
-                console.log('[PanoramaPlayer] iOS detected: forcing pixelRatio to 1 to prevent WebGL context loss');
+                console.log('[PanoramaPlayer] iOS detected: forcing pixelRatio to 1');
             } else if (isMobile) {
                 pixelRatio = Math.min(pixelRatio, 2);
             }
@@ -231,16 +253,22 @@ export class PanoramaPlayer {
             this.renderer.setSize(window.innerWidth, window.innerHeight);
             this.renderer.xr.enabled = true;
             
-            // Fix brightness/gamma for VR headsets (Meta Quest)
-            this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            this.renderer.toneMappingExposure = 0.85; // Reduce brightness slightly
+            // Simpler tone mapping for iOS
+            if (isIOS) {
+                this.renderer.toneMapping = THREE.LinearToneMapping;
+                this.renderer.toneMappingExposure = 1.0;
+            } else {
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 0.85;
+            }
+            
             this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
             this.renderer.domElement.style.transition = 'opacity 0.5s ease';
             this.container.appendChild(this.renderer.domElement);
             this.renderer.setAnimationLoop(this.animate.bind(this));
             
-            console.log(`[PanoramaPlayer] ✅ Renderer initialized successfully (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, iOS: ${isIOS}, pixelRatio: ${pixelRatio})`);
+            console.log(`[PanoramaPlayer] ✅ Renderer initialized successfully (${isMobile ? 'Mobile' : 'Desktop'}, Safari: ${isSafari}, iOS: ${isIOS}, pixelRatio: ${pixelRatio})`);
         } catch (error) {
             console.error('[PanoramaPlayer] ❌ Error initializing renderer:', error);
             console.error('[PanoramaPlayer] Error stack:', error.stack);
