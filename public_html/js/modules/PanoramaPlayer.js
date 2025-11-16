@@ -166,24 +166,38 @@ export class PanoramaPlayer {
             // Mobile-friendly renderer settings
             const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
             const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
             
-            console.log(`[PanoramaPlayer] Initializing renderer - Mobile: ${isMobile}, Safari: ${isSafari}`);
+            console.log(`[PanoramaPlayer] Initializing renderer - Mobile: ${isMobile}, Safari: ${isSafari}, iOS: ${isIOS}`);
             
-            // Safari iOS specific settings - very conservative and minimal
+            // For Safari iOS, we need to create a canvas first and test WebGL availability
+            if (isIOS || isSafari) {
+                const testCanvas = document.createElement('canvas');
+                const testGL = testCanvas.getContext('webgl2', { failIfMajorPerformanceCaveat: false }) || 
+                              testCanvas.getContext('webgl', { failIfMajorPerformanceCaveat: false }) || 
+                              testCanvas.getContext('experimental-webgl', { failIfMajorPerformanceCaveat: false });
+                
+                if (!testGL) {
+                    console.error('[PanoramaPlayer] Pre-check failed: Cannot create WebGL context on Safari/iOS');
+                    throw new Error('Safari/iOS: WebGL context pre-check failed. This may be a browser limitation or privacy setting.');
+                }
+                console.log('[PanoramaPlayer] Safari/iOS WebGL pre-check passed');
+            }
+            
+            // Safari iOS specific settings - absolute minimal config
             const rendererConfig = {
-                canvas: undefined, // Let Three.js create its own canvas
-                context: undefined, // Let Three.js create the WebGL context
-                antialias: !isMobile, // Disable antialiasing on mobile for performance
+                antialias: false, // Always false for Safari iOS
                 alpha: true,
-                powerPreference: (isMobile || isSafari) ? 'low-power' : 'high-performance',
-                stencil: false, // Disable stencil buffer to save memory on mobile
+                premultipliedAlpha: true,
+                powerPreference: 'default', // Use default for Safari iOS
+                stencil: false,
                 depth: true,
-                logarithmicDepthBuffer: false, // Can cause issues on some mobile devices
+                logarithmicDepthBuffer: false,
                 preserveDrawingBuffer: false,
                 failIfMajorPerformanceCaveat: false // CRITICAL: Don't fail on Safari iOS
             };
             
-            console.log('[PanoramaPlayer] Creating WebGLRenderer with config:', rendererConfig);
+            console.log('[PanoramaPlayer] Creating WebGLRenderer with minimal config for Safari compatibility');
             this.renderer = new THREE.WebGLRenderer(rendererConfig);
             
             // Check if renderer was created successfully
@@ -193,15 +207,26 @@ export class PanoramaPlayer {
             
             const gl = this.renderer.getContext();
             if (!gl) {
-                throw new Error('WebGL context is null after renderer creation');
+                throw new Error('WebGL context is null after renderer creation. Safari may have blocked WebGL.');
             }
             
-            console.log('[PanoramaPlayer] WebGL context created successfully');
+            console.log('[PanoramaPlayer] WebGL context created successfully:', {
+                version: gl.getParameter(gl.VERSION),
+                vendor: gl.getParameter(gl.VENDOR),
+                renderer: gl.getParameter(gl.RENDERER)
+            });
             
             this.renderer.setClearColor(0x000000, 0); // Transparent background
             
-            // Set pixel ratio - cap at 2 for mobile to prevent memory issues
-            const pixelRatio = isMobile ? Math.min(window.devicePixelRatio, 2) : window.devicePixelRatio;
+            // Set pixel ratio - always cap at 1 for Safari iOS to avoid memory issues
+            let pixelRatio = window.devicePixelRatio;
+            if (isIOS) {
+                pixelRatio = 1; // Force 1x on iOS to prevent context loss
+                console.log('[PanoramaPlayer] iOS detected: forcing pixelRatio to 1 to prevent WebGL context loss');
+            } else if (isMobile) {
+                pixelRatio = Math.min(pixelRatio, 2);
+            }
+            
             this.renderer.setPixelRatio(pixelRatio);
             this.renderer.setSize(window.innerWidth, window.innerHeight);
             this.renderer.xr.enabled = true;
@@ -215,7 +240,7 @@ export class PanoramaPlayer {
             this.container.appendChild(this.renderer.domElement);
             this.renderer.setAnimationLoop(this.animate.bind(this));
             
-            console.log(`[PanoramaPlayer] ✅ Renderer initialized successfully (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, pixelRatio: ${pixelRatio})`);
+            console.log(`[PanoramaPlayer] ✅ Renderer initialized successfully (${isMobile ? 'Mobile' : 'Desktop'} mode, Safari: ${isSafari}, iOS: ${isIOS}, pixelRatio: ${pixelRatio})`);
         } catch (error) {
             console.error('[PanoramaPlayer] ❌ Error initializing renderer:', error);
             console.error('[PanoramaPlayer] Error stack:', error.stack);
@@ -225,6 +250,8 @@ export class PanoramaPlayer {
     
     // Show user-friendly error message when WebGL fails
     showWebGLError(error) {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        
         const errorDiv = document.createElement('div');
         errorDiv.style.cssText = `
             position: fixed;
@@ -240,43 +267,57 @@ export class PanoramaPlayer {
             text-align: center;
             z-index: 10000;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-height: 85vh;
+            overflow-y: auto;
         `;
         
-        const errorDetails = error ? `<p style="margin: 0.5rem 0; font-size: 0.8rem; opacity: 0.7; font-family: monospace;">${error.message}</p>` : '';
+        const errorDetails = error ? `<p style="margin: 0.5rem 0; font-size: 0.75rem; opacity: 0.7; font-family: monospace; word-break: break-word;">${error.message}</p>` : '';
+        
+        const iosSpecificHelp = isIOS ? `
+            <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px; margin: 1rem 0; text-align: left;">
+                <strong style="display: block; margin-bottom: 0.5rem;">🍎 Safari iOS Settings:</strong>
+                <ol style="margin: 0; padding-left: 1.5rem; font-size: 0.85rem; line-height: 1.6;">
+                    <li>Open Settings app</li>
+                    <li>Scroll to Safari</li>
+                    <li>Scroll to Advanced</li>
+                    <li>Enable "WebGL"</li>
+                    <li>Restart Safari</li>
+                </ol>
+            </div>
+        ` : '';
         
         errorDiv.innerHTML = `
-            <h3 style="margin: 0 0 1rem 0;">⚠️ WebGL Not Available</h3>
+            <h3 style="margin: 0 0 1rem 0;">⚠️ WebGL Initialization Failed</h3>
             <p style="margin: 0 0 1rem 0; font-size: 0.95rem;">
-                This experience requires WebGL support, which could not be initialized on your device.
+                This 360° VR experience requires WebGL, which could not be initialized.
             </p>
             ${errorDetails}
-            <p style="margin: 0.5rem 0; font-size: 0.9rem; opacity: 0.9;">
-                Try:<br>
-                • Refreshing the page<br>
-                • Checking Safari Settings → Advanced → Experimental Features<br>
-                • Using a different browser or updating your current one
+            ${iosSpecificHelp}
+            <p style="margin: 0.5rem 0; font-size: 0.85rem; opacity: 0.9; line-height: 1.5;">
+                ${isIOS ? 'If WebGL is enabled and you still see this error, Safari may be blocking it due to privacy settings or Low Power Mode.' : 'Try refreshing the page or using a different browser.'}
             </p>
-            <button onclick="window.location.reload()" style="
-                margin-top: 1rem;
-                padding: 0.75rem 1.5rem;
-                background: white;
-                color: #ff0000;
-                border: none;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-                margin-right: 0.5rem;
-            ">🔄 Retry</button>
-            <button onclick="window.history.back()" style="
-                margin-top: 1rem;
-                padding: 0.75rem 1.5rem;
-                background: rgba(255, 255, 255, 0.2);
-                color: white;
-                border: 1px solid white;
-                border-radius: 8px;
-                font-weight: 600;
-                cursor: pointer;
-            ">← Go Back</button>
+            <div style="display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap;">
+                <button onclick="window.location.reload()" style="
+                    padding: 0.75rem 1.5rem;
+                    background: white;
+                    color: #ff0000;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                ">🔄 Retry</button>
+                <button onclick="window.history.back()" style="
+                    padding: 0.75rem 1.5rem;
+                    background: rgba(255, 255, 255, 0.2);
+                    color: white;
+                    border: 1px solid white;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                ">← Go Back</button>
+            </div>
         `;
         document.body.appendChild(errorDiv);
     }
