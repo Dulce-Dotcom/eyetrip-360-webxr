@@ -1,0 +1,220 @@
+/**
+ * Mobile-Only Performance Fixes for iOS Safari
+ * These styles ONLY apply to mobile devices (max-width: 768px)
+ * Desktop and VR modes are completely unaffected
+ */
+
+/* ============================================
+   CRITICAL iOS SAFARI FIXES (Mobile Only)
+   ============================================ */
+
+/* Fix background-attachment: fixed crash on iOS - MOBILE ONLY */
+@media (max-width: 768px) {
+    body {
+        background-attachment: scroll !important;
+        /* Remove the image on mobile to save memory */
+        background-image: linear-gradient(to bottom, rgba(1, 1, 155, 0.7), rgba(27, 42, 65, 0.9)) !important;
+    }
+    
+    html {
+        background: #1b2a41 !important;
+    }
+}
+
+/* Remove backdrop-filter on mobile (causes crashes) - MOBILE ONLY */
+@media (max-width: 768px) {
+    .header,
+    .landing-container,
+    .content-section,
+    .video-card,
+    .affirmation-section,
+    .social-sharing,
+    .filter-bar,
+    [style*="backdrop-filter"],
+    [style*="-webkit-backdrop-filter"] {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+    
+    /* Increase opacity to compensate for removed blur - MOBILE ONLY */
+    .header {
+        background: rgba(27, 42, 65, 0.98) !important;
+    }
+    
+    .landing-container {
+        background: rgba(27, 42, 65, 0.95) !important;
+    }
+    
+    .content-section,
+    .video-card {
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+    
+    .filter-bar {
+        background: rgba(27, 42, 65, 0.95) !important;
+    }
+}
+
+/* ============================================
+   PERFORMANCE OPTIMIZATIONS (Mobile Only)
+   ============================================ */
+
+/* Reduce animation complexity on mobile */
+@media (max-width: 768px) {
+    * {
+        animation-duration: 0.15s !important;
+        transition-duration: 0.15s !important;
+    }
+    
+    /* Disable expensive animations on mobile */
+    .logo-icon {
+        animation: none !important;
+    }
+    
+    @keyframes floatIcon {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(0px); }
+    }
+}
+
+/* ============================================
+   INPUT & INTERACTION FIXES (Mobile Only)
+   ============================================ */
+
+/* Prevent iOS zoom on input focus - MOBILE ONLY */
+@media (max-width: 768px) {
+    input,
+    select,
+    textarea,
+    button {
+        font-size: 16px !important;
+    }
+    
+    /* Better touch targets for mobile */
+    .btn,
+    .nav-links a,
+    .filter-btn,
+    .social-btn,
+    .logo-button {
+        min-height: 44px;
+        min-width: 44px;
+    }
+}
+
+/* ============================================
+   MEMORY OPTIMIZATION (Mobile Only)
+   ============================================ */
+
+/* Disable expensive gradient animations on mobile */
+@media (max-width: 768px) {
+    @keyframes gradientShift {
+        0%, 100% { background-position: 0% 50%; }
+    }
+    
+    /* Simplify shadows on mobile */
+    .video-card,
+    .content-section,
+    .landing-container {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    /* Reduce filter complexity */
+    .logo img {
+        filter: brightness(0) invert(1) !important;
+    }
+}
+
+/* ============================================
+   IMAGE OPTIMIZATION (Mobile Only)
+   ============================================ */
+
+/* Lazy loading hint for browsers - MOBILE ONLY */
+@media (max-width: 768px) {
+    img {
+        content-visibility: auto;
+    }
+    
+    /* Prevent layout shift */
+    .video-thumbnail {
+        aspect-ratio: 16/9;
+        object-fit: cover;
+    }
+}
+
+/* ============================================
+   TEXT RENDERING (Mobile Only)
+   ============================================ */
+
+/* Optimize text rendering on mobile */
+@media (max-width: 768px) {
+    body {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeSpeed;
+    }
+}
+
+/* ============================================
+   SCROLLING PERFORMANCE (Mobile Only)
+   ============================================ */
+
+/* Improve scroll performance on mobile */
+@media (max-width: 768px) {
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Use GPU acceleration wisely - only for necessary elements */
+    .video-card,
+    .btn,
+    .nav-links a {
+        transform: translateZ(0);
+        will-change: transform;
+    }
+    
+    /* Remove unnecessary GPU acceleration */
+    .feature,
+    .logo-icon {
+        transform: none !important;
+        will-change: auto !important;
+    }
+}
+
+/* ============================================
+   ERROR PREVENTION (Mobile Only)
+   ============================================ */
+
+/* Prevent iOS bounce/overscroll if it causes issues - MOBILE ONLY */
+@media (max-width: 768px) {
+    body {
+        overscroll-behavior-y: contain;
+    }
+}
+
+/* Safe area insets for notched devices - MOBILE ONLY */
+@media (max-width: 768px) {
+    .header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+    
+    .page-wrapper {
+        padding-bottom: max(2rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* ============================================
+   VIDEO HANDLING (Mobile Only)
+   ============================================ */
+
+/* Optimize video backgrounds on mobile */
+@media (max-width: 768px) {
+    #video-background {
+        display: none !important; /* Hide video background on mobile to save memory */
+    }
+    
+    .video-overlay {
+        display: none !important;
+    }
+}
