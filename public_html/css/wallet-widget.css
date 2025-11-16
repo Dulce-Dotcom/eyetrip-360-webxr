@@ -1,0 +1,166 @@
+/* Wallet Widget Styles */
+
+.wallet-widget {
+    position: fixed;
+    top: 120px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(27, 42, 65, 0.95);
+    border-radius: 15px;
+    padding: 15px 20px;
+    border: 2px solid rgba(102, 126, 234, 0.3);
+    box-shadow: 0 8px 32px rgba(205, 0, 255, 0.3);
+    min-width: 200px;
+    transition: all 0.3s ease;
+}
+
+.wallet-widget:hover {
+    border-color: rgba(205, 0, 255, 0.6);
+    box-shadow: 0 12px 40px rgba(205, 0, 255, 0.5);
+}
+
+#walletConnectBtn {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(45deg, #cd00ff, #00eeff);
+    color: #f0f8ff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#walletConnectBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
+}
+
+#walletConnectBtn:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+#walletConnectBtn.connected {
+    background: linear-gradient(45deg, #00ff88, #00eeff);
+}
+
+#walletInfo {
+    display: none;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.wallet-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 0;
+    font-size: 0.9rem;
+}
+
+.wallet-info-label {
+    color: rgba(240, 248, 255, 0.7);
+    font-size: 0.85rem;
+}
+
+.wallet-info-value {
+    color: #00eeff;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.demo-badge {
+    display: inline-block;
+    background: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 10px;
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    text-align: center;
+    width: 100%;
+}
+
+.purchase-btn {
+    width: 100%;
+    padding: 10px 16px;
+    background: rgba(102, 126, 234, 0.3);
+    color: #f0f8ff;
+    border: 2px solid rgba(102, 126, 234, 0.5);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: all 0.3s ease;
+}
+
+.purchase-btn:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.5);
+    border-color: rgba(102, 126, 234, 0.8);
+    transform: translateY(-1px);
+}
+
+.purchase-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Notification Animations */
+@keyframes slideDown {
+    from {
+        transform: translateX(-50%) translateY(-100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(-50%) translateY(-100px);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsive - moves to bottom */
+@media (max-width: 768px) {
+    .wallet-widget {
+        top: auto;
+        bottom: 20px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        padding: 12px 15px;
+        /* Remove backdrop filter on mobile per mobile-fixes.css */
+    }
+    
+    #walletConnectBtn {
+        font-size: 0.9rem;
+        padding: 10px 16px;
+    }
+    
+    .wallet-info-row {
+        font-size: 0.85rem;
+    }
+    
+    .purchase-btn {
+        font-size: 0.85rem;
+        padding: 8px 14px;
+    }
+}

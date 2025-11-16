@@ -28,6 +28,9 @@
     <!-- Mobile-Only Performance Fixes (Does not affect Desktop/VR) -->
     <link rel="stylesheet" href="css/mobile-fixes.css">
     
+    <!-- Wallet Widget Styles -->
+    <link rel="stylesheet" href="css/wallet-widget.css">
+    
     <style>
         * {
             margin: 0;
@@ -788,6 +791,19 @@
         window.startAffirmationExperience = function() {
             console.log('🎯 Starting personalized affirmation experience');
             
+            // CHECK WALLET CONNECTION (Demo Mode - Just checks, doesn't require payment)
+            if (window.walletManager && window.walletManager.demoMode) {
+                console.log('🎭 Demo Mode: Wallet check (no payment required)');
+                
+                if (!window.walletManager.isConnected()) {
+                    showNotification('💡 Connect your MetaMask wallet to preview the payment flow!\n(No actual payment required in demo mode)', 'warning');
+                    // Still allow access in demo mode
+                } else {
+                    console.log('✅ Wallet connected:', window.walletManager.getUserAddress());
+                    showNotification('✅ Wallet connected! Proceeding to affirmations...', 'success');
+                }
+            }
+            
             // IMPORTANT: Create and activate AudioContext IMMEDIATELY during the click
             // This ensures browser allows audio without user gesture issues
             console.log('🎼 Pre-creating audio context during click...');
@@ -1228,5 +1244,94 @@
     
     <!-- Mobile-Only Performance Script (Does not affect Desktop/VR) -->
     <script src="js/mobile-performance.js"></script>
+    
+    <!-- Wallet Connection Widget (Gallery Only) -->
+    <div class="wallet-widget">
+        <button id="walletConnectBtn" onclick="handleWalletConnect()">
+            🦊 Connect MetaMask
+        </button>
+        
+        <div id="walletInfo">
+            <div class="wallet-info-row">
+                <span class="wallet-info-label">Address:</span>
+                <span class="wallet-info-value" id="walletAddress">-</span>
+            </div>
+            <div class="wallet-info-row">
+                <span class="wallet-info-label">Network:</span>
+                <span class="wallet-info-value" id="walletNetwork">-</span>
+            </div>
+            
+            <div class="demo-badge">
+                🎭 DEMO MODE - Active after Chroma Awards
+            </div>
+        </div>
+    </div>
+    
+    <!-- Wallet Connection Script -->
+    <script src="js/wallet-connect.js"></script>
+    <script>
+    async function handleWalletConnect() {
+        const btn = document.getElementById('walletConnectBtn');
+        
+        if (window.walletManager.isConnected()) {
+            // Disconnect
+            await window.walletManager.disconnectWallet();
+            return;
+        }
+        
+        btn.innerHTML = '⏳ Connecting...';
+        btn.disabled = true;
+        
+        const result = await window.walletManager.connectWallet();
+        
+        btn.disabled = false;
+        
+        if (result.success) {
+            console.log('✅ Connected to wallet:', result.address);
+            console.log('🌐 Network:', result.network);
+            
+            // Show success message
+            showNotification('✅ Wallet Connected!\n' + result.network, 'success');
+            
+            // Track event
+            if (window.trackVREvent) {
+                window.trackVREvent('wallet_connected', result.network, 1);
+            }
+        } else {
+            console.error('❌ Connection failed:', result.error);
+            btn.innerHTML = '🦊 Connect MetaMask';
+            showNotification('❌ ' + result.error, 'error');
+        }
+    }
+
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? 'rgba(76, 175, 80, 0.95)' : type === 'error' ? 'rgba(244, 67, 54, 0.95)' : 'rgba(255, 193, 7, 0.95)'};
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 10000;
+            font-weight: 600;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            white-space: pre-line;
+            text-align: center;
+            max-width: 90%;
+            animation: slideDown 0.3s ease;
+        `;
+        
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.animation = 'slideUp 0.3s ease';
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
+    }
+    </script>
 </body>
 </html>
