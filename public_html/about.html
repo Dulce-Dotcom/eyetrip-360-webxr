@@ -234,6 +234,141 @@
             box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
         }
 
+        /* White Paper Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, rgba(27, 42, 65, 0.98), rgba(1, 1, 155, 0.95));
+            margin: 2% auto;
+            padding: 3rem;
+            border: 1px solid rgba(240, 248, 255, 0.2);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 900px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid rgba(240, 248, 255, 0.2);
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 2rem;
+            color: #87CEEB;
+        }
+
+        .close {
+            color: #f0f8ff;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            line-height: 1;
+            padding: 0.25rem 0.75rem;
+            border-radius: 8px;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+        }
+
+        .whitepaper-content h3 {
+            color: #87CEEB;
+            font-size: 1.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .whitepaper-content h4 {
+            color: #B0E0E6;
+            font-size: 1.2rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .whitepaper-content p,
+        .whitepaper-content li {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.8;
+            margin-bottom: 1rem;
+        }
+
+        .whitepaper-content ul {
+            margin-left: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .whitepaper-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .whitepaper-content th,
+        .whitepaper-content td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .whitepaper-content th {
+            background: rgba(135, 206, 235, 0.2);
+            color: #87CEEB;
+            font-weight: 600;
+        }
+
+        .whitepaper-content .highlight-box {
+            background: rgba(135, 206, 235, 0.1);
+            border-left: 4px solid #87CEEB;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 8px;
+        }
+
+        .btn-whitepaper {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+
+        .btn-whitepaper:hover {
+            background: linear-gradient(45deg, #764ba2, #667eea);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
         @media (max-width: 768px) {
             .header {
                 padding: 1rem;
@@ -314,6 +449,29 @@
             .btn {
                 width: 100%;
                 max-width: 300px;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 2rem 1.5rem;
+                margin: 5% auto;
+            }
+
+            .modal-header h2 {
+                font-size: 1.5rem;
+            }
+
+            .whitepaper-content h3 {
+                font-size: 1.3rem;
+            }
+
+            .whitepaper-content table {
+                font-size: 0.9rem;
+            }
+
+            .whitepaper-content th,
+            .whitepaper-content td {
+                padding: 0.75rem 0.5rem;
             }
         }
 
@@ -401,6 +559,9 @@
                 Our mission is to make high-quality, accessible VR content that works seamlessly across 
                 all devices and platforms, from desktop browsers to the latest VR headsets like Meta Quest.
             </p>
+            <button class="btn-whitepaper" onclick="openWhitePaper()">
+                📄 Read Our White Paper
+            </button>
         </div>
 
         <div class="content-section">
@@ -526,6 +687,214 @@
         <div>Powered by <a href="https://dulce.com" target="_blank">Dulce Dotcom</a>        </div>
     </footer>
     </div> <!-- end .page-wrapper -->
+    
+    <!-- White Paper Modal -->
+    <div id="whitePaperModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Eyetrip White Paper</h2>
+                <span class="close" onclick="closeWhitePaper()">&times;</span>
+            </div>
+            <div class="whitepaper-content">
+                <h3>Eyetrip: A Dual-Platform Immersive Media Ecosystem for the Web3 Creative Future</h3>
+                
+                <div class="highlight-box">
+                    <h4>1. Executive Summary</h4>
+                    <p>
+                        <strong>Eyetrip</strong> is a visionary two-part digital platform that reimagines how immersive media is experienced, collected, and monetized. Through <strong>Eyetrip Images</strong>, an ultra-optimized portfolio site showcasing high-fidelity visuals, and <strong>Eyetrip VR</strong>, a WebXR experience built for standalone headsets and desktop VR, the project delivers a complete ecosystem for storytelling, showcasing, and interacting with digital art.
+                    </p>
+                    <p>
+                        Designed by award-winning creative technologist <strong>Dulce Baerga</strong> and visionary artist <strong>David Aughenbaugh</strong>, Eyetrip is built on open web technologies, integrated with streaming pipelines and upcoming Web3 wallet features, and engineered to support scalable monetization through marketplace and licensing integrations.
+                    </p>
+                </div>
+
+                <h4>2. Project Vision</h4>
+                <p>Eyetrip bridges the gap between artist portfolios, immersive experience design, and Web3-native commerce by offering:</p>
+                <ul>
+                    <li>A performant, scalable platform to showcase high-res images and 360° video</li>
+                    <li>Seamless VR/WebXR deployment for immersive storytelling</li>
+                    <li>Future-facing integration of blockchain wallet features and NFT-ready marketplace tools</li>
+                    <li>A collaborative partnership model between technical and artistic leads to expand into LBE (location-based experiences) and competition circuits</li>
+                </ul>
+
+                <h4>3. Technical Architecture Overview</h4>
+                
+                <p><strong>A. Eyetrip Images</strong> (<a href="https://eyetripimages.com" target="_blank" style="color: #87CEEB;">eyetripimages.com</a>)</p>
+                <ul>
+                    <li><strong>Framework:</strong> Next.js / Vercel CDN / Tailwind CSS</li>
+                    <li><strong>Media Tools:</strong> Custom image galleries with Gigapixel viewer</li>
+                    <li><strong>SEO:</strong> Pre-rendered routes, custom metadata, fast Lighthouse scores</li>
+                    <li><strong>CMS (in progress):</strong> Headless CMS for blog/newsletter/marketplace</li>
+                </ul>
+
+                <p><strong>B. Eyetrip VR</strong> (<a href="https://eyetripvr.com" target="_blank" style="color: #87CEEB;">eyetripvr.com</a>)</p>
+                <ul>
+                    <li><strong>Framework:</strong> Three.js r170 + WebXR API + Vanilla JavaScript</li>
+                    <li><strong>Optimized for:</strong> Meta Quest (90FPS goal), Desktop VR/WebGL, Mobile iOS/Android</li>
+                    <li><strong>Media:</strong> Embedded 360° spatial video streaming with adaptive quality (360p-4K)</li>
+                    <li><strong>VR Interface:</strong> Custom menu interactions, controller-based navigation, interactive audio hotspots</li>
+                    <li><strong>Deployment:</strong> Progressive Web App with VR headset support</li>
+                    <li><strong>Future:</strong> Wallet login, NFT drops, interactive scenes</li>
+                </ul>
+
+                <h4>4. Project Milestones</h4>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Milestone</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>✅ Portfolio v2 Launch</td>
+                            <td>Fully optimized public gallery with modal viewer</td>
+                            <td><strong>Complete</strong></td>
+                        </tr>
+                        <tr>
+                            <td>✅ WebXR Experience Core</td>
+                            <td>VR navigation + streaming infrastructure</td>
+                            <td><strong>Complete</strong></td>
+                        </tr>
+                        <tr>
+                            <td>✅ Mobile Optimization</td>
+                            <td>iOS Safari 18.2+ support, touch controls, performance</td>
+                            <td><strong>Complete</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔄 VR Menu Polish</td>
+                            <td>Interactive UI/UX and enhancements</td>
+                            <td><strong>In Progress</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔄 Video Streaming Pipeline</td>
+                            <td>CDN optimization for 4K videos in VR</td>
+                            <td><strong>In Progress</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔜 CMS + Newsletter Integration</td>
+                            <td>Blogging, email publishing, and shop</td>
+                            <td><strong>Launching Soon</strong></td>
+                        </tr>
+                        <tr>
+                            <td>🔜 Wallet & Web3 Setup</td>
+                            <td>Web3 login and tokenized collectibles</td>
+                            <td><strong>Launching Soon</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4>5. Value Delivered</h4>
+                <p>To date, the project has delivered over <strong>$33,000</strong> in professional-grade development value, including:</p>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Site</th>
+                            <th>Total Hours</th>
+                            <th>Cost Estimate</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>EyetripImages.com</td>
+                            <td>78 hrs</td>
+                            <td>$11,700</td>
+                        </tr>
+                        <tr>
+                            <td>EyetripVR.com</td>
+                            <td>145 hrs</td>
+                            <td>$21,750</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Total</strong></td>
+                            <td><strong>223 hrs</strong></td>
+                            <td><strong>$33,450</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>This includes infrastructure, streaming optimization, interface design, QA, animations, multi-device compatibility, and future-facing integrations.</p>
+
+                <h4>6. Future Roadmap</h4>
+                
+                <p><strong>A. Technical</strong></p>
+                <ul>
+                    <li>Web3 wallet login (MetaMask, WalletConnect)</li>
+                    <li>Token-gated experiences + smart contract integration</li>
+                    <li>NFT marketplace (custom + 3rd-party integrations)</li>
+                    <li>Expanded CMS for writing, shop, and publishing</li>
+                    <li>Local device caching for XR optimization</li>
+                </ul>
+
+                <p><strong>B. Marketing & Business</strong></p>
+                <ul>
+                    <li>Submit to LBE/VR art festivals (Tribeca Immersive, IDFA DocLab, SIGGRAPH XR, A Maze, Venice VR)</li>
+                    <li>Launch e-commerce campaign (limited edition prints, VR tickets, NFT collectibles)</li>
+                    <li>SEO-optimized content marketing (blog, social)</li>
+                    <li>Monthly newsletter for audience building and cross-promotion</li>
+                    <li>Partner with galleries for spatial installations</li>
+                </ul>
+
+                <h4>7. Strategic Partnership Model</h4>
+                <p>
+                    The development model behind Eyetrip is a co-owned creative partnership that trades upfront capital for shared equity, where:
+                </p>
+                <ul>
+                    <li><strong>Artistic Lead</strong> handles visual content, branding, and audience-building</li>
+                    <li><strong>Technical Lead</strong> builds, deploys, and maintains the XR infrastructure</li>
+                    <li><strong>Revenue</strong> will be shared 50/50 across LBE earnings, online marketplace sales, and competition prizes</li>
+                </ul>
+
+                <h4>8. Conclusion</h4>
+                <p>
+                    <strong>Eyetrip is more than a portfolio.</strong> It is a foundation for a creative economy that spans immersive narrative, WebXR storytelling, and blockchain-enabled monetization. This white paper anchors our vision and supports the broader roadmap for Eyetrip's expansion into XR, art, and digital commerce.
+                </p>
+
+                <div class="highlight-box">
+                    <h4>🧩 Resources</h4>
+                    <ul style="margin-left: 0; list-style: none;">
+                        <li>🌐 <a href="https://eyetripimages.com" target="_blank" style="color: #87CEEB;">EyetripImages.com</a> – Live Portfolio</li>
+                        <li>🥽 <a href="https://eyetripvr.com" target="_blank" style="color: #87CEEB;">EyetripVR.com</a> – WebXR Experience</li>
+                        <li>📂 <a href="https://github.com/Dulce-Dotcom/eyetrip-360-webxr" target="_blank" style="color: #87CEEB;">GitHub Repository</a> – Open Source Code</li>
+                    </ul>
+                </div>
+
+                <p style="text-align: center; margin-top: 3rem; color: #87CEEB; font-size: 0.9rem;">
+                    © 2024-2025 EyeTrip Images & EyeTrip VR. All Rights Reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // White Paper Modal Functions
+        function openWhitePaper() {
+            document.getElementById('whitePaperModal').style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeWhitePaper() {
+            document.getElementById('whitePaperModal').style.display = 'none';
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('whitePaperModal');
+            if (event.target === modal) {
+                closeWhitePaper();
+            }
+        }
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeWhitePaper();
+            }
+        });
+    </script>
     
     <!-- Mobile-Only Performance Script (Does not affect Desktop/VR) -->
     <script src="js/mobile-performance.js"></script>
