@@ -592,6 +592,17 @@
         let deferredPrompt;
         const installButton = document.getElementById('pwa-install-btn');
 
+        // Detect if we're in VR or if PWA is already installed
+        const isVR = navigator.userAgent.includes('OculusBrowser') || navigator.userAgent.includes('Quest');
+        const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+        // Show button in VR or if install prompt is available
+        if (isVR && !isPWAInstalled) {
+            console.log('💾 [PWA] VR browser detected, showing install button');
+            installButton.style.display = 'block';
+            installButton.textContent = '📱 Add to Home Screen';
+        }
+
         window.addEventListener('beforeinstallprompt', (e) => {
             console.log('💾 [PWA] Install prompt available');
             e.preventDefault();
@@ -600,7 +611,11 @@
         });
 
         installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
+            if (!deferredPrompt) {
+                // VR browsers don't support beforeinstallprompt, show instructions
+                alert('To install this app:\n\n1. Tap the browser menu (three dots)\n2. Select "Add to Home Screen"\n3. Confirm the installation\n\nThis will create an app icon for easy access!');
+                return;
+            }
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             console.log(`User response to install prompt: ${outcome}`);

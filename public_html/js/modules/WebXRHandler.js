@@ -657,21 +657,24 @@ export class WebXRHandler {
             
             // Handle button presses
             if (gamepad.buttons) {
-                // A button (usually index 0)
-                if (gamepad.buttons[0]?.pressed && !this.aButtonPressed) {
+                // A button for Quest controllers (button 3 on right controller, button 4 on left controller)
+                // Note: buttons[0] is the TRIGGER and is handled by selectstart event for hotspot discovery
+                const aButtonIndex = inputSource.handedness === 'right' ? 3 : 4;
+                if (gamepad.buttons[aButtonIndex]?.pressed && !this.aButtonPressed) {
                     this.aButtonPressed = true;
-                    console.log('🎮 [DEBUG] A button pressed - calling togglePlayPause');
+                    console.log('🎮 [DEBUG] A button pressed (button', aButtonIndex, ') - calling togglePlayPause');
                     this.togglePlayPause();
-                } else if (!gamepad.buttons[0]?.pressed) {
+                } else if (!gamepad.buttons[aButtonIndex]?.pressed) {
                     this.aButtonPressed = false;
                 }
                 
-                // B button (usually index 1)
-                if (gamepad.buttons[1]?.pressed && !this.bButtonPressed) {
+                // B button for Quest controllers (button 4 on right controller, button 5 on left controller)
+                const bButtonIndex = inputSource.handedness === 'right' ? 4 : 5;
+                if (gamepad.buttons[bButtonIndex]?.pressed && !this.bButtonPressed) {
                     this.bButtonPressed = true;
-                    console.log('🎮 [DEBUG] B button pressed - calling toggleMute');
+                    console.log('🎮 [DEBUG] B button pressed (button', bButtonIndex, ') - calling toggleMute');
                     this.toggleMute();
-                } else if (!gamepad.buttons[1]?.pressed) {
+                } else if (!gamepad.buttons[bButtonIndex]?.pressed) {
                     this.bButtonPressed = false;
                 }
             }
@@ -1044,7 +1047,11 @@ export class WebXRHandler {
     }
 
     toggleMute() {
-        if (this.panoramaPlayer?.video) {
+        // Call PanoramaPlayer's toggleMute which handles both video AND hotspot audio
+        if (this.panoramaPlayer?.toggleMute) {
+            this.panoramaPlayer.toggleMute();
+        } else if (this.panoramaPlayer?.video) {
+            // Fallback if toggleMute doesn't exist
             this.panoramaPlayer.video.muted = !this.panoramaPlayer.video.muted;
         }
     }
