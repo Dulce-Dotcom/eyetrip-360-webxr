@@ -522,6 +522,12 @@
                             audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
                             updateAudioControls();
                             console.log('[AUDIO] mute toggled:', video.muted);
+                            
+                            // Also mute/unmute hotspot sounds
+                            if (window.panoramaPlayer && window.panoramaPlayer.hotspotManager) {
+                                window.panoramaPlayer.hotspotManager.setMuted(video.muted);
+                                console.log('[AUDIO] hotspot sounds muted:', video.muted);
+                            }
                         } else {
                             console.warn('[AUDIO] mute button: no video element or control disabled');
                         }

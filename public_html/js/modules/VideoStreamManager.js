@@ -169,7 +169,7 @@ class VideoStreamManager {
             }, { once: true });
             
             // Increased timeout to 30 seconds for large 360 videos
-            setTimeout(() => reject(new Error(`Preload timeout after 30s: ${videoPath}`)), 30000);
+            setTimeout(() => reject(new Error(`Preload timeout after 30s: ${videoURL}`)), 30000);
         });
 
         this.videoCache.set(cacheKey, video);

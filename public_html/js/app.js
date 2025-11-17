@@ -171,10 +171,15 @@ class App {
             console.log('📊 Initializing Performance Monitor...');
             this.perfMonitor = new PerformanceMonitor(this.player.renderer, this.player.scene);
             
-            // 2. PWA Support
-            console.log('📱 Initializing PWA Support...');
-            this.pwaSupport = new PWASupport();
-            this.pwaSupport.setupOfflineDetection();
+            // 2. PWA Support - Only for VR headsets, not mobile
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (!isMobile) {
+                console.log('📱 Initializing PWA Support...');
+                this.pwaSupport = new PWASupport();
+                this.pwaSupport.setupOfflineDetection();
+            } else {
+                console.log('⏭️ PWA Support skipped on mobile');
+            }
             
             // 3. Haptic Feedback System
             console.log('📳 Initializing Haptic Feedback...');
