@@ -2,7 +2,8 @@
 // Refactored for official VRButton usage and best practices
 import * as THREE from 'three';
 import VideoStreamManager from './VideoStreamManager.js';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+// GLTFLoader removed - controller models disabled to avoid import map issues on mobile Safari
+// import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRButton } from '../vendor/VRButton.js';
 import VRMenu from './VRMenu.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';
@@ -1188,7 +1189,9 @@ export class PanoramaPlayer {
 
     // Three.js best practice: setup controllers and models
     setupControllers() {
-        const gltfLoader = new GLTFLoader();
+        // DISABLED: GLTFLoader causes import map CORS issues on mobile Safari
+        // Controllers still work with ray visualization only (no 3D models)
+        // const gltfLoader = new GLTFLoader();
         
         for (let i = 0; i < 2; i++) {
             // Get controller (target ray space)
@@ -1204,60 +1207,13 @@ export class PanoramaPlayer {
             // Get controller grip (for model)
             const controllerGrip = this.renderer.xr.getControllerGrip(i);
             
-            // Load GLTF controller models
-            // Controller 0 = LEFT = GREEN dot + CYAN tint (left-controller.glb)
-            // Controller 1 = RIGHT = RED dot + PINK tint (right-controller.glb)
-            const modelPath = i === 0 ? 'assets/models/left-controller.glb' : 'assets/models/right-controller.glb';
-            const tintColor = i === 0 ? 0x00ffff : 0xffb6c1; // Cyan for left, light pink for right
-            
-            console.log(`🎮 Loading controller ${i} model: ${modelPath}`);
-            
-            gltfLoader.load(
-                modelPath,
-                (gltf) => {
-                    console.log(`✅ Controller ${i} model loaded successfully`);
-                    const model = gltf.scene;
-                    
-                    // Scale down the controller model to 50% of original size
-                    model.scale.set(0.5, 0.5, 0.5);
-                    
-                    // Apply color tint to all meshes in the model
-                    model.traverse((child) => {
-                        if (child.isMesh) {
-                            // Clone material and apply tint
-                            if (child.material) {
-                                child.material = child.material.clone();
-                                child.material.color.set(tintColor);
-                                child.material.emissive = new THREE.Color(tintColor);
-                                child.material.emissiveIntensity = 0.2;
-                            }
-                        }
-                    });
-                    
-                    // Add model to grip - it should be centered at origin
-                    controllerGrip.add(model);
-                    console.log(`🎮 Controller ${i} model added with ${i === 0 ? 'CYAN' : 'PINK'} tint at 50% scale`);
-                },
-                undefined,
-                (error) => {
-                    console.error(`❌ Error loading controller ${i} model:`, error);
-                    // Fallback to simple box if model fails to load
-                    const fallbackGeometry = new THREE.BoxGeometry(0.02, 0.02, 0.08);
-                    const fallbackMaterial = new THREE.MeshBasicMaterial({ 
-                        color: tintColor,
-                        transparent: true,
-                        opacity: 0.8
-                    });
-                    const fallbackMesh = new THREE.Mesh(fallbackGeometry, fallbackMaterial);
-                    controllerGrip.add(fallbackMesh);
-                    console.log(`🎮 Controller ${i} using fallback mesh`);
-                }
-            );
+            // DISABLED: GLTF model loading (mobile Safari import map issues)
+            // Controllers work fine without 3D models - ray visualization is enough
             
             this.scene.add(controllerGrip);
             this.controllerGrips[i] = controllerGrip;
             
-            console.log(`🎮 Controller ${i} (${i === 0 ? 'LEFT/GREEN/CYAN' : 'RIGHT/RED/PINK'}) initialized`);
+            console.log(`🎮 Controller ${i} (${i === 0 ? 'LEFT/GREEN' : 'RIGHT/RED'}) initialized (no 3D model)`);
         }
     }
 
