@@ -31,6 +31,16 @@ class VideoStreamManager {
         // Check if we're in VR mode
         this.isVR = navigator.xr !== undefined;
         
+        // Detect mobile devices
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        // Mobile devices get 720p max for better performance
+        if (isMobile) {
+            this.currentQuality = '720p';
+            console.log('📱 Mobile device detected, using 720p quality');
+            return;
+        }
+        
         // Detect connection speed (if Network Information API available)
         if (navigator.connection) {
             const connection = navigator.connection;
