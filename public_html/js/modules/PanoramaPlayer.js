@@ -2251,6 +2251,7 @@ export class PanoramaPlayer {
             font-weight: bold;
             border: 2px solid #${color.toString(16).padStart(6, '0')};
             box-shadow: 0 0 20px rgba(${parseInt(color.toString(16).substr(0,2), 16)}, ${parseInt(color.toString(16).substr(2,2), 16)}, ${parseInt(color.toString(16).substr(4,2), 16)}, 0.6);
+            text-shadow: 0 0 10px rgba(255, 182, 193, 0.8), 0 0 20px rgba(255, 182, 193, 0.6), 0 0 30px rgba(255, 182, 193, 0.4);
             z-index: 10000;
             animation: slideInRight 0.3s ease, fadeOut 0.3s ease 2.7s forwards;
         `;
