@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import * as THREE from 'three';
 import ThreeMeshUI from 'https://unpkg.com/three-mesh-ui@6.5.4/build/three-mesh-ui.module.js';
 
 /**

@@ -1,4 +1,4 @@
-import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import * as THREE from 'three';
 
 /**
  * HotspotManager - Interactive Audio Hotspots for 360° VR Experiences

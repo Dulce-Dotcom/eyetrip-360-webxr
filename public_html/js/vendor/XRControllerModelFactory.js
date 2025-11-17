@@ -1,6 +1,6 @@
 // Custom XRControllerModelFactory with GLB model support
-import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 
 export class XRControllerModelFactory {
     constructor() {

@@ -1,8 +1,8 @@
 // --- Three.js WebXR VR Panorama Player ---
 // Refactored for official VRButton usage and best practices
-import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import * as THREE from 'three';
 import VideoStreamManager from './VideoStreamManager.js';
-import { GLTFLoader } from 'https://unpkg.com/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRButton } from '../vendor/VRButton.js';
 import VRMenu from './VRMenu.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';

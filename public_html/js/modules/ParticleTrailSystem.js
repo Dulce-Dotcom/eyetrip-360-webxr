@@ -2,7 +2,7 @@
  * ParticleTrailSystem - Psychedelic particle trails with SVG icons
  * Creates trippy, holographic particle effects that follow mouse/controller movement
  */
-import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+import * as THREE from 'three';
 
 export class ParticleTrailSystem {
     constructor(scene, camera) {
