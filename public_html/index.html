@@ -82,6 +82,20 @@
     <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-7Y1YJBXJ2X"></script>
     <script>
+        // Detect VR headset and add class to body for CSS targeting
+        (function() {
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isVRHeadset = userAgent.includes('quest') || 
+                              userAgent.includes('oculus') || 
+                              userAgent.includes('vr') ||
+                              (navigator.xr && window.innerWidth > 768);
+            
+            if (isVRHeadset) {
+                document.documentElement.classList.add('vr-headset');
+                console.log('🥽 VR Headset detected - showing video background');
+            }
+        })();
+        
         window.dataLayer = window.dataLayer || [];
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
@@ -237,6 +251,15 @@
             }
         }
         
+        /* Show video on VR headsets (Meta Quest, etc.) */
+        body.vr-headset #video-background {
+            display: block !important;
+        }
+        
+        body.vr-headset::before {
+            display: none !important;
+        }
+        
         .video-overlay {
             position: fixed;
             top: 0;
@@ -246,6 +269,11 @@
             background: linear-gradient(to bottom, rgba(1, 1, 155, 0.1), rgba(27, 42, 65, 0.2));
             z-index: 0;
             pointer-events: none;
+        }
+        
+        /* Remove/reduce blue overlay on VR headsets */
+        body.vr-headset .video-overlay {
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.1));
         }
         
         .page-wrapper {
