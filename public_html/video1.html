@@ -13,6 +13,14 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#667eea">
     
+    <!-- Performance: Preconnect to CDN -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- Performance: Preload critical CSS -->
+    <link rel="preload" href="css/eyetrip-style.css" as="style">
+    <link rel="preload" href="css/experience-mobile.css" as="style">
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     
@@ -292,19 +300,21 @@
                 <div>Initializing 360° Experience...</div>
             </div>
 
-            <div id="webxrBadge" style="display: block !important; opacity: 1; transition: opacity 0.5s;">WebXR Ready</div>
+            <div id="webxrBadge">WebXR Ready</div>
 
             <script>
-            // Auto-hide WebXR badge after 30 seconds, show on hover
+            // Auto-hide WebXR badge after 30 seconds, show on hover (desktop only)
             (function() {
                 const badge = document.getElementById('webxrBadge');
-                if (badge) {
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                
+                if (badge && !isMobile) {
                     setTimeout(() => {
                         badge.style.opacity = '0';
                         badge.style.pointerEvents = 'none';
                     }, 30000); // 30 seconds
                     
-                    // Show on hover over that area
+                    // Show on hover over that area (desktop only)
                     badge.addEventListener('mouseenter', () => {
                         badge.style.opacity = '1';
                         badge.style.pointerEvents = 'auto';
@@ -314,6 +324,11 @@
                         badge.style.opacity = '0';
                         badge.style.pointerEvents = 'none';
                     });
+                } else if (badge && isMobile) {
+                    // Force hide on mobile immediately
+                    badge.style.display = 'none';
+                    badge.style.visibility = 'hidden';
+                    badge.style.opacity = '0';
                 }
             })();
             </script>

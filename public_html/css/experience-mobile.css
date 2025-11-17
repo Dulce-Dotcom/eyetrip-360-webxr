@@ -50,8 +50,11 @@
         right: 0 !important;
         width: 100% !important;
         transform: none !important;
-        padding: 6px 20px !important;
-        gap: 6px !important;
+        padding: 8px 24px !important;
+        padding-left: max(24px, env(safe-area-inset-left)) !important;
+        padding-right: max(24px, env(safe-area-inset-right)) !important;
+        padding-bottom: max(8px, env(safe-area-inset-bottom)) !important;
+        gap: 8px !important;
         flex-wrap: nowrap !important;
         justify-content: center !important;
         align-items: center !important;
@@ -76,6 +79,7 @@
         font-size: 0.75rem !important;
         white-space: nowrap !important;
         border-radius: 50% !important;
+        touch-action: manipulation !important;
     }
     
     #controls .material-icons, .md-controls .material-icons {
@@ -548,6 +552,11 @@
     /* WebXR Badge - Hide on mobile (WebXR only works on VR headsets) */
     #webxrBadge, .webxr-badge {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        position: absolute !important;
+        left: -9999px !important;
     }
     
     /* Video Progress Bar */
