@@ -7,6 +7,11 @@
         padding: 0.5rem 0.75rem !important;
         flex-wrap: wrap;
         gap: 0.5rem;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        z-index: 10000 !important;
     }
     
     .md-title {
@@ -37,22 +42,29 @@
         font-size: 20px !important;
     }
     
-    /* Controls Bar */
+    /* Controls Bar - Fixed at bottom */
     #controls {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
         padding: 0.75rem 0.5rem !important;
         gap: 0.5rem !important;
-        flex-wrap: wrap;
-        justify-content: center;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+        background: rgba(0, 0, 0, 0.9) !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 9999 !important;
+        box-sizing: border-box !important;
     }
     
     #controls button {
         padding: 0.5rem 0.75rem !important;
         font-size: 0.85rem !important;
-        min-width: auto !important;
-        white-space: nowrap;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        white-space: nowrap !important;
     }
     
     #controls .material-icons {
@@ -65,18 +77,36 @@
     }
     
     /* Modals */
+    .modal {
+        padding: 1rem !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    .modal > div {
+        width: 95% !important;
+        max-width: 95% !important;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        padding: 1.5rem !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+    }
+    
     .modal-content {
         width: 95% !important;
         max-width: 95% !important;
-        max-height: 90vh;
-        overflow-y: auto;
-        padding: 1.25rem !important;
-        margin: 1rem;
+        max-height: 85vh !important;
+        overflow-y: auto !important;
+        padding: 1.5rem !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
     }
     
     .modal h2 {
         font-size: 1.3rem !important;
         margin-bottom: 0.75rem !important;
+        margin-top: 0 !important;
     }
     
     .modal p, .modal ul {
@@ -87,6 +117,18 @@
     .modal button {
         padding: 0.75rem 1.5rem !important;
         font-size: 0.95rem !important;
+        min-height: 44px !important;
+    }
+    
+    .modal-close {
+        position: absolute !important;
+        top: 12px !important;
+        right: 12px !important;
+        font-size: 24px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 8px !important;
+        z-index: 1 !important;
     }
     
     /* Video List Menu */
@@ -101,16 +143,26 @@
     .gallery-grid {
         grid-template-columns: 1fr !important;
         gap: 1rem !important;
-        padding: 0 0.25rem;
+        padding: 0 !important;
     }
     
     .gallery-item {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.5rem !important;
+        max-width: 100% !important;
+        width: 100% !important;
     }
     
     .gallery-thumb {
         height: 150px !important;
-        object-fit: cover;
+        width: 100% !important;
+        max-width: 100% !important;
+        object-fit: cover !important;
+    }
+    
+    .play-experience-btn {
+        width: 100% !important;
+        min-height: 44px !important;
+        font-size: 0.95rem !important;
     }
     
     /* Canvas Container */
@@ -135,9 +187,31 @@
     
     /* Achievement Notifications */
     .achievement-notification {
+        top: 100px !important;
+        right: -400px !important;
         max-width: 90% !important;
-        padding: 0.75rem !important;
+        width: 300px !important;
+        padding: 1rem !important;
         font-size: 0.85rem !important;
+        box-sizing: border-box !important;
+    }
+    
+    .achievement-notification.show {
+        right: 10px !important;
+    }
+    
+    .achievement-icon {
+        font-size: 2rem !important;
+    }
+    
+    .achievement-text h3 {
+        font-size: 1rem !important;
+        margin: 0 0 0.25rem 0 !important;
+    }
+    
+    .achievement-text p {
+        font-size: 0.8rem !important;
+        margin: 0 !important;
     }
     
     /* Hotspot Labels */
@@ -145,6 +219,105 @@
         font-size: 0.8rem !important;
         padding: 0.25rem 0.5rem !important;
         max-width: 150px !important;
+    }
+    
+    /* Hotspot Discovery UI - Hidden sounds counter */
+    .hotspot-discovery-ui {
+        position: fixed !important;
+        top: 70px !important; /* Below header */
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        width: auto !important;
+        max-width: 90% !important;
+        padding: 8px 14px !important;
+        font-size: 12px !important;
+        background: rgba(0, 0, 0, 0.85) !important;
+        border-radius: 8px !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 9998 !important;
+        white-space: nowrap !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Discovery Toast Notification */
+    .discovery-toast {
+        top: 80px !important;
+        font-size: 13px !important;
+        padding: 12px 20px !important;
+        max-width: 90% !important;
+    }
+    
+    /* Intro Overlay - Welcome screen */
+    #intro-overlay, .intro-overlay {
+        top: 60px !important; /* Below header */
+        height: calc(100vh - 60px) !important;
+        padding: 1rem !important;
+        box-sizing: border-box !important;
+    }
+    
+    .intro-content {
+        max-width: 95% !important;
+        width: 95% !important;
+        padding: 1.5rem !important;
+        box-sizing: border-box !important;
+    }
+    
+    .intro-logo {
+        height: 60px !important;
+        max-width: 90% !important;
+    }
+    
+    .intro-title {
+        font-size: 1.4rem !important;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    .intro-subtitle {
+        font-size: 0.95rem !important;
+        margin-bottom: 1rem !important;
+    }
+    
+    .intro-main-section {
+        flex-direction: column !important;
+        gap: 1rem !important;
+        padding: 1rem !important;
+    }
+    
+    .intro-instructions {
+        margin-bottom: 1rem !important;
+        text-align: left !important;
+    }
+    
+    .instruction-item {
+        padding: 8px 0 !important;
+        font-size: 0.85rem !important;
+        gap: 10px !important;
+    }
+    
+    .instruction-icon {
+        font-size: 1.3rem !important;
+        min-width: 35px !important;
+    }
+    
+    .intro-actions {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .intro-button, .intro-start-btn {
+        padding: 14px 28px !important;
+        font-size: 1rem !important;
+        width: 100% !important;
+        max-width: 280px !important;
+        justify-content: center !important;
+    }
+    
+    .intro-skip-btn {
+        top: 15px !important;
+        right: 15px !important;
+        padding: 8px 16px !important;
+        font-size: 0.85rem !important;
+        min-height: 36px !important;
     }
     
     /* Mini-map */
@@ -235,16 +408,17 @@
     /* Sound count card specifically */
     #soundCount, .sound-count, [class*="sound-count"], [id*="soundCount"] {
         position: fixed !important;
-        top: 80px !important;
+        top: 70px !important; /* Below header */
         right: 10px !important;
         width: auto !important;
-        max-width: 120px !important;
-        padding: 0.5rem 0.75rem !important;
+        max-width: 140px !important;
+        padding: 8px 12px !important;
         font-size: 0.85rem !important;
-        background: rgba(0, 0, 0, 0.7) !important;
+        background: rgba(0, 0, 0, 0.85) !important;
         border-radius: 8px !important;
         backdrop-filter: blur(10px) !important;
-        z-index: 999 !important;
+        z-index: 9998 !important;
+        box-sizing: border-box !important;
     }
     
     /* Controls menu - ensure it's properly sized */
@@ -281,14 +455,22 @@
     /* WebXR Badge */
     #webxrBadge {
         position: fixed !important;
-        top: 10px !important;
-        right: 10px !important;
-        padding: 0.5rem 0.75rem !important;
-        font-size: 0.75rem !important;
-        max-width: 150px !important;
+        top: 70px !important; /* Below header */
+        left: 10px !important;
+        padding: 8px 12px !important;
+        font-size: 0.7rem !important;
+        max-width: 140px !important;
         background: rgba(76, 175, 80, 0.9) !important;
         border-radius: 6px !important;
-        z-index: 999 !important;
+        z-index: 9998 !important;
+        transition: opacity 0.3s ease !important;
+    }
+    
+    /* Video Progress Bar */
+    #videoProgressBar {
+        height: 3px !important;
+        top: 0 !important;
+        z-index: 10001 !important;
     }
     
     /* Prevent any element from being full-screen on mobile */

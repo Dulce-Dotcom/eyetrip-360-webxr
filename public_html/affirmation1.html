@@ -400,6 +400,29 @@
             </div>
 
             <div class="webxr-badge" id="webxrBadge"></div>
+            <script>
+            // Auto-hide WebXR badge after 30 seconds, show on hover
+            (function() {
+                const badge = document.getElementById('webxrBadge');
+                if (badge) {
+                    setTimeout(() => {
+                        badge.style.opacity = '0';
+                        badge.style.pointerEvents = 'none';
+                    }, 30000); // 30 seconds
+                    
+                    // Show on hover over that area
+                    badge.addEventListener('mouseenter', () => {
+                        badge.style.opacity = '1';
+                        badge.style.pointerEvents = 'auto';
+                    });
+                    
+                    badge.addEventListener('mouseleave', () => {
+                        badge.style.opacity = '0';
+                        badge.style.pointerEvents = 'none';
+                    });
+                }
+            })();
+            </script>
 
             <button class="md-fab" id="fabBtn">
                 <span class="material-icons">360</span>
