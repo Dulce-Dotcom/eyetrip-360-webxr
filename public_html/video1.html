@@ -596,6 +596,21 @@
                     });
                 }
             });
+            
+            // Clear all caches on Safari iOS
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    return Promise.all(
+                        cacheNames.map(cacheName => {
+                            console.log('🗑️ [PWA] Clearing cache:', cacheName);
+                            return caches.delete(cacheName);
+                        })
+                    );
+                }).then(() => {
+                    console.log('✅ [PWA] All caches cleared on Safari iOS');
+                });
+            }
+            
             console.log('⚠️ [PWA] Service Worker disabled on Safari iOS');
         }
         
