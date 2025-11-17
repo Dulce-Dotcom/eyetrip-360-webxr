@@ -571,6 +571,9 @@
     <!-- Webpack will inject the correct bundled script automatically. -->
      <script type="module" src="js/app.js?v=1763319206"></script>
     
+    <!-- PWA Install Button -->
+    <button id="pwa-install-btn" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer; z-index: 10000; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s, box-shadow 0.2s;">📱 Install App</button>
+    
     <!-- PWA Service Worker Registration -->
     <script>
         if ('serviceWorker' in navigator) {
@@ -584,6 +587,41 @@
                     });
             });
         }
+        
+        // PWA Install Button Handler
+        let deferredPrompt;
+        const installButton = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💾 [PWA] Install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installButton.style.display = 'none';
+        });
+        
+        installButton.addEventListener('mouseenter', () => {
+            installButton.style.transform = 'scale(1.05)';
+            installButton.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
+        });
+        
+        installButton.addEventListener('mouseleave', () => {
+            installButton.style.transform = 'scale(1)';
+            installButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
+        });
+
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed');
+            installButton.style.display = 'none';
+        });
     </script>
 </body>
 </html>

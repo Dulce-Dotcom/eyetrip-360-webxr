@@ -314,9 +314,16 @@ export class HotspotManager {
         
         // Use regular HTML5 Audio (like particle swoosh) for maximum volume
         const audio = new Audio(`/assets/sound/${hotspot.sound}`);
-        audio.volume = 1.0; // Maximum volume
+        
+        // Apply current video volume/mute state immediately
+        const videoMuted = this.video.muted;
+        const videoVolume = this.video.volume;
+        audio.volume = videoVolume; // Match video volume
+        audio.muted = videoMuted; // Match video mute state
         audio.loop = true; // Enable looping
         audio.preload = 'auto';
+        
+        console.log(`🔊 Creating hotspot audio with video state: volume=${videoVolume}, muted=${videoMuted}`);
         
         // Load audio on user interaction for Safari compatibility
         const loadAudio = () => {
@@ -331,7 +338,7 @@ export class HotspotManager {
         hotspot.audio = audio;
         hotspot.isRegularAudio = true; // Flag to indicate this is HTML5 Audio, not THREE.Audio
         
-        console.log(`✅ Loaded regular audio (loud): ${hotspot.sound}`);
+        console.log(`✅ Loaded regular audio: ${hotspot.sound}`);
     }
     
     /**
@@ -533,6 +540,12 @@ export class HotspotManager {
     playProximitySound() {
         if (!this.audioListener) return;
         
+        // Respect video mute state
+        if (this.video.muted) {
+            console.log('🔇 Proximity sound skipped (video muted)');
+            return;
+        }
+        
         // Create proximity audio if it doesn't exist
         if (!this.proximityAudio) {
             this.proximityAudio = new THREE.Audio(this.audioListener);
@@ -554,15 +567,19 @@ export class HotspotManager {
             oscillator.frequency.value = 800; // High pitched chime
             oscillator.type = 'sine';
             
-            // Quick fade in/out envelope - LOUDER volume
+            // Apply video volume to gain - adjusted for video volume
+            const videoVolume = this.video.volume;
+            const adjustedVolume = 0.8 * videoVolume; // Scale by video volume
+            
+            // Quick fade in/out envelope
             gainNode.gain.setValueAtTime(0, context.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.8, context.currentTime + 0.05); // Fade in (increased from 0.2 to 0.8)
+            gainNode.gain.linearRampToValueAtTime(adjustedVolume, context.currentTime + 0.05); // Fade in
             gainNode.gain.linearRampToValueAtTime(0, context.currentTime + 0.3); // Fade out
             
             oscillator.start(context.currentTime);
             oscillator.stop(context.currentTime + 0.3);
             
-            console.log('🔔 Proximity audio cue played');
+            console.log(`🔔 Proximity audio cue played (volume: ${adjustedVolume.toFixed(2)})`);
         }
     }
     
@@ -571,6 +588,12 @@ export class HotspotManager {
      */
     playAppearanceSound() {
         if (!this.audioListener) return;
+        
+        // Respect video mute state
+        if (this.video.muted) {
+            console.log('🔇 Appearance sound skipped (video muted)');
+            return;
+        }
         
         const context = this.audioListener.context;
         if (context.state === 'suspended') {
@@ -587,15 +610,19 @@ export class HotspotManager {
         oscillator.frequency.value = 1200; // Higher pitch than proximity sound
         oscillator.type = 'sine';
         
+        // Apply video volume to gain
+        const videoVolume = this.video.volume;
+        const adjustedVolume = 1.0 * videoVolume; // Scale by video volume
+        
         // Louder, clearer envelope for appearance
         gainNode.gain.setValueAtTime(0, context.currentTime);
-        gainNode.gain.linearRampToValueAtTime(1.0, context.currentTime + 0.02); // Quick attack
+        gainNode.gain.linearRampToValueAtTime(adjustedVolume, context.currentTime + 0.02); // Quick attack
         gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5); // Gentle decay
         
         oscillator.start(context.currentTime);
         oscillator.stop(context.currentTime + 0.5);
         
-        console.log('✨ Orb appearance sound played');
+        console.log(`✨ Orb appearance sound played (volume: ${adjustedVolume.toFixed(2)})`);
     }
     
     /**
