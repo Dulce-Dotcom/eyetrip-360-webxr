@@ -668,20 +668,27 @@ export class HotspotManager {
         
         // Play new sound (looped)
         if (hotspot.audio) {
+            // Apply current video mute/volume state to hotspot audio
+            const videoMuted = this.video.muted;
+            const videoVolume = this.video.volume;
+            
             if (hotspot.isRegularAudio) {
                 // Regular HTML5 Audio element
                 hotspot.audio.currentTime = 0;
+                hotspot.audio.muted = videoMuted;
+                hotspot.audio.volume = videoVolume;
                 hotspot.audio.play().catch(err => {
                     console.warn('Audio play failed:', err);
                 });
             } else {
                 // THREE.Audio
                 if (hotspot.audio.buffer) {
+                    hotspot.audio.setVolume(videoMuted ? 0 : videoVolume);
                     hotspot.audio.play();
                 }
             }
             this.currentLoopingAudio = hotspot.audio;
-            console.log(`🔊 Now looping: ${hotspot.label}`);
+            console.log(`🔊 Now looping: ${hotspot.label} (muted: ${videoMuted}, volume: ${videoVolume})`);
         }
         
         // Visual feedback - explosion effect

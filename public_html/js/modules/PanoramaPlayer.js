@@ -43,6 +43,15 @@ export class PanoramaPlayer {
     this.controllerGrips = [];
     this.controllerModels = [];
     this.controllerRays = [];
+    
+    // Video-specific camera starting positions (clock positions on sphere)
+    // lon: horizontal rotation (negative = left/counter-clockwise, positive = right/clockwise)
+    // lat: vertical rotation (negative = down, positive = up)
+    this.videoStartPositions = {
+        'Scraptangle_latlong_05b_offsetOverture1': { lon: -60, lat: 0 },    // 10 o'clock
+        'ShroomZoomLatlong_12': { lon: 0, lat: -60 },                       // 6 o'clock (bottom)
+        'stumpy_latlong_01_waves_61Mbps-003': { lon: 60, lat: 0 }          // 2 o'clock
+    };
     this.controllerSelecting = [false, false]; // Track if controllers are selecting (clicking)
     // VR Menu properties
     this.vrMenu = null;
@@ -288,6 +297,13 @@ export class PanoramaPlayer {
             this.renderer.outputColorSpace = THREE.SRGBColorSpace;
             this.renderer.domElement.style.opacity = '0'; // Hide canvas initially
             this.renderer.domElement.style.transition = 'opacity 0.5s ease';
+            
+            // Prevent iOS text selection and touch callout for better hotspot interaction
+            this.renderer.domElement.style.userSelect = 'none';
+            this.renderer.domElement.style.webkitUserSelect = 'none';
+            this.renderer.domElement.style.webkitTouchCallout = 'none';
+            this.renderer.domElement.style.touchAction = 'pan-y pan-x';
+            
             this.container.appendChild(this.renderer.domElement);
             
             // Add WebGL context loss/restoration handlers (critical for Safari iOS)
@@ -511,6 +527,12 @@ export class PanoramaPlayer {
                 this.currentVideoName = videoName;
                 this.hotspotsInitialized = false; // Reset flag for new video
                 
+                // Set initial camera position based on video
+                const startPos = this.videoStartPositions[videoName] || { lon: 0, lat: 0 };
+                this.lon = startPos.lon;
+                this.lat = startPos.lat;
+                console.log(`📹 Setting camera start position for ${videoName}: lon=${startPos.lon}, lat=${startPos.lat}`);
+                
                 // Remove previous video element if it exists
                 if (this.video && this.video instanceof HTMLVideoElement) {
                     this.video.pause();
@@ -612,8 +634,17 @@ export class PanoramaPlayer {
                 
                 // Reset camera orientation
                 const initialRotation = sessionStorage.getItem('initialRotation');
-                this.lon = initialRotation ? parseFloat(initialRotation) : 0;
-                this.lat = 0;
+                if (initialRotation) {
+                    // Use stored rotation if available
+                    this.lon = parseFloat(initialRotation);
+                    this.lat = 0;
+                } else {
+                    // Use video-specific start position
+                    const startPos = this.videoStartPositions[this.currentVideoName] || { lon: 0, lat: 0 };
+                    this.lon = startPos.lon;
+                    this.lat = startPos.lat;
+                    console.log(`📹 Setting camera start position for ${this.currentVideoName}: lon=${startPos.lon}, lat=${startPos.lat}`);
+                }
                 
                 // Check if auto-play is requested
                 const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
@@ -874,8 +905,17 @@ export class PanoramaPlayer {
                 
                 // Set initial camera orientation - check for custom initial rotation
                 const initialRotation = sessionStorage.getItem('initialRotation');
-                this.lon = initialRotation ? parseFloat(initialRotation) : 0;
-                this.lat = 0;
+                if (initialRotation) {
+                    // Use stored rotation if available
+                    this.lon = parseFloat(initialRotation);
+                    this.lat = 0;
+                } else {
+                    // Use video-specific start position
+                    const startPos = this.videoStartPositions[this.currentVideoName] || { lon: 0, lat: 0 };
+                    this.lon = startPos.lon;
+                    this.lat = startPos.lat;
+                    console.log(`📹 Setting camera start position for ${this.currentVideoName}: lon=${startPos.lon}, lat=${startPos.lat}`);
+                }
                 
                 // Check if auto-play is requested
                 const shouldAutoPlay = sessionStorage.getItem('autoPlayVideo') === 'true';
@@ -1459,8 +1499,11 @@ export class PanoramaPlayer {
                 onPointerDownMouseY = event.touches[0].clientY;
                 onPointerDownLon = this.lon;
                 onPointerDownLat = this.lat;
+                
+                // Prevent iOS text selection on long press
+                event.preventDefault();
             }
-        });
+        }, { passive: false });
 
         dom.addEventListener('touchmove', (event) => {
             if (isUserInteracting && event.touches.length === 1) {
@@ -1476,7 +1519,8 @@ export class PanoramaPlayer {
                 const touch = event.changedTouches[0];
                 const dragDistance = Math.abs(touch.clientX - onPointerDownMouseX) + Math.abs(touch.clientY - onPointerDownMouseY);
                 
-                if (dragDistance < 20 && this.hotspotManager) {
+                // Increased threshold from 20 to 30 for more forgiving tap detection
+                if (dragDistance < 30 && this.hotspotManager) {
                     // It's a tap, not a drag - check for hotspot interaction
                     this.mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
                     this.mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
@@ -1484,6 +1528,14 @@ export class PanoramaPlayer {
                     this.raycaster.setFromCamera(this.mouse, this.camera);
                     const hotspot = this.hotspotManager.checkInteraction(this.camera.position, this.raycaster.ray.direction);
                     if (hotspot) {
+                        // Prevent iOS context menu
+                        event.preventDefault();
+                        
+                        // Haptic feedback for iOS
+                        if (navigator.vibrate) {
+                            navigator.vibrate(50); // Short vibration
+                        }
+                        
                         console.log(`🎯 Hotspot discovered via tap: ${hotspot.label}`);
                         this.hotspotManager.discoverHotspot(hotspot);
                     }
@@ -1491,7 +1543,7 @@ export class PanoramaPlayer {
             }
             
             isUserInteracting = false;
-        });
+        }, { passive: false });
     }
 
     togglePlay() {
@@ -1530,6 +1582,19 @@ export class PanoramaPlayer {
                         }
                     }
                 });
+                
+                // Also mute/unmute currently playing looped audio
+                if (this.hotspotManager.currentLoopingAudio) {
+                    const loopingAudio = this.hotspotManager.currentLoopingAudio;
+                    if (loopingAudio.muted !== undefined) {
+                        // HTML5 Audio
+                        loopingAudio.muted = this.isMuted;
+                    } else if (loopingAudio.setVolume) {
+                        // THREE.Audio
+                        loopingAudio.setVolume(this.isMuted ? 0 : 1.0);
+                    }
+                }
+                
                 console.log(`🔊 ${this.isMuted ? 'Muted' : 'Unmuted'} all sounds (video + ${this.hotspotManager.hotspots.length} hotspots)`);
             }
         }
@@ -2062,10 +2127,37 @@ export class PanoramaPlayer {
         });
     }
     
-    // Set volume for experience video
+    // Set volume for experience video AND all hotspot sounds
     setVolume(val) {
         if (this.video) {
             this.video.volume = val;
+            
+            // Also set volume for all hotspot sounds
+            if (this.hotspotManager && this.hotspotManager.hotspots) {
+                this.hotspotManager.hotspots.forEach(hotspot => {
+                    if (hotspot.audio) {
+                        if (hotspot.isRegularAudio) {
+                            // HTML5 Audio element
+                            hotspot.audio.volume = val;
+                        } else {
+                            // THREE.Audio
+                            hotspot.audio.setVolume(val);
+                        }
+                    }
+                });
+            }
+            
+            // Also control currently playing looped audio
+            if (this.hotspotManager && this.hotspotManager.currentLoopingAudio) {
+                const loopingAudio = this.hotspotManager.currentLoopingAudio;
+                if (loopingAudio.volume !== undefined) {
+                    // HTML5 Audio
+                    loopingAudio.volume = val;
+                } else if (loopingAudio.setVolume) {
+                    // THREE.Audio
+                    loopingAudio.setVolume(val);
+                }
+            }
         }
     }
 

@@ -216,6 +216,27 @@
             z-index: -1;
         }
         
+        /* Hide video on mobile and show thumbnail background instead */
+        @media (max-width: 768px) {
+            #video-background {
+                display: none;
+            }
+            
+            body::before {
+                content: '';
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100vw;
+                height: 100vh;
+                background-image: url('assets/thumbnails/eyetrip-test-video4.png');
+                background-size: cover;
+                background-position: center;
+                background-repeat: no-repeat;
+                z-index: -1;
+            }
+        }
+        
         .video-overlay {
             position: fixed;
             top: 0;
