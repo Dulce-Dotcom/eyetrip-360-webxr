@@ -585,7 +585,17 @@
                         console.error('❌ [PWA] Service Worker registration failed:', error);
                     });
             });
-        } else if (isSafariIOS) {
+        } else if (isSafariIOS && 'serviceWorker' in navigator) {
+            // Unregister any existing Service Worker on Safari iOS
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for (let registration of registrations) {
+                    registration.unregister().then(success => {
+                        if (success) {
+                            console.log('🗑️ [PWA] Service Worker unregistered on Safari iOS');
+                        }
+                    });
+                }
+            });
             console.log('⚠️ [PWA] Service Worker disabled on Safari iOS');
         }
         
