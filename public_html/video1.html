@@ -588,30 +588,44 @@
                     });
             });
         } else if ('serviceWorker' in navigator && isMobile) {
-            // Unregister and clear caches on mobile devices
+            // Unregister and clear caches on mobile devices, then force reload
+            const needsReload = sessionStorage.getItem('sw_cleaned') !== 'true';
+            
             navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let registration of registrations) {
-                    registration.unregister().then(success => {
+                const unregisterPromises = registrations.map(registration => {
+                    return registration.unregister().then(success => {
                         if (success) {
                             console.log('🗑️ [PWA] Service Worker unregistered on mobile');
                         }
+                        return success;
+                    });
+                });
+                
+                return Promise.all(unregisterPromises);
+            }).then(() => {
+                // Clear all caches
+                if ('caches' in window) {
+                    return caches.keys().then(cacheNames => {
+                        return Promise.all(
+                            cacheNames.map(cacheName => {
+                                console.log('🗑️ [PWA] Clearing cache:', cacheName);
+                                return caches.delete(cacheName);
+                            })
+                        );
                     });
                 }
+            }).then(() => {
+                console.log('✅ [PWA] All caches cleared on mobile');
+                
+                // Force reload once to ensure clean state
+                if (needsReload) {
+                    sessionStorage.setItem('sw_cleaned', 'true');
+                    console.log('🔄 [PWA] Reloading page to clear Service Worker...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
             });
-            
-            // Clear all caches on mobile devices
-            if ('caches' in window) {
-                caches.keys().then(cacheNames => {
-                    return Promise.all(
-                        cacheNames.map(cacheName => {
-                            console.log('🗑️ [PWA] Clearing cache:', cacheName);
-                            return caches.delete(cacheName);
-                        })
-                    );
-                }).then(() => {
-                    console.log('✅ [PWA] All caches cleared on mobile');
-                });
-            }
             
             console.log('⚠️ [PWA] Service Worker disabled on mobile devices');
         }
