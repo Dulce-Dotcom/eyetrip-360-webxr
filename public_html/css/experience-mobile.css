@@ -220,3 +220,80 @@
         max-width: 600px !important;
     }
 }
+
+/* Mobile-specific card/panel fixes - prevent huge elements */
+@media (max-width: 768px) {
+    /* Any card, panel, or overlay elements */
+    .card, .panel, .overlay, .notification, .alert, .info-box {
+        max-width: 95vw !important;
+        max-height: 80vh !important;
+        font-size: 0.9rem !important;
+        padding: 1rem !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Sound count card specifically */
+    #soundCount, .sound-count, [class*="sound-count"], [id*="soundCount"] {
+        position: fixed !important;
+        top: 80px !important;
+        right: 10px !important;
+        width: auto !important;
+        max-width: 120px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.85rem !important;
+        background: rgba(0, 0, 0, 0.7) !important;
+        border-radius: 8px !important;
+        backdrop-filter: blur(10px) !important;
+        z-index: 999 !important;
+    }
+    
+    /* Controls menu - ensure it's properly sized */
+    #controls, .controls, [id*="control"], [class*="control-menu"] {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        padding: 0.75rem 0.5rem !important;
+        background: rgba(0, 0, 0, 0.85) !important;
+        backdrop-filter: blur(10px) !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 0.5rem !important;
+        justify-content: center !important;
+        align-items: center !important;
+        box-sizing: border-box !important;
+        z-index: 1000 !important;
+    }
+    
+    /* Control buttons */
+    #controls button, .controls button {
+        flex: 0 1 auto !important;
+        min-width: 44px !important;
+        height: 44px !important;
+        padding: 0.5rem !important;
+        margin: 0 !important;
+        font-size: 0.85rem !important;
+        white-space: nowrap !important;
+    }
+    
+    /* WebXR Badge */
+    #webxrBadge {
+        position: fixed !important;
+        top: 10px !important;
+        right: 10px !important;
+        padding: 0.5rem 0.75rem !important;
+        font-size: 0.75rem !important;
+        max-width: 150px !important;
+        background: rgba(76, 175, 80, 0.9) !important;
+        border-radius: 6px !important;
+        z-index: 999 !important;
+    }
+    
+    /* Prevent any element from being full-screen on mobile */
+    body > div:not(#canvas-container):not(#container):not(.modal) {
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+    }
+}

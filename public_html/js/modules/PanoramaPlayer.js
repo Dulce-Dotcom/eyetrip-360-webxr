@@ -186,9 +186,14 @@ export class PanoramaPlayer {
             
             console.log(`[PanoramaPlayer] Device Info - Mobile: ${isMobile}, Safari: ${isSafari}, iOS: ${isIOS}${iosVersion ? ` v${iosVersion}` : ''}`);
             
+            // iOS 18 FIX: Use WebGL 1 on iOS 18 (WebGL 2 context creation is bugged)
+            const forceWebGL1 = isIOS && iosVersion >= 18;
+            
             // iOS: Let Three.js handle context creation completely
             // This avoids all the shader precision and context creation issues
             const rendererConfig = {
+                canvas: undefined, // Let Three.js create canvas
+                context: undefined, // Let Three.js create context
                 antialias: !isMobile, // Enable antialiasing only on desktop/VR
                 alpha: true,
                 premultipliedAlpha: true,
@@ -200,6 +205,31 @@ export class PanoramaPlayer {
                 failIfMajorPerformanceCaveat: false, // CRITICAL: Don't fail if GPU is slow
                 precision: isMobile ? 'mediump' : 'highp' // Use medium precision on mobile
             };
+            
+            if (forceWebGL1) {
+                console.log('🔧 [iOS 18 FIX] Forcing WebGL 1.0 (WebGL 2.0 has context creation bug)');
+                // Create canvas manually with WebGL 1 context
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl', {
+                    alpha: true,
+                    antialias: false,
+                    depth: true,
+                    stencil: false,
+                    premultipliedAlpha: true,
+                    preserveDrawingBuffer: false,
+                    powerPreference: 'default',
+                    failIfMajorPerformanceCaveat: false
+                });
+                
+                if (!gl) {
+                    console.error('❌ [iOS 18] Failed to create WebGL 1.0 context');
+                    throw new Error('WebGL 1.0 context creation failed on iOS 18');
+                }
+                
+                console.log('✅ [iOS 18] WebGL 1.0 context created successfully');
+                rendererConfig.canvas = canvas;
+                rendererConfig.context = gl;
+            }
             
             console.log('[PanoramaPlayer] Creating THREE.WebGLRenderer (letting Three.js handle context)');
             console.log('[PanoramaPlayer] Config:', rendererConfig);

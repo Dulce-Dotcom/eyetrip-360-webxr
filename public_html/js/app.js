@@ -542,7 +542,7 @@ function initializeApp() {
     // Mark as initializing
     document.body.setAttribute('data-app-initialized', 'true');
     
-    // SAFARI iOS FIX: Add small delay to let WebGL contexts from polyfills settle
+    // SAFARI iOS FIX: Add significant delay to let iOS settle and release any phantom contexts
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     
@@ -560,9 +560,9 @@ function initializeApp() {
             const visibilityHandler = () => {
                 if (!document.hidden) {
                     document.removeEventListener('visibilitychange', visibilityHandler);
-                    console.log('✅ Page now visible - initializing in 1500ms');
-                    // Longer delay to ensure any cached contexts are cleared
-                    setTimeout(startApp, 1500);
+                    console.log('✅ Page now visible - initializing in 3000ms (iOS 18 fix)');
+                    // EXTENDED delay for iOS 18 WebGL context release
+                    setTimeout(startApp, 3000);
                 }
             };
             document.addEventListener('visibilitychange', visibilityHandler);
@@ -576,10 +576,10 @@ function initializeApp() {
                 }
             }, 5000);
         } else {
-            // Page is visible, add longer delay for Safari to clear any phantom contexts
-            console.log('✅ Page visible - adding 1500ms delay for WebGL stability');
-            // Increased from 500ms to 1500ms to give Safari more time
-            setTimeout(startApp, 1500);
+            // Page is visible, add EXTENDED delay for iOS 18 Safari to clear phantom contexts
+            console.log('✅ Page visible - adding 3000ms delay for iOS 18 WebGL stability');
+            // TRIPLED from 1500ms to 3000ms for iOS 18 WebGL bug
+            setTimeout(startApp, 3000);
         }
     } else {
         console.log('Creating new App instance...');
