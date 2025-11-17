@@ -48,7 +48,7 @@
     <script type="importmap">
     {
         "imports": {
-            "three": "https://unpkg.com/three@0.153.0/build/three.module.js",
+            "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
             "three/": "https://unpkg.com/three@0.153.0/"
         }
     }
@@ -572,7 +572,10 @@
     
     <!-- PWA Service Worker Registration -->
     <script>
-        if ('serviceWorker' in navigator) {
+        // Disable Service Worker on Safari iOS to avoid WebGL interference
+        const isSafariIOS = /^((?!chrome|android).)*safari/i.test(navigator.userAgent) && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        
+        if ('serviceWorker' in navigator && !isSafariIOS) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
@@ -582,6 +585,8 @@
                         console.error('❌ [PWA] Service Worker registration failed:', error);
                     });
             });
+        } else if (isSafariIOS) {
+            console.log('⚠️ [PWA] Service Worker disabled on Safari iOS');
         }
         
         // PWA Install Prompt

@@ -82,12 +82,17 @@ export class PanoramaPlayer {
         ];
         this.currentVideoIndex = 0;
         
-        // Setup scene, camera, renderer FIRST - before intro
+        // Setup scene, camera, renderer FIRST - before intro (NO particle systems yet!)
         console.log('🎥 [PanoramaPlayer] Setting up scene, camera, renderer...');
         this.setupScene();
         this.setupCamera();
         await this.setupRenderer();
         this.createSphere();
+        
+        // NOW initialize particle systems AFTER WebGL renderer is created
+        console.log('🎨 [PanoramaPlayer] Initializing particle systems...');
+        this.initializeParticleSystems();
+        
         this.setupEventListeners();
         this.setupVRButton();
         this.setupControllers();
@@ -126,6 +131,12 @@ export class PanoramaPlayer {
         directionalLight.position.set(0, 1, 0);
         this.scene.add(directionalLight);
         
+        // NOTE: Particle systems will be initialized AFTER renderer is created to preserve WebGL contexts
+        console.log('🎬 Scene setup complete (particle systems deferred for iOS 18 compatibility)');
+    }
+    
+    // Initialize particle trail systems AFTER renderer is ready (iOS 18 fix)
+    initializeParticleSystems() {
         // Initialize particle trail system for desktop
         this.particleTrailSystem = new ParticleTrailSystem(this.scene, this.camera);
         this.particleTrailSystem.initialize().then(() => {
@@ -146,19 +157,8 @@ export class PanoramaPlayer {
     setupCamera() {
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 20); // Reduced near to 0.01, increased far to 20
         
-        // Now that camera is ready, set up spatial audio for particle systems
-        if (this.particleTrailSystem) {
-            this.particleTrailSystem.camera = this.camera;
-            this.particleTrailSystem.setupAudio();
-        }
-        
-        // Set up audio for VR particle systems
-        this.vrParticleTrailSystems.forEach((system, i) => {
-            if (system) {
-                system.camera = this.camera;
-                system.setupAudio();
-            }
-        });
+        // NOTE: Audio setup for particle systems will happen in initializeParticleSystems()
+        console.log('📹 Camera setup complete');
     }
 
     // Create renderer and enable WebXR
