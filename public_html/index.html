@@ -294,6 +294,11 @@
             color: #f0f8ff;
             box-shadow: 0 4px 15px rgba(205, 0, 255, 0.4);
             white-space: nowrap;
+            /* Fix iOS touch click delay */
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: rgba(205, 0, 255, 0.3);
+            user-select: none;
+            -webkit-user-select: none;
         }
         
         .logo-button:hover {
@@ -516,6 +521,8 @@
                 width: 100%;
                 max-width: 280px;
                 justify-content: center;
+                /* Ensure touch-action is enforced on mobile */
+                touch-action: manipulation;
             }
             
             .tagline {
