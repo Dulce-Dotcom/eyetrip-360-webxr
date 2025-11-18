@@ -299,7 +299,7 @@
             text-align: center;
             max-width: 1400px;
             width: 90%;
-            padding: 30px 40px;
+            padding: 20px 40px;
             background: rgba(27, 42, 65, 0.6);
             border-radius: 20px;
             backdrop-filter: blur(10px);
@@ -314,7 +314,7 @@
         }
         
         .logo {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -322,7 +322,7 @@
         }
         
         .logo img {
-            height: 300px;
+            height: 220px;
             width: auto;
             filter: brightness(0) invert(1) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.8));
         }
@@ -371,16 +371,16 @@
         }
         
         .tagline {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             font-weight: 300;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             opacity: 0.9;
         }
         
         .description {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 40px;
+            font-size: 1.05rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
             opacity: 0.8;
             max-width: 900px;
             margin-left: auto;
@@ -662,6 +662,17 @@
     </style>
 </head>
 <body>
+    <!-- Chroma Awards Badge (judges only) -->
+    <div style="position: fixed; top: 110px; right: 20px; z-index: 100; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); color: #000; padding: 12px 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4); font-weight: 600; font-size: 0.9rem; display: none;" id="chromaBadge">
+        🏆 Chroma Awards Submission
+    </div>
+    <script>
+    // Show badge only for Devpost referrals (judges)
+    if (document.referrer.includes('devpost.com') || window.location.search.includes('judge')) {
+        document.getElementById('chromaBadge').style.display = 'block';
+    }
+    </script>
+    
     <!-- SVG Icon Strip -->
     <div class="logo-strip" id="logoStrip"></div>
     
@@ -672,15 +683,7 @@
     <div class="page-wrapper">
     <div class="landing-container">
         <div class="logo">
-            <a href="gallery.html" class="logo-button">
-                <span class="logo-button-text">🎬 Enter Gallery</span>
-                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
-            </a>
             <img src="images/eyetripimagesvr-tall.svg?v=2" alt="EyeTripVR">
-            <a href="gallery.html" class="logo-button">
-                <span class="logo-button-text">Enter Gallery 🎬</span>
-                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
-            </a>
         </div>
         <p class="tagline">FLY INSIDE THE INFINITE ZOOM</p>
         
@@ -697,6 +700,14 @@
             and other VR headsets. Navigate with intuitive controls and discover 
             new perspectives as you journey through stunning panoramic worlds.
         </p>
+        
+        <!-- Enter Gallery CTA Button -->
+        <div style="text-align: center; margin: 2rem auto;">
+            <a href="gallery.html" class="logo-button">
+                <span class="logo-button-text">🎬 Enter Gallery</span>
+                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
+            </a>
+        </div>
         
         <!-- What to Expect Section -->
         <div style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: rgba(27, 42, 65, 0.8); border-radius: 20px; border: 2px solid rgba(102, 126, 234, 0.3); text-align: left;">
@@ -736,6 +747,44 @@
                     <div style="color: rgba(240, 248, 255, 0.7); font-size: 0.85rem;">(no download required)</div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Judge Quick Start Guide -->
+        <div style="max-width: 800px; margin: 2rem auto; padding: 2rem; background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%); border-radius: 20px; border: 2px solid rgba(255, 215, 0, 0.4); text-align: left;">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center; background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+                🎯 JUDGE QUICK START
+            </h2>
+            <div style="margin-bottom: 1.5rem;">
+                <h3 style="color: #FFD700; font-size: 1.2rem; margin-bottom: 0.75rem;">🥽 VR Mode (Recommended)</h3>
+                <ol style="color: rgba(240, 248, 255, 0.9); font-size: 1.05rem; line-height: 1.8; padding-left: 1.5rem;">
+                    <li>Open <strong>eyetripvr.com</strong> in <strong>Meta Quest Browser</strong></li>
+                    <li>Click any experience in the gallery</li>
+                    <li>Click <strong>"Enter VR"</strong> button (bottom right)</li>
+                    <li><strong>Look around</strong> - glowing orbs appear at timed intervals</li>
+                    <li><strong>Point controller + trigger</strong> to discover audio hotspots</li>
+                    <li>Press <strong>A button</strong> (or squeeze grip) for menu</li>
+                </ol>
+            </div>
+            <div>
+                <h3 style="color: #667eea; font-size: 1.2rem; margin-bottom: 0.75rem;">🖥️ Desktop Mode</h3>
+                <ul style="color: rgba(240, 248, 255, 0.9); font-size: 1.05rem; line-height: 1.8; padding-left: 1.5rem;">
+                    <li><strong>Click + drag</strong> to look around 360° space</li>
+                    <li><strong>Click orbs</strong> to discover audio (spatial mixing)</li>
+                    <li>Find all 10 hidden sounds for completion</li>
+                </ul>
+            </div>
+            <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(0, 0, 0, 0.3); border-radius: 8px; border-left: 4px solid #FFD700;">
+                <strong style="color: #FFD700;">💡 Pro Tip:</strong>
+                <span style="color: rgba(240, 248, 255, 0.9);"> Orbs appear throughout the video at specific timestamps. Each discovery unlocks spatial audio with haptic feedback (VR only).</span>
+            </div>
+        </div>
+        
+        <!-- Enter Gallery CTA Button -->
+        <div style="text-align: center; margin: 2rem auto;">
+            <a href="gallery.html" class="logo-button">
+                <span class="logo-button-text">🎬 Enter Gallery</span>
+                <span class="logo-button-subtext">Explore 4 immersive 360° VR videos</span>
+            </a>
         </div>
         
         <div class="user-note">
