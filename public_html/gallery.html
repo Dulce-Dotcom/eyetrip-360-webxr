@@ -1381,12 +1381,12 @@
         // Helper: Get descriptive title for selected video
         function getVideoTitle(videoName, responses) {
             const titles = {
-                'matrixCaracasSphere_1': `${responses.emotionalTone.charAt(0).toUpperCase() + responses.emotionalTone.slice(1)} Journey - ${responses.focusArea}`,
-                'Scraptangle_latlong_05b_offsetOverture1': `Grounding Journey - ${responses.focusArea}`,
-                'ShroomZoomLatlong_12': `Transformative Journey - ${responses.focusArea}`,
-                'stumpy_latlong_01_waves_61Mbps-003': `Uplifting Journey - ${responses.focusArea}`
+                'matrixCaracasSphere_1': 'Affirmation Journey: Matrix Caracas Sphere',
+                'Scraptangle_latlong_05b_offsetOverture1': 'Affirmation Journey: Scraptangle',
+                'ShroomZoomLatlong_12': 'Affirmation Journey: Shroom Zoom',
+                'stumpy_latlong_01_waves_61Mbps-003': 'Affirmation Journey: Stumpy Waves'
             };
-            return titles[videoName] || 'Personalized Journey';
+            return titles[videoName] || 'Affirmation Journey';
         }
         
         // Add click listeners to affirmation cards as backup

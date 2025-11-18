@@ -638,10 +638,11 @@ export class PanoramaPlayer {
                 
                 // Reset camera orientation
                 const initialRotation = sessionStorage.getItem('initialRotation');
+                const initialLat = sessionStorage.getItem('initialLat');
                 if (initialRotation) {
                     // Use stored rotation if available
                     this.lon = parseFloat(initialRotation);
-                    this.lat = 0;
+                    this.lat = initialLat ? parseFloat(initialLat) : 0;
                 } else {
                     // Use video-specific start position
                     const startPos = this.videoStartPositions[this.currentVideoName] || { lon: 0, lat: 0 };
@@ -930,10 +931,11 @@ export class PanoramaPlayer {
                 
                 // Set initial camera orientation - check for custom initial rotation
                 const initialRotation = sessionStorage.getItem('initialRotation');
+                const initialLat = sessionStorage.getItem('initialLat');
                 if (initialRotation) {
                     // Use stored rotation if available
                     this.lon = parseFloat(initialRotation);
-                    this.lat = 0;
+                    this.lat = initialLat ? parseFloat(initialLat) : 0;
                 } else {
                     // Use video-specific start position
                     const startPos = this.videoStartPositions[this.currentVideoName] || { lon: 0, lat: 0 };

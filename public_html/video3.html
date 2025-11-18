@@ -118,6 +118,8 @@
         // Set single video configuration
         sessionStorage.setItem('selectedVideo', 'assets/videos/processed/ShroomZoomLatlong_12/ShroomZoomLatlong_12_1080p.mp4');
         sessionStorage.setItem('selectedTitle', 'Shroom Zoom');
+        sessionStorage.setItem('initialRotation', '140'); // Start facing left to show main content
+        sessionStorage.setItem('initialLat', '0'); // Look straight ahead (not down)
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -167,7 +169,294 @@
         });
         </script>
     <div id="container">
-        <!-- Removed Start Experience Overlay and logic -->
+        <!-- Intro Overlay (first-time visitors only) -->
+        <div id="introOverlay" class="intro-overlay" style="display: none;">
+            <div class="intro-content">
+                <h1>Shroom Zoom</h1>
+                <p class="intro-subtitle">Explore an organic, otherworldly 360° landscape with hidden audio affirmations.</p>
+                
+                <div class="intro-grid">
+                    <div class="intro-section">
+                        <h3>🥽 VR Mode</h3>
+                        <ul>
+                            <li><strong>Look around</strong> - Glowing orbs appear at timed intervals</li>
+                            <li><strong>Point + trigger</strong> to discover audio hotspots</li>
+                            <li><strong>Press A button</strong> (or grip) for menu</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="intro-section">
+                        <h3>🖥️ Desktop</h3>
+                        <ul>
+                            <li><strong>Click + drag</strong> to look around 360° space</li>
+                            <li><strong>Click orbs</strong> to unlock spatial audio</li>
+                            <li>Find all 10 hidden affirmations</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="intro-section">
+                        <h3>📱 Mobile</h3>
+                        <ul>
+                            <li><strong>Swipe</strong> to explore the 360° environment</li>
+                            <li><strong>Tap orbs</strong> to discover affirmations</li>
+                            <li>Use headphones for best audio</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="intro-section accessibility-section">
+                        <h3>♿ Accessibility</h3>
+                        <div class="accessibility-options">
+                            <label class="accessibility-option">
+                                <input type="checkbox" id="reducedMotion" />
+                                <span>Reduce motion</span>
+                            </label>
+                            <label class="accessibility-option">
+                                <input type="checkbox" id="audioDescriptions" />
+                                <span>Audio descriptions</span>
+                            </label>
+                            <label class="accessibility-option">
+                                <input type="checkbox" id="highContrast" />
+                                <span>High contrast</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="startExperienceBtn" class="start-btn">Start Experience</button>
+            </div>
+        </div>
+        
+        <style>
+            /* Intro Overlay Styles */
+            .intro-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: url('assets/thumbnails/eyetrip-test-video2.jpg') center/cover no-repeat;
+                z-index: 9998; /* Below loading overlay (9999) */
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                overflow: hidden;
+            }
+            
+            .intro-overlay::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 1;
+            }
+            
+            .intro-overlay.visible {
+                opacity: 1;
+            }
+            
+            .intro-content {
+                position: relative;
+                z-index: 2;
+                text-align: center;
+                color: #f0f8ff;
+                max-width: 900px;
+                max-height: 85vh;
+                width: 90%;
+                padding: 20px 25px;
+                background: rgba(27, 42, 65, 0.75);
+                border-radius: 20px;
+                box-shadow: 0 8px 32px rgba(205, 0, 255, 0.4);
+                border: 2px solid rgba(240, 248, 255, 0.2);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                overflow-y: auto;
+                animation: slideIn 0.5s ease-out;
+                margin-top: 5vh;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateY(20px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+            
+            .intro-content h1 {
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 8px;
+                color: #f0f8ff;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                line-height: 1.2;
+            }
+            
+            .intro-subtitle {
+                font-size: 1rem;
+                line-height: 1.4;
+                margin-bottom: 15px;
+                opacity: 0.95;
+                color: rgba(240, 248, 255, 0.95);
+            }
+            
+            .intro-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 12px;
+                margin-bottom: 15px;
+            }
+            
+            .intro-section {
+                text-align: left;
+                padding: 10px 12px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
+                border-left: 3px solid #00eeff;
+            }
+            
+            .intro-section h3 {
+                font-size: 0.95rem;
+                margin-bottom: 6px;
+                color: #00eeff;
+                font-weight: 500;
+            }
+            
+            .intro-section ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .intro-section li {
+                padding: 3px 0;
+                font-size: 0.85rem;
+                line-height: 1.4;
+                color: rgba(240, 248, 255, 0.9);
+            }
+            
+            .intro-section li strong {
+                color: #fff;
+                font-weight: 500;
+            }
+            
+            .accessibility-section {
+                border-left-color: #667eea;
+            }
+            
+            .accessibility-section h3 {
+                color: #667eea;
+            }
+            
+            .accessibility-options {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+            }
+            
+            .accessibility-option {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                cursor: pointer;
+                padding: 5px;
+                border-radius: 6px;
+                transition: background 0.2s ease;
+            }
+            
+            .accessibility-option:hover {
+                background: rgba(102, 126, 234, 0.2);
+            }
+            
+            .accessibility-option input[type="checkbox"] {
+                width: 16px;
+                height: 16px;
+                cursor: pointer;
+                accent-color: #667eea;
+                flex-shrink: 0;
+            }
+            
+            .accessibility-option span {
+                font-size: 0.85rem;
+                color: rgba(240, 248, 255, 0.9);
+            }
+            
+            .start-btn {
+                margin-top: 15px;
+                padding: 12px 40px;
+                font-size: 1.1rem;
+                font-weight: 600;
+                background: linear-gradient(45deg, #cd00ff, #00eeff);
+                color: #fff;
+                border: none;
+                border-radius: 50px;
+                cursor: pointer;
+                box-shadow: 0 4px 15px rgba(205, 0, 255, 0.4);
+                transition: all 0.3s ease;
+                touch-action: manipulation;
+                -webkit-tap-highlight-color: transparent;
+            }
+            
+            .start-btn:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(205, 0, 255, 0.6);
+            }
+            
+            .start-btn:active {
+                transform: translateY(0);
+            }
+            
+            /* Mobile optimizations */
+            @media (max-width: 768px) {
+                .intro-content {
+                    max-width: 95%;
+                    padding: 15px 18px;
+                    max-height: 88vh;
+                    margin-top: 6vh;
+                }
+                
+                .intro-grid {
+                    grid-template-columns: 1fr;
+                    gap: 10px;
+                }
+                
+                .intro-content h1 {
+                    font-size: 1.4rem;
+                }
+                
+                .intro-subtitle {
+                    font-size: 0.9rem;
+                }
+                
+                .intro-section {
+                    padding: 8px 10px;
+                }
+                
+                .intro-section h3 {
+                    font-size: 0.9rem;
+                }
+                
+                .intro-section li {
+                    font-size: 0.8rem;
+                }
+                
+                .accessibility-option span {
+                    font-size: 0.8rem;
+                }
+                
+                .start-btn {
+                    padding: 10px 32px;
+                    font-size: 1rem;
+                }
+            }
+        </style>
         <script>
         // Play button logic (ensure video/audio starts on play)
                 document.addEventListener('DOMContentLoaded', function() {
@@ -299,7 +588,7 @@
                 VR Mode Active
             </div>
 
-            <div class="md-loading" id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Roboto', sans-serif; color: white;">
+            <div class="md-loading" id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(27, 42, 65, 0.95); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Roboto', sans-serif; color: white;">
                 <div class="md-spinner" style="width: 80px; height: 80px; border: 8px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px;"></div>
                 <div style="font-size: 1.5em; font-weight: 500; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">Initializing 360° Experience...</div>
                 <div style="font-size: 1em; margin-top: 16px; opacity: 0.9;">Shroom Zoom</div>
@@ -742,6 +1031,182 @@
                 installButton.style.display = 'none';
             }
         });
+    </script>
+    
+    <!-- Intro Overlay JavaScript -->
+    <script>
+        (function initIntroOverlay() {
+            'use strict';
+            
+            // Cookie utilities
+            function setCookie(name, value, days) {
+                const expires = new Date(Date.now() + days * 864e5).toUTCString();
+                document.cookie = name + '=' + encodeURIComponent(value) + '; expires=' + expires + '; path=/; SameSite=Lax';
+            }
+            
+            function getCookie(name) {
+                return document.cookie.split('; ').reduce((r, v) => {
+                    const parts = v.split('=');
+                    return parts[0] === name ? decodeURIComponent(parts[1]) : r;
+                }, '');
+            }
+            
+            const introOverlay = document.getElementById('introOverlay');
+            const startBtn = document.getElementById('startExperienceBtn');
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            
+            if (!introOverlay || !startBtn) {
+                console.warn('[INTRO] Overlay elements not found');
+                return;
+            }
+            
+            let overlayShown = false;
+            let experienceStarted = false;
+            
+            // Check if user has seen intro before
+            const hasSeenIntro = getCookie('eyetrip_intro_seen') === 'true';
+            
+            // Pause video until user clicks Start Experience
+            function pauseVideoUntilStart() {
+                // Hook into app initialization to pause video
+                const originalMainVideoReady = window.mainVideoReady;
+                window.addEventListener('mainVideoReady', () => {
+                    if (!experienceStarted && !hasSeenIntro) {
+                        setTimeout(() => {
+                            const video = window.panoramaPlayer?.video;
+                            if (video && !video.paused) {
+                                video.pause();
+                                console.log('⏸️ [INTRO] Video paused - waiting for user to start');
+                            }
+                        }, 100);
+                    }
+                });
+            }
+            
+            // Show intro overlay function
+            function showIntroOverlay() {
+                if (overlayShown || hasSeenIntro) return;
+                
+                const isInVR = window.panoramaPlayer?.renderer?.xr?.isPresenting;
+                if (isInVR) return;
+                
+                // Show overlay with fade-in
+                introOverlay.style.display = 'flex';
+                // Force reflow for transition
+                void introOverlay.offsetWidth;
+                introOverlay.classList.add('visible');
+                overlayShown = true;
+                
+                console.log('✨ [INTRO] Overlay shown for first-time visitor');
+            }
+            
+            // Hide intro overlay function
+            function hideIntroOverlay() {
+                if (!introOverlay) return;
+                
+                // Fade out
+                introOverlay.classList.remove('visible');
+                
+                setTimeout(() => {
+                    introOverlay.style.display = 'none';
+                    console.log('👋 [INTRO] Overlay hidden');
+                }, 300); // Match CSS transition duration
+            }
+            
+            // Handle start button click - prevent double-triggers on mobile
+            let clickHandled = false;
+            function handleStartClick(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (clickHandled) return;
+                clickHandled = true;
+                experienceStarted = true;
+                
+                console.log('▶️ [INTRO] Start button clicked - starting experience');
+                
+                // Set cookie to remember user has seen intro
+                setCookie('eyetrip_intro_seen', 'true', 365); // Remember for 1 year
+                
+                // Hide overlay
+                hideIntroOverlay();
+                
+                // Start the video playback
+                setTimeout(() => {
+                    const video = window.panoramaPlayer?.video;
+                    if (video) {
+                        video.play().then(() => {
+                            console.log('▶️ [INTRO] Video playback started');
+                        }).catch(err => {
+                            console.warn('[INTRO] Video play failed:', err);
+                        });
+                    }
+                }, 100);
+                
+                // Track event
+                if (window.trackVREvent) {
+                    window.trackVREvent('intro_completed', 'first_visit', 1);
+                }
+            }
+            
+            // Touch-optimized event listeners
+            startBtn.addEventListener('click', handleStartClick);
+            startBtn.addEventListener('touchend', (e) => {
+                e.preventDefault(); // Prevent ghost click on mobile
+                handleStartClick(e);
+            });
+            
+            // Keyboard accessibility (Enter or Space)
+            startBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleStartClick(e);
+                }
+            });
+            
+            // Show overlay immediately on page load for first-time visitors
+            if (!hasSeenIntro) {
+                // Show overlay as soon as DOM is ready
+                document.addEventListener('DOMContentLoaded', () => {
+                    showIntroOverlay();
+                });
+                
+                // If DOM already loaded, show now
+                if (document.readyState === 'interactive' || document.readyState === 'complete') {
+                    showIntroOverlay();
+                }
+                
+                // Pause video when it's ready
+                pauseVideoUntilStart();
+            } else {
+                console.log('👤 [INTRO] Returning visitor - overlay skipped');
+                experienceStarted = true; // Auto-start for returning visitors
+            }
+            
+            // Hide overlay if user enters VR mode
+            document.addEventListener('DOMContentLoaded', () => {
+                if (window.panoramaPlayer?.renderer?.xr) {
+                    window.panoramaPlayer.renderer.xr.addEventListener('sessionstart', () => {
+                        if (overlayShown) {
+                            hideIntroOverlay();
+                            experienceStarted = true;
+                            console.log('🥽 [INTRO] Hidden due to VR session start');
+                        }
+                    });
+                }
+            });
+            
+            // Expose for debugging
+            window.debugIntroOverlay = {
+                show: showIntroOverlay,
+                hide: hideIntroOverlay,
+                reset: () => {
+                    document.cookie = 'eyetrip_intro_seen=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                    console.log('🔄 [INTRO] Cookie reset - reload page to see intro');
+                    location.reload();
+                }
+            };
+        })();
     </script>
 </body>
 </html>
