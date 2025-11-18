@@ -13,12 +13,25 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#667eea">
     
+    <!-- Performance: Preconnect to CDN -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- Performance: Preload critical CSS -->
+    <link rel="preload" href="css/eyetrip-style.css" as="style">
+    <link rel="preload" href="css/experience-mobile.css" as="style">
+    
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     
-    <!-- Icons -->
-    <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
-    <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
+    <!-- Favicons - Multiple sizes for all devices -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <link rel="stylesheet" href="css/experience-mobile.css">
     
@@ -49,7 +62,7 @@
     {
         "imports": {
             "three": "https://unpkg.com/three@0.170.0/build/three.module.js",
-            "three/": "https://unpkg.com/three@0.170.0/"
+            "three/addons/": "https://unpkg.com/three@0.170.0/examples/jsm/"
         }
     }
     </script>
@@ -108,8 +121,8 @@
     </script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="css/material-ui.css">
-    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/material-ui.css?v=5">
+    <link rel="stylesheet" href="css/app.css?v=103">
     <style>
         /* Gallery thumbnail hover effects */
         .gallery-thumb {
@@ -154,7 +167,6 @@
         });
         </script>
     <div id="container">
-    <!-- Start Experience Overlay -->
         <!-- Removed Start Experience Overlay and logic -->
         <script>
         // Play button logic (ensure video/audio starts on play)
@@ -254,7 +266,7 @@
                 <button class="md-button" id="prevBtn" style="visibility: hidden;">
                     <span class="material-icons">skip_previous</span>
                 </button>
-                <button class="md-button md-primary" id="playBtn">
+                <button class="md-button pulse-animation" id="playBtn" style="display: flex;">
                     <span class="material-icons">play_arrow</span>
                 </button>
                 <button class="md-button" id="nextBtn" style="visibility: hidden;">
@@ -287,23 +299,34 @@
                 VR Mode Active
             </div>
 
-            <div class="md-loading" id="loadingOverlay">
-                <div class="md-spinner"></div>
-                <div>Loading 360° Experience...</div>
+            <div class="md-loading" id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Roboto', sans-serif; color: white;">
+                <div class="md-spinner" style="width: 80px; height: 80px; border: 8px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px;"></div>
+                <div style="font-size: 1.5em; font-weight: 500; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">Initializing 360° Experience...</div>
+                <div style="font-size: 1em; margin-top: 16px; opacity: 0.9;">Stumpy Waves</div>
             </div>
+            
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
 
-            <div class="webxr-badge" id="webxrBadge"></div>
+            <div id="webxrBadge">WebXR Ready</div>
+
             <script>
-            // Auto-hide WebXR badge after 30 seconds, show on hover
+            // Auto-hide WebXR badge after 30 seconds, show on hover (desktop only)
             (function() {
                 const badge = document.getElementById('webxrBadge');
-                if (badge) {
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+                
+                if (badge && !isMobile) {
                     setTimeout(() => {
                         badge.style.opacity = '0';
                         badge.style.pointerEvents = 'none';
                     }, 30000); // 30 seconds
                     
-                    // Show on hover over that area
+                    // Show on hover over that area (desktop only)
                     badge.addEventListener('mouseenter', () => {
                         badge.style.opacity = '1';
                         badge.style.pointerEvents = 'auto';
@@ -313,6 +336,11 @@
                         badge.style.opacity = '0';
                         badge.style.pointerEvents = 'none';
                     });
+                } else if (badge && isMobile) {
+                    // Force hide on mobile immediately
+                    badge.style.display = 'none';
+                    badge.style.visibility = 'hidden';
+                    badge.style.opacity = '0';
                 }
             })();
             </script>
@@ -378,22 +406,41 @@
             document.addEventListener('DOMContentLoaded', function() {
                 const menuButton = document.getElementById('menuButton');
                 const mainMenu = document.getElementById('mainMenu');
-                menuButton.addEventListener('click', function() {
-                    mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
-                });
+                
+                if (menuButton && mainMenu) {
+                    menuButton.addEventListener('click', function() {
+                        mainMenu.style.display = mainMenu.style.display === 'block' ? 'none' : 'block';
+                    });
+                }
+                
                 // Modal triggers
-                document.getElementById('galleryMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('galleryModal').style.display = 'flex';
-                };
-                document.getElementById('aboutMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('aboutModal').style.display = 'flex';
-                };
-                document.getElementById('contactMenu').onclick = function() {
-                    mainMenu.style.display = 'none';
-                    document.getElementById('contactModal').style.display = 'flex';
-                };
+                const galleryMenu = document.getElementById('galleryMenu');
+                const aboutMenu = document.getElementById('aboutMenu');
+                const contactMenu = document.getElementById('contactMenu');
+                
+                if (galleryMenu) {
+                    galleryMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('galleryModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (aboutMenu) {
+                    aboutMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('aboutModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
+                
+                if (contactMenu) {
+                    contactMenu.onclick = function() {
+                        if (mainMenu) mainMenu.style.display = 'none';
+                        const modal = document.getElementById('contactModal');
+                        if (modal) modal.style.display = 'flex';
+                    };
+                }
                 // Modal close logic
                 document.querySelectorAll('.modal-close').forEach(btn => {
                     btn.onclick = function() {
@@ -496,27 +543,39 @@
                 // Remove previous listeners by re-assigning
                 if (audioMuteBtn) {
                     audioMuteBtn.onclick = function() {
-                        const video = getCurrentVideo();
-                        if (video && !audioMuteBtn.disabled) {
-                            video.muted = !video.muted;
-                            audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+                        if (window.panoramaPlayer && !audioMuteBtn.disabled) {
+                            // Let PanoramaPlayer handle ALL audio toggling
+                            window.panoramaPlayer.toggleMute();
+                            
+                            // Update UI to match
+                            const video = getCurrentVideo();
+                            if (video) {
+                                audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
+                            }
                             updateAudioControls();
-                            console.log('[AUDIO] mute toggled:', video.muted);
+                            console.log('[AUDIO] PanoramaPlayer.toggleMute() called - muted:', video?.muted);
                         } else {
-                            console.warn('[AUDIO] mute button: no video element or control disabled');
+                            console.warn('[AUDIO] mute button: PanoramaPlayer not available or control disabled');
                         }
                     };
                 }
                 if (mainVolume) {
                     mainVolume.oninput = function() {
-                        const video = getCurrentVideo();
-                        if (video && !mainVolume.disabled) {
-                            video.volume = parseFloat(mainVolume.value);
-                            updateAudioControls();
-                            console.log('[AUDIO] volume set:', video.volume);
+                        const newVolume = parseFloat(mainVolume.value);
+                        
+                        if (window.panoramaPlayer && !mainVolume.disabled) {
+                            // Route through PanoramaPlayer to control ALL audio sources
+                            window.panoramaPlayer.setVolume(newVolume);
+                            console.log('[AUDIO] Master volume set via PanoramaPlayer:', Math.round(newVolume * 100) + '%');
                         } else {
-                            console.warn('[AUDIO] volume slider: no video element or control disabled');
+                            // Fallback to video only if PanoramaPlayer not available
+                            const video = getCurrentVideo();
+                            if (video) {
+                                video.volume = newVolume;
+                                console.log('[AUDIO] Video volume set (fallback):', newVolume);
+                            }
                         }
+                        updateAudioControls();
                     };
                 }
             }
@@ -572,70 +631,116 @@
      <script type="module" src="js/app.js?v=1763319206"></script>
     
     <!-- PWA Install Button -->
-    <button id="pwa-install-btn" style="display: none; position: fixed; bottom: 20px; right: 20px; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 50px; font-size: 16px; font-weight: bold; cursor: pointer; z-index: 10000; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4); transition: transform 0.2s, box-shadow 0.2s;">📱 Install App</button>
+    <button id="pwa-install-btn" style="display: none;">📱 Install App</button>
     
     <!-- PWA Service Worker Registration -->
     <script>
-        if ('serviceWorker' in navigator) {
+        // Only enable Service Worker for VR headsets (Meta Quest), not mobile devices
+        const isVRHeadset = /OculusBrowser|Quest/i.test(navigator.userAgent);
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        
+        if ('serviceWorker' in navigator && isVRHeadset) {
+            // Only register on VR headsets
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('✅ [PWA] Service Worker registered:', registration);
+                        console.log('✅ [PWA] Service Worker registered on VR headset:', registration);
                     })
                     .catch(error => {
                         console.error('❌ [PWA] Service Worker registration failed:', error);
                     });
             });
+        } else if ('serviceWorker' in navigator && isMobile) {
+            // Unregister and clear caches on mobile devices, then force reload
+            const needsReload = sessionStorage.getItem('sw_cleaned') !== 'true';
+            
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                const unregisterPromises = registrations.map(registration => {
+                    return registration.unregister().then(success => {
+                        if (success) {
+                            console.log('🗑️ [PWA] Service Worker unregistered on mobile');
+                        }
+                        return success;
+                    });
+                });
+                
+                return Promise.all(unregisterPromises);
+            }).then(() => {
+                // Clear all caches
+                if ('caches' in window) {
+                    return caches.keys().then(cacheNames => {
+                        return Promise.all(
+                            cacheNames.map(cacheName => {
+                                console.log('🗑️ [PWA] Clearing cache:', cacheName);
+                                return caches.delete(cacheName);
+                            })
+                        );
+                    });
+                }
+            }).then(() => {
+                console.log('✅ [PWA] All caches cleared on mobile');
+                
+                // Force reload once to ensure clean state
+                if (needsReload) {
+                    sessionStorage.setItem('sw_cleaned', 'true');
+                    console.log('🔄 [PWA] Reloading page to clear Service Worker...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                }
+            });
+            
+            console.log('⚠️ [PWA] Service Worker disabled on mobile devices');
         }
         
-        // PWA Install Button Handler
+        // PWA Install Prompt - Enhanced for Meta Quest
         let deferredPrompt;
         const installButton = document.getElementById('pwa-install-btn');
 
-        // Detect if we're in VR or if PWA is already installed
-        const isVR = navigator.userAgent.includes('OculusBrowser') || navigator.userAgent.includes('Quest');
-        const isPWAInstalled = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        // Detect Quest browser
+        const isQuestBrowser = /OculusBrowser|Quest/i.test(navigator.userAgent);
+        const hasWebXR = 'xr' in navigator;
 
-        // Show button in VR or if install prompt is available
-        if (isVR && !isPWAInstalled) {
-            console.log('💾 [PWA] VR browser detected, showing install button');
+        // Show install button on Quest even without beforeinstallprompt
+        if ((isQuestBrowser || hasWebXR) && installButton) {
             installButton.style.display = 'block';
-            installButton.textContent = '📱 Add to Home Screen';
+            installButton.title = 'Add to Quest Library: Press ... menu > Add to Home Screen';
+            console.log('📱 PWA install button shown for Quest/WebXR browser');
         }
 
         window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('💾 [PWA] Install prompt available');
             e.preventDefault();
             deferredPrompt = e;
-            installButton.style.display = 'block';
+            if (installButton) {
+                installButton.style.display = 'block';
+                console.log('📱 PWA install prompt available');
+            }
         });
 
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) {
-                // VR browsers don't support beforeinstallprompt, show instructions
-                alert('To install this app:\n\n1. Tap the browser menu (three dots)\n2. Select "Add to Home Screen"\n3. Confirm the installation\n\nThis will create an app icon for easy access!');
-                return;
-            }
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to install prompt: ${outcome}`);
-            deferredPrompt = null;
-            installButton.style.display = 'none';
-        });
-        
-        installButton.addEventListener('mouseenter', () => {
-            installButton.style.transform = 'scale(1.05)';
-            installButton.style.boxShadow = '0 6px 20px rgba(102, 126, 234, 0.6)';
-        });
-        
-        installButton.addEventListener('mouseleave', () => {
-            installButton.style.transform = 'scale(1)';
-            installButton.style.boxShadow = '0 4px 15px rgba(102, 126, 234, 0.4)';
-        });
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    // Standard PWA install flow
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                    installButton.style.display = 'none';
+                } else if (isQuestBrowser) {
+                    // Show manual instructions for Quest
+                    alert('To install EyeTrip VR on Quest:\n\n1. Press the "..." menu button\n2. Select "Add to Home Screen"\n3. Access from your Quest Library\n\nThis allows offline access and a native app experience!');
+                } else {
+                    // Generic instructions
+                    alert('To install:\n\nUse your browser\'s menu to "Add to Home Screen" or "Install App"');
+                }
+            });
+        }
 
         window.addEventListener('appinstalled', () => {
             console.log('✅ PWA installed');
-            installButton.style.display = 'none';
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
         });
     </script>
 </body>

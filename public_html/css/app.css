@@ -247,10 +247,8 @@
     font-size: 14px !important;
 }
 
-/* Loading Overlay */
-#loadingOverlay {
-    display: none !important;
-}
+/* Loading Overlay - Removed display:none !important to allow gradient loader to show */
+/* #loadingOverlay styles are now inline in HTML files for gradient effect */
 
 #loadingProgress {
     margin-top: 10px !important;
@@ -700,22 +698,8 @@ body.high-contrast a {
     color: white;
 }
 
-#loadingOverlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.95);
-    display: none; /* Hide by default - show when loading */
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: white;
-    z-index: 9999;
-    font-size: 24px;
-    font-weight: 500;
-}
+/* #loadingOverlay styles moved to inline styles in HTML for gradient effect */
+/* This prevents CSS from overriding the beautiful gradient background */
 
 #loadingOverlay.active {
     display: flex;
@@ -995,6 +979,9 @@ body.high-contrast a {
     font-weight: 300;
     font-family: 'Playfair Display', 'Georgia', serif;
     text-shadow: 
+        0 0 10px rgba(255, 20, 147, 0.8),
+        0 0 20px rgba(255, 20, 147, 0.6),
+        0 0 30px rgba(255, 20, 147, 0.4),
         0 2px 4px rgba(0, 0, 0, 0.7),
         0 3px 6px rgba(0, 0, 0, 0.5);
     letter-spacing: 2px;

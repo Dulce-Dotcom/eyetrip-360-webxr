@@ -24,9 +24,14 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
     
-    <!-- Icons -->
-    <link rel="icon" type="image/png" href="images/eyetripvr-icon.png">
-    <link rel="apple-touch-icon" href="images/eyetripvr-icon.png">
+    <!-- Favicons - Multiple sizes for all devices -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/android-chrome-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/android-chrome-512x512.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    
     <link rel="stylesheet" href="css/eyetrip-style.css">
     <link rel="stylesheet" href="css/experience-mobile.css">
     
@@ -162,7 +167,6 @@
         });
         </script>
     <div id="container">
-    <!-- Start Experience Overlay -->
         <!-- Removed Start Experience Overlay and logic -->
         <script>
         // Play button logic (ensure video/audio starts on play)
@@ -295,10 +299,18 @@
                 VR Mode Active
             </div>
 
-            <div class="md-loading" id="loadingOverlay">
-                <div class="md-spinner"></div>
-                <div>Initializing 360° Experience...</div>
+            <div class="md-loading" id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: 'Roboto', sans-serif; color: white;">
+                <div class="md-spinner" style="width: 80px; height: 80px; border: 8px solid rgba(255, 255, 255, 0.2); border-top-color: white; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 24px;"></div>
+                <div style="font-size: 1.5em; font-weight: 500; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">Initializing 360° Experience...</div>
+                <div style="font-size: 1em; margin-top: 16px; opacity: 0.9;">Matrix Caracas Sphere</div>
             </div>
+            
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
 
             <div id="webxrBadge">WebXR Ready</div>
 
@@ -531,33 +543,39 @@
                 // Remove previous listeners by re-assigning
                 if (audioMuteBtn) {
                     audioMuteBtn.onclick = function() {
-                        const video = getCurrentVideo();
-                        if (video && !audioMuteBtn.disabled) {
-                            video.muted = !video.muted;
-                            audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
-                            updateAudioControls();
-                            console.log('[AUDIO] mute toggled:', video.muted);
+                        if (window.panoramaPlayer && !audioMuteBtn.disabled) {
+                            // Let PanoramaPlayer handle ALL audio toggling
+                            window.panoramaPlayer.toggleMute();
                             
-                            // Also mute/unmute hotspot sounds
-                            if (window.panoramaPlayer && window.panoramaPlayer.hotspotManager) {
-                                window.panoramaPlayer.hotspotManager.setMuted(video.muted);
-                                console.log('[AUDIO] hotspot sounds muted:', video.muted);
+                            // Update UI to match
+                            const video = getCurrentVideo();
+                            if (video) {
+                                audioMuteIcon.textContent = video.muted ? 'volume_off' : 'volume_up';
                             }
+                            updateAudioControls();
+                            console.log('[AUDIO] PanoramaPlayer.toggleMute() called - muted:', video?.muted);
                         } else {
-                            console.warn('[AUDIO] mute button: no video element or control disabled');
+                            console.warn('[AUDIO] mute button: PanoramaPlayer not available or control disabled');
                         }
                     };
                 }
                 if (mainVolume) {
                     mainVolume.oninput = function() {
-                        const video = getCurrentVideo();
-                        if (video && !mainVolume.disabled) {
-                            video.volume = parseFloat(mainVolume.value);
-                            updateAudioControls();
-                            console.log('[AUDIO] volume set:', video.volume);
+                        const newVolume = parseFloat(mainVolume.value);
+                        
+                        if (window.panoramaPlayer && !mainVolume.disabled) {
+                            // Route through PanoramaPlayer to control ALL audio sources
+                            window.panoramaPlayer.setVolume(newVolume);
+                            console.log('[AUDIO] Master volume set via PanoramaPlayer:', Math.round(newVolume * 100) + '%');
                         } else {
-                            console.warn('[AUDIO] volume slider: no video element or control disabled');
+                            // Fallback to video only if PanoramaPlayer not available
+                            const video = getCurrentVideo();
+                            if (video) {
+                                video.volume = newVolume;
+                                console.log('[AUDIO] Video volume set (fallback):', newVolume);
+                            }
                         }
+                        updateAudioControls();
                     };
                 }
             }
@@ -675,28 +693,54 @@
             console.log('⚠️ [PWA] Service Worker disabled on mobile devices');
         }
         
-        // PWA Install Prompt
+        // PWA Install Prompt - Enhanced for Meta Quest
         let deferredPrompt;
         const installButton = document.getElementById('pwa-install-btn');
+
+        // Detect Quest browser
+        const isQuestBrowser = /OculusBrowser|Quest/i.test(navigator.userAgent);
+        const hasWebXR = 'xr' in navigator;
+
+        // Show install button on Quest even without beforeinstallprompt
+        if ((isQuestBrowser || hasWebXR) && installButton) {
+            installButton.style.display = 'block';
+            installButton.title = 'Add to Quest Library: Press ... menu > Add to Home Screen';
+            console.log('📱 PWA install button shown for Quest/WebXR browser');
+        }
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            installButton.style.display = 'block';
+            if (installButton) {
+                installButton.style.display = 'block';
+                console.log('📱 PWA install prompt available');
+            }
         });
 
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to install prompt: ${outcome}`);
-            deferredPrompt = null;
-            installButton.style.display = 'none';
-        });
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    // Standard PWA install flow
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    console.log(`User response to install prompt: ${outcome}`);
+                    deferredPrompt = null;
+                    installButton.style.display = 'none';
+                } else if (isQuestBrowser) {
+                    // Show manual instructions for Quest
+                    alert('To install EyeTrip VR on Quest:\n\n1. Press the "..." menu button\n2. Select "Add to Home Screen"\n3. Access from your Quest Library\n\nThis allows offline access and a native app experience!');
+                } else {
+                    // Generic instructions
+                    alert('To install:\n\nUse your browser\'s menu to "Add to Home Screen" or "Install App"');
+                }
+            });
+        }
 
         window.addEventListener('appinstalled', () => {
             console.log('✅ PWA installed');
-            installButton.style.display = 'none';
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
         });
     </script>
 </body>

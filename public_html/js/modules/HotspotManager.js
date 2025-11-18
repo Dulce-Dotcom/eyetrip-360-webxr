@@ -6,10 +6,11 @@ import * as THREE from 'three';
  * Works on Meta Quest, Desktop, WebXR Emulator, and Mobile
  */
 export class HotspotManager {
-    constructor(scene, camera, video) {
+    constructor(scene, camera, video, renderer = null) {
         this.scene = scene;
         this.camera = camera;
         this.video = video;
+        this.renderer = renderer; // For VR mode detection
         
         // Detect Safari for performance optimizations
         this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -181,6 +182,7 @@ export class HotspotManager {
             color: data.color,
             discovered: false,
             visible: false,
+            active: false, // Track if hotspot is currently active/shown
             mesh: null,
             audio: null,
             glowMesh: null
@@ -244,6 +246,7 @@ export class HotspotManager {
             glowMesh.position.copy(hotspot.position);
             glowMesh.visible = false;
             glowMesh.renderOrder = -1 - i;
+            glowMesh.userData.hotspot = hotspot; // CRITICAL: Add hotspot reference for VR raycasting
             
             this.scene.add(glowMesh);
             hotspot.glowLayers.push(glowMesh);
@@ -343,26 +346,35 @@ export class HotspotManager {
     
     /**
      * Update hotspot visibility based on video time
+     * OPTIMIZED: Reduced update frequency for better performance
      */
     update(deltaTime) {
         if (!this.video) return;
         
+        // Light throttle - only run every other frame to reduce CPU load (still smooth at 36fps)
+        this.updateCounter = (this.updateCounter || 0) + 1;
+        const shouldAnimate = this.updateCounter % 2 === 0;
+        
         const currentTime = this.video.currentTime;
         
-        // Check proximity for all active hotspots (for audio cues)
-        let maxProximity = 0;
-        this.hotspots.forEach(hotspot => {
-            if (hotspot.visible && !hotspot.discovered) {
-                const proximity = this.checkProximity(hotspot);
-                maxProximity = Math.max(maxProximity, proximity);
+        // Only check proximity every 5 frames (moderate throttling)
+        if (this.updateCounter % 5 === 0) {
+            let maxProximity = 0;
+            this.hotspots.forEach(hotspot => {
+                if (hotspot.visible && !hotspot.discovered) {
+                    const proximity = this.checkProximity(hotspot);
+                    maxProximity = Math.max(maxProximity, proximity);
+                }
+            });
+            
+            // Play proximity audio cue if very close (throttled to once every 3 seconds)
+            const now = Date.now();
+            if (maxProximity > 0.7 && now - this.lastProximitySound > 3000) {
+                // TEMPORARY FIX: Disable proximity sounds to prevent video muting
+                // this.playProximitySound();
+                console.log('🔕 Proximity sound disabled (preventing audio conflict)');
+                this.lastProximitySound = now;
             }
-        });
-        
-        // Play proximity audio cue if very close (throttled to once every 3 seconds)
-        const now = Date.now();
-        if (maxProximity > 0.7 && now - this.lastProximitySound > 3000) {
-            this.playProximitySound();
-            this.lastProximitySound = now;
         }
         
         // Show/hide hotspots based on video time
@@ -377,8 +389,8 @@ export class HotspotManager {
                 this.hideHotspot(hotspot);
             }
             
-            // Animate visible hotspots
-            if (hotspot.visible) {
+            // Animate visible hotspots - but only every other frame
+            if (hotspot.visible && shouldAnimate) {
                 this.animateHotspot(hotspot, deltaTime);
             }
         });
@@ -389,6 +401,7 @@ export class HotspotManager {
      */
     showHotspot(hotspot) {
         hotspot.visible = true;
+        hotspot.active = true; // Mark as active for raycaster detection
         hotspot.mesh.visible = true;
         
         // Show all glow layers
@@ -415,6 +428,7 @@ export class HotspotManager {
      */
     hideHotspot(hotspot) {
         hotspot.visible = false;
+        hotspot.active = false; // Mark as inactive
         hotspot.mesh.visible = false;
         
         // Hide all glow layers
@@ -595,6 +609,11 @@ export class HotspotManager {
             return;
         }
         
+        // TEMPORARY FIX: Disable appearance sounds to prevent video muting issue
+        // The Web Audio API oscillator seems to interfere with video audio in VR
+        console.log('🔕 Appearance sound disabled (preventing audio conflict)');
+        return;
+        
         const context = this.audioListener.context;
         if (context.state === 'suspended') {
             context.resume();
@@ -758,28 +777,163 @@ export class HotspotManager {
      * Show center screen notification when sound is discovered
      */
     showDiscoveryNotification(soundName) {
-        // Remove any existing notification
-        const existing = document.querySelector('.hotspot-discovery-notification');
-        if (existing) {
-            existing.remove();
+        // Check if in VR mode - try multiple detection methods
+        const hasRenderer = !!this.renderer;
+        const hasXR = hasRenderer && !!this.renderer.xr;
+        const isPresenting = hasXR && this.renderer.xr.isPresenting;
+        
+        console.log(`📢 [Notification Debug] Sound: ${soundName}`);
+        console.log(`   - Has renderer: ${hasRenderer}`);
+        console.log(`   - Has XR: ${hasXR}`);
+        console.log(`   - Is presenting: ${isPresenting}`);
+        
+        const isVRMode = isPresenting;
+        console.log(`📢 [Notification] VR Mode: ${isVRMode}`);
+        
+        if (isVRMode) {
+            // DISABLED: 3D text notification temporarily for performance
+            console.log('✨ [Notification] 3D VR notification DISABLED for performance');
+            // this.showVRNotification(soundName);
+        } else {
+            // Show DOM notification for desktop
+            console.log('📱 [Notification] Creating DOM notification for desktop');
+            const existing = document.querySelector('.hotspot-discovery-notification');
+            if (existing) {
+                existing.remove();
+            }
+            
+            const notification = document.createElement('div');
+            notification.className = 'hotspot-discovery-notification';
+            notification.innerHTML = `
+                <div class="sound-name">🎵 ${soundName} 🎵</div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Animate out and remove after 5 seconds (longer display time)
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 500);
+            }, 5000);
+        }
+    }
+    
+    /**
+     * Show 3D text notification in VR
+     */
+    showVRNotification(soundName) {
+        console.log('🎨 [VR Notification] Creating 3D text for:', soundName);
+        
+        // Remove existing VR notification
+        if (this.vrNotification) {
+            this.scene.remove(this.vrNotification);
+            this.vrNotification = null;
         }
         
-        const notification = document.createElement('div');
-        notification.className = 'hotspot-discovery-notification';
-        notification.innerHTML = `
-            <div class="sound-name">🎵 ${soundName} 🎵</div>
-        `;
+        // Create canvas with text - OPTIMIZED: Reduced from 2048x512 to 1024x256
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        canvas.width = 1024;  // Reduced by 50%
+        canvas.height = 256;  // Reduced by 50%
         
-        document.body.appendChild(notification);
+        // Clear canvas
+        context.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Animate in
-        setTimeout(() => notification.classList.add('show'), 100);
+        // Draw text with glow effect - adjusted font size
+        context.fillStyle = '#ffffff';
+        context.font = 'bold 60px Arial';  // Reduced from 120px
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
         
-        // Animate out and remove after 5 seconds (longer display time)
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 500);
-        }, 5000);
+        // Add text shadow for glow
+        context.shadowColor = '#ff1493';
+        context.shadowBlur = 15;  // Reduced from 30
+        context.shadowOffsetX = 0;
+        context.shadowOffsetY = 0;
+        
+        // Draw emoji and text
+        context.fillText(`🎵 ${soundName} 🎵`, canvas.width / 2, canvas.height / 2);
+        
+        console.log('✅ [VR Notification] Canvas created with text');
+        
+        // Create texture from canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        
+        // Create plane for text - make it bigger and use DoubleSide
+        const geometry = new THREE.PlaneGeometry(4, 1);
+        const material = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            opacity: 0,
+            side: THREE.DoubleSide,
+            depthTest: false, // Render on top
+            depthWrite: false
+        });
+        
+        this.vrNotification = new THREE.Mesh(geometry, material);
+        this.vrNotification.renderOrder = 999; // Render last (on top)
+        
+        // Position directly in front of camera in world space
+        // Get camera world position and direction
+        const cameraWorldPosition = new THREE.Vector3();
+        this.camera.getWorldPosition(cameraWorldPosition);
+        
+        const cameraWorldDirection = new THREE.Vector3();
+        this.camera.getWorldDirection(cameraWorldDirection);
+        
+        // Place text 2.5 meters in front of camera
+        this.vrNotification.position.copy(cameraWorldPosition);
+        this.vrNotification.position.add(cameraWorldDirection.multiplyScalar(2.5));
+        
+        // Make it face the camera
+        this.vrNotification.lookAt(cameraWorldPosition);
+        
+        console.log('📍 [VR Notification] Positioned at:', this.vrNotification.position);
+        console.log('👁️ [VR Notification] Camera at:', cameraWorldPosition);
+        
+        this.scene.add(this.vrNotification);
+        console.log('✅ [VR Notification] Added to scene');
+        
+        // Fade in animation
+        const fadeInDuration = 600;
+        const displayDuration = 5000;
+        const fadeOutDuration = 500;
+        const startTime = Date.now();
+        
+        const animate = () => {
+            if (!this.vrNotification) return; // Safety check
+            
+            const elapsed = Date.now() - startTime;
+            
+            if (elapsed < fadeInDuration) {
+                // Fade in
+                material.opacity = elapsed / fadeInDuration;
+                requestAnimationFrame(animate);
+            } else if (elapsed < fadeInDuration + displayDuration) {
+                // Full opacity
+                material.opacity = 1;
+                requestAnimationFrame(animate);
+            } else if (elapsed < fadeInDuration + displayDuration + fadeOutDuration) {
+                // Fade out
+                const fadeProgress = (elapsed - fadeInDuration - displayDuration) / fadeOutDuration;
+                material.opacity = 1 - fadeProgress;
+                requestAnimationFrame(animate);
+            } else {
+                // Remove
+                console.log('🗑️ [VR Notification] Removing after animation complete');
+                if (this.vrNotification) {
+                    this.scene.remove(this.vrNotification);
+                    this.vrNotification = null;
+                }
+            }
+        };
+        
+        animate();
+        console.log('✨ [VR] 3D notification animation started for:', soundName);
     }
     
     /**

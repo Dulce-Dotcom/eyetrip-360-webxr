@@ -13,11 +13,15 @@ export class ParticleTrailSystem {
         this.isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
         console.log('🔍 Browser detection - Safari:', this.isSafari);
         
+        // Detect VR mode for further optimizations
+        this.isVRMode = false;
+        
         // Particle systems for different icons
         this.particleSystems = [];
         this.trailHistory = []; // Store positions for trail effect
-        // Optimized trail length: shorter = less lag, more responsive
-        this.maxTrailLength = this.isSafari ? 20 : 35; // Reduced from 30/60
+        // OPTIMIZED: Significantly reduced trail length for better performance
+        // VR gets even fewer particles since it renders twice (one per eye)
+        this.maxTrailLength = this.isSafari ? 15 : 25; // Reduced from 20/35
         
         // Animation properties
         this.time = 0;
@@ -523,7 +527,10 @@ export class ParticleTrailSystem {
         // Check if there's significant movement
         const distance = this.currentPosition.distanceTo(this.lastPosition);
         
-        console.log(`📏 movement distance: ${distance.toFixed(4)}, VR: ${isVRMode}, isDragging: ${this.isDragging}`);
+        // Only log significant movement (reduce console spam)
+        if (distance > 0.1) {
+            console.log(`📏 movement distance: ${distance.toFixed(4)}, VR: ${isVRMode}, isDragging: ${this.isDragging}`);
+        }
         
         if (distance > 0.001) { // Lower threshold for more sensitive sound triggering
             // Calculate velocity for Doppler effect
@@ -537,19 +544,11 @@ export class ParticleTrailSystem {
             if (isVRMode) {
                 // VR mode: sound based on movement speed AND having an existing trail
                 shouldPlaySound = speed > 0.08 && this.trailHistory.length > 2;
-                if (shouldPlaySound) {
-                    console.log(`🎵 ✅ VR SOUND - speed: ${speed.toFixed(4)}, trail: ${this.trailHistory.length}`);
-                } else {
-                    console.log(`🎵 ⏸️  VR no sound - speed: ${speed.toFixed(4)}, trail: ${this.trailHistory.length}`);
-                }
+                // Only log when sound state changes
             } else {
                 // Desktop mode: sound only when dragging AND trail exists (movement happened)
                 shouldPlaySound = this.isDragging && this.trailHistory.length > 2;
-                if (shouldPlaySound) {
-                    console.log(`🎵 ✅ DESKTOP SOUND - dragging with trail: ${this.trailHistory.length}`);
-                } else {
-                    console.log(`🎵 ❌ Desktop no sound - dragging: ${this.isDragging}, trail: ${this.trailHistory.length}`);
-                }
+                // Only log when sound state changes
             }
             
             if (shouldPlaySound) {

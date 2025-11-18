@@ -6,10 +6,11 @@ import ThreeMeshUI from 'https://unpkg.com/three-mesh-ui@6.5.4/build/three-mesh-
  * Uses three-mesh-ui for beautiful, readable 3D interfaces
  */
 export default class VRMenu {
-    constructor(scene, camera, video) {
+    constructor(scene, camera, panoramaPlayer) {
         this.scene = scene;
         this.camera = camera;
-        this.video = video;
+        this.panoramaPlayer = panoramaPlayer;
+        this.video = panoramaPlayer.video; // Keep video reference for compatibility
         
         this.container = null;
         this.isVisible = false;
@@ -320,11 +321,15 @@ export default class VRMenu {
     }
     
     onMuteClick() {
-        if (this.video) {
+        if (this.panoramaPlayer?.toggleMute) {
+            this.panoramaPlayer.toggleMute();
+            console.log('🎮 VRMenu: Called panoramaPlayer.toggleMute()');
+        } else if (this.video) {
+            // Fallback
             this.video.muted = !this.video.muted;
             console.log(this.video.muted ? '🔇 Muted' : '🔊 Unmuted');
-            this.updateButtonStates();
         }
+        this.updateButtonStates();
     }
     
     onRestartClick() {
@@ -336,19 +341,29 @@ export default class VRMenu {
     }
     
     onVolumeDown() {
-        if (this.video) {
+        if (this.panoramaPlayer?.setVolume) {
+            const newVolume = Math.max(0, this.video.volume - 0.1);
+            this.panoramaPlayer.setVolume(newVolume);
+            console.log(`🎮 VRMenu: Called panoramaPlayer.setVolume(${Math.round(newVolume * 100)}%)`);
+        } else if (this.video) {
+            // Fallback
             this.video.volume = Math.max(0, this.video.volume - 0.1);
             console.log(`🔉 Volume: ${Math.round(this.video.volume * 100)}%`);
-            this.updateButtonStates();
         }
+        this.updateButtonStates();
     }
     
     onVolumeUp() {
-        if (this.video) {
+        if (this.panoramaPlayer?.setVolume) {
+            const newVolume = Math.min(1, this.video.volume + 0.1);
+            this.panoramaPlayer.setVolume(newVolume);
+            console.log(`🎮 VRMenu: Called panoramaPlayer.setVolume(${Math.round(newVolume * 100)}%)`);
+        } else if (this.video) {
+            // Fallback
             this.video.volume = Math.min(1, this.video.volume + 0.1);
             console.log(`🔊 Volume: ${Math.round(this.video.volume * 100)}%`);
-            this.updateButtonStates();
         }
+        this.updateButtonStates();
     }
     
     onGalleryClick() {

@@ -6,6 +6,7 @@ import VideoStreamManager from './VideoStreamManager.js';
 // import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { VRButton } from '../vendor/VRButton.js';
 import VRMenu from './VRMenu.js';
+import VREndScreen from './VREndScreen.js';
 import { ParticleTrailSystem } from './ParticleTrailSystem.js';
 import { HotspotManager } from './HotspotManager.js';
 import { MiniMap } from './MiniMap.js';
@@ -58,6 +59,11 @@ export class PanoramaPlayer {
     this.vrMenuVisible = false;
     this.vrMenuButtons = [];
     this.hoveredButton = null;
+    
+    // VR End Screen properties
+    this.vrEndScreen = null;
+    this.vrEndScreenVisible = false;
+    
     // Particle trail systems - one for each controller and one for mouse
     this.particleTrailSystem = null; // Desktop mouse trail
     this.vrParticleTrailSystems = []; // VR controller trails [left, right]
@@ -107,23 +113,10 @@ export class PanoramaPlayer {
         this.setupVRButton();
         this.setupControllers();
         
-        // NOW check for intro
-        const introSeen = sessionStorage.getItem('eyetripvr_intro_seen');
-        
-        if (introSeen) {
-            console.log('✅ Intro already seen, resolving immediately');
-            return Promise.resolve();
-        } else {
-            console.log('🎬 Showing intro sequence...');
-            return new Promise(async (resolve) => {
-                const IntroSequence = (await import('./IntroSequence.js')).IntroSequence;
-                new IntroSequence(this.container, () => {
-                    console.log('🎬 Intro complete callback fired');
-                    sessionStorage.setItem('eyetripvr_intro_seen', 'true');
-                    resolve();
-                });
-            });
-        }
+        // HTML intro overlay in video1.html handles user interaction
+        // Always resolve immediately since intro is handled in HTML
+        console.log('🎬 HTML intro overlay handles user interaction');
+        return Promise.resolve();
     }
 
     // Create Three.js scene
@@ -549,11 +542,22 @@ export class PanoramaPlayer {
                 const loadingOverlay = document.getElementById('loadingOverlay');
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'flex';
-                    loadingOverlay.innerHTML = `
-                        <div class="md-spinner"></div>
-                        <div>Loading 360° Experience...</div>
-                        <div id="loadingProgress" style="margin-top: 10px; font-size: 18px; font-weight: bold;">0%</div>
-                    `;
+                    // Preserve the gradient styling and just update the text content
+                    const loadingText = loadingOverlay.querySelector('div:nth-child(2)');
+                    if (loadingText) {
+                        loadingText.textContent = 'Loading 360° Experience...';
+                    }
+                    // Add progress indicator if it doesn't exist
+                    let progressDiv = document.getElementById('loadingProgress');
+                    if (!progressDiv) {
+                        progressDiv = document.createElement('div');
+                        progressDiv.id = 'loadingProgress';
+                        progressDiv.style.cssText = 'margin-top: 16px; font-size: 1.2em; font-weight: 500; opacity: 0.9;';
+                        progressDiv.textContent = '0%';
+                        loadingOverlay.appendChild(progressDiv);
+                    } else {
+                        progressDiv.textContent = '0%';
+                    }
                     console.log('[DEBUG] Loading overlay shown with progress');
                 }
                 
@@ -601,7 +605,7 @@ export class PanoramaPlayer {
                 if (this.hotspotManager) {
                     this.hotspotManager.cleanup();
                 }
-                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video);
+                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video, this.renderer);
                 console.log('✅ HotspotManager instance created');
                 
                 // Set up metadata loaded handler
@@ -773,6 +777,16 @@ export class PanoramaPlayer {
             this.video.load();
             // Don't auto-play - wait for user interaction
             console.log('[DEBUG] Video loaded, waiting for user interaction to play');
+            
+            // CRITICAL: Force-hide loading overlay when video actually plays (Meta Browser fix)
+            this.video.addEventListener('play', () => {
+                console.log('▶️ [META FIX] Video play event - hiding loading overlay');
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) {
+                    overlay.style.display = 'none';
+                }
+            }, { once: true });
+            
             // Show progress bar and loading overlay with percentage
             const progressBar = document.getElementById('videoProgressBar');
             const progressFill = document.getElementById('videoProgress');
@@ -786,10 +800,11 @@ export class PanoramaPlayer {
             // Update loading overlay to show percentage
             if (loadingOverlay) {
                 loadingOverlay.style.display = 'flex';
-                loadingOverlay.innerHTML = `
-                    <div class="md-spinner"></div>
-                    <div>Loading: <span id="loadProgress">0%</span></div>
-                `;
+                // Preserve gradient styling and just update text
+                const loadingText = loadingOverlay.querySelector('div:nth-child(2)');
+                if (loadingText) {
+                    loadingText.innerHTML = 'Loading: <span id="loadProgress">0%</span>';
+                }
             }
             
             // Listen for progress events
@@ -846,7 +861,17 @@ export class PanoramaPlayer {
                 // Hide loading overlay when video is ready
                 if (loadingOverlay) {
                     loadingOverlay.style.display = 'none';
+                    console.log('✅ Loading overlay hidden on canplaythrough');
                 }
+                
+                // CRITICAL: Force-hide loading overlay after delay (Meta Browser fix)
+                setTimeout(() => {
+                    const overlay = document.getElementById('loadingOverlay');
+                    if (overlay && overlay.style.display !== 'none') {
+                        console.log('🔧 [META FIX] Force-hiding stuck loading overlay');
+                        overlay.style.display = 'none';
+                    }
+                }, 2000);
                 
                 this.texture = new THREE.VideoTexture(this.video);
                 this.texture.minFilter = THREE.LinearFilter;
@@ -870,7 +895,7 @@ export class PanoramaPlayer {
                 if (this.hotspotManager) {
                     this.hotspotManager.cleanup();
                 }
-                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video);
+                this.hotspotManager = new HotspotManager(this.scene, this.camera, this.video, this.renderer);
                 this.hotspotManager.setupAudio();
                 
                 // Extract video name from URL for hotspot configuration
@@ -1076,7 +1101,7 @@ export class PanoramaPlayer {
         
         this.camera.updateMatrixWorld(true);
         
-        // Update VR menu if visible
+        // Update VR menu if visible - ThreeMeshUI REQUIRES update() every frame when visible
         if (this.vrMenu && this.vrMenuVisible) {
             this.vrMenu.update();
             
@@ -1094,8 +1119,23 @@ export class PanoramaPlayer {
                     if (intersectedButton) {
                         this.vrMenu.highlightButton(intersectedButton);
                         this.hoveredButton = intersectedButton;
-                    } else {
-                        this.hoveredButton = null;
+                    }
+                }
+            });
+        }
+        
+        // Update VR end screen if visible - ThreeMeshUI REQUIRES update() every frame when visible
+        if (this.vrEndScreen && this.vrEndScreenVisible) {
+            this.vrEndScreen.update();
+            
+            // Check controller intersections with end screen buttons
+            this.controllers.forEach(controller => {
+                if (controller) {
+                    const intersectedButton = this.vrEndScreen.checkIntersection(controller);
+                    
+                    // Highlight buttons on hover (simplified - no hover state tracking)
+                    if (intersectedButton) {
+                        this.vrEndScreen.highlightButton(intersectedButton);
                     }
                 }
             });
@@ -1105,7 +1145,7 @@ export class PanoramaPlayer {
         const isInVR = this.renderer.xr.isPresenting;
         
         if (isInVR) {
-            // Animate VR particle systems
+            // Animate VR controller particle trails
             this.vrParticleTrailSystems.forEach((system) => {
                 if (system) {
                     system.animate();
@@ -1146,8 +1186,9 @@ export class PanoramaPlayer {
                 window.app.perfMonitor.update();
             }
             
-            // Audio-Reactive Particles
-            if (window.app.audioParticles) {
+            // Audio-Reactive Particles - DISABLE IN VR FOR PERFORMANCE
+            const isVRMode = this.renderer.xr.isPresenting;
+            if (window.app.audioParticles && !isVRMode) {
                 window.app.audioParticles.update();
             }
             
@@ -1174,13 +1215,103 @@ export class PanoramaPlayer {
     handleVRTransition(isVRMode) {
         console.log('🔄 [VR] Handling transition to:', isVRMode ? 'VR' : 'Desktop');
         
-        // Show VR menu when entering VR mode
         if (isVRMode) {
+            console.log('🎮 [VR] Entered VR mode');
+            
+            // Capture audio state BEFORE any VR operations
+            const audioStateBefore = {
+                playing: this.video && !this.video.paused,
+                muted: this.video ? this.video.muted : false,
+                volume: this.video ? this.video.volume : 1.0
+            };
+            console.log('🔊 [VR] Audio state BEFORE transition:', audioStateBefore);
+            
+            // Show VR menu
             setTimeout(() => {
                 this.showVRMenu();
-            }, 1000); // Small delay to let VR session stabilize
+                
+                // Force audio restoration after menu shows
+                setTimeout(() => {
+                    if (this.video && audioStateBefore.playing) {
+                        console.log('🔊 [VR] Forcing audio restoration after menu...');
+                        this.video.muted = audioStateBefore.muted;
+                        this.video.volume = audioStateBefore.volume;
+                        
+                        if (this.video.paused) {
+                            this.video.play().then(() => {
+                                console.log('✅ [VR] Video resumed with audio');
+                            }).catch(err => {
+                                console.warn('⚠️ [VR] Video resume failed:', err);
+                            });
+                        }
+                    }
+                }, 100);
+            }, 1000);
+            
+            // Listen for XR session visibility changes (Quest OS popups)
+            const session = this.renderer.xr.getSession();
+            if (session) {
+                // Store audio state when session becomes hidden
+                session.addEventListener('visibilitychange', () => {
+                    const isVisible = session.visibilityState === 'visible';
+                    console.log('👁️ [VR] Session visibility changed:', session.visibilityState);
+                    
+                    if (!isVisible) {
+                        // Session hidden (Quest OS popup) - store state
+                        console.log('🔇 [VR] Session hidden - storing audio state');
+                        this._storedAudioState = {
+                            playing: !this.video.paused,
+                            muted: this.video.muted,
+                            volume: this.video.volume,
+                            currentTime: this.video.currentTime
+                        };
+                    } else {
+                        // Session visible again - restore audio AGGRESSIVELY
+                        console.log('🔊 [VR] Session visible - restoring audio state');
+                        
+                        if (this._storedAudioState && this.video) {
+                            const stored = this._storedAudioState;
+                            console.log('🔊 Restoring:', stored);
+                            
+                            // Force unmute and restore volume
+                            this.video.muted = stored.muted;
+                            this.video.volume = stored.volume;
+                            
+                            // Resume playback if it was playing
+                            if (stored.playing && this.video.paused) {
+                                // Seek back slightly in case we lost sync
+                                const timeDiff = this.video.currentTime - stored.currentTime;
+                                if (timeDiff > 0.1) {
+                                    this.video.currentTime = stored.currentTime;
+                                }
+                                
+                                this.video.play().then(() => {
+                                    console.log('✅ [VR] Audio restored successfully!');
+                                    console.log('🔊 Current state:', {
+                                        muted: this.video.muted,
+                                        volume: this.video.volume,
+                                        playing: !this.video.paused
+                                    });
+                                }).catch(err => {
+                                    console.error('❌ [VR] Failed to restore audio:', err);
+                                    // Try again after a short delay
+                                    setTimeout(() => {
+                                        this.video.play().catch(e => console.error('Retry failed:', e));
+                                    }, 100);
+                                });
+                            }
+                            
+                            // Clear stored state
+                            delete this._storedAudioState;
+                        }
+                    }
+                });
+                
+                console.log('✅ [VR] Session visibility handler attached');
+            }
+            
         } else {
-            // Hide VR menu when exiting VR
+            // Exiting VR mode
             this.hideVRMenu();
         }
         
@@ -1190,8 +1321,6 @@ export class PanoramaPlayer {
             controlsUI.style.display = isVRMode ? 'none' : 'block';
             console.log('🎮 [VR] UI controls:', isVRMode ? 'hidden' : 'visible');
         }
-        
-        // DON'T auto-resume video - let user control with trigger
         
         // Force texture update
         if (this.texture) {
@@ -1256,8 +1385,8 @@ export class PanoramaPlayer {
         for (let i = 0; i < 2; i++) {
             // Get controller (target ray space)
             const controller = this.renderer.xr.getController(i);
-            controller.addEventListener('selectstart', (event) => this.onSelectStart(event, i));
-            controller.addEventListener('selectend', (event) => this.onSelectEnd(event, i));
+            // REMOVED: selectstart/selectend listeners - WebXRHandler handles all trigger interactions
+            // Only keep squeeze button for menu toggle
             controller.addEventListener('squeezestart', (event) => this.onSqueezeStart(event, i));
             controller.addEventListener('squeezeend', (event) => this.onSqueezeEnd(event, i));
             this.addControllerRay(controller, i);
@@ -1298,19 +1427,14 @@ export class PanoramaPlayer {
         console.log('🎮 [VR] Trigger pressed on controller', i);
         
         if (this.renderer.xr.isPresenting) {
-            // Don't start drag overlay in VR - we don't want click sounds, only movement sounds
-            // Particles are already being generated by controller movement
-            
             // If menu is visible and we're hovering a button, click it
             if (this.vrMenuVisible && this.hoveredButton) {
                 console.log('🎯 [VR] Clicking menu button');
                 this.vrMenu.selectButton(this.hoveredButton);
             } else {
-                // Otherwise, play/pause video
-                this.togglePlay();
-                if (this.vrMenu) {
-                    this.vrMenu.updateButtonStates();
-                }
+                // Trigger is ONLY for hotspot discovery - handled by WebXRHandler
+                // Do NOT toggle video playback here
+                console.log('🎯 [VR] Trigger press - hotspot discovery handled by WebXRHandler');
             }
         }
         
@@ -1380,6 +1504,22 @@ export class PanoramaPlayer {
                 const videoTimeEl = document.getElementById('videoTime');
                 if (videoTimeEl) {
                     videoTimeEl.textContent = `0:00 / ${duration}`;
+                }
+            });
+            
+            // Handle video end - show VR menu
+            this.video.addEventListener('ended', () => {
+                console.log('📺 Video ended');
+                
+                // Check if in VR mode
+                const isVR = this.renderer.xr.isPresenting;
+                
+                if (isVR && this.vrMenu) {
+                    // VR Mode: Show VR menu when video ends
+                    console.log('🥽 Video ended - showing VR menu');
+                    this.showVRMenu();
+                } else {
+                    console.log('🖥️ Desktop mode - video ended');
                 }
             });
         }
@@ -1565,35 +1705,47 @@ export class PanoramaPlayer {
             this.video.muted = !this.video.muted;
             this.isMuted = this.video.muted;
             
-            // Also mute/unmute all hotspot sounds
-            if (this.hotspotManager && this.hotspotManager.hotspots) {
-                this.hotspotManager.hotspots.forEach(hotspot => {
-                    if (hotspot.audio) {
-                        if (hotspot.isRegularAudio) {
-                            // HTML5 Audio element
-                            hotspot.audio.muted = this.isMuted;
-                        } else {
-                            // THREE.Audio
-                            if (this.isMuted) {
-                                hotspot.audio.setVolume(0);
-                            } else {
-                                hotspot.audio.setVolume(1.0);
-                            }
-                        }
-                    }
+            console.log(`🔊 toggleMute called: now ${this.isMuted ? 'MUTED' : 'UNMUTED'}`);
+            
+            // Handle currently playing looped audio FIRST (most important)
+            if (this.hotspotManager?.currentLoopingAudio) {
+                const loopingAudio = this.hotspotManager.currentLoopingAudio;
+                console.log(`🔊 Handling currentLoopingAudio:`, {
+                    paused: loopingAudio.paused,
+                    volume: loopingAudio.volume,
+                    muted: loopingAudio.muted,
+                    currentTime: loopingAudio.currentTime
                 });
                 
-                // Also mute/unmute currently playing looped audio
-                if (this.hotspotManager.currentLoopingAudio) {
-                    const loopingAudio = this.hotspotManager.currentLoopingAudio;
-                    if (loopingAudio.muted !== undefined) {
-                        // HTML5 Audio
-                        loopingAudio.muted = this.isMuted;
-                    } else if (loopingAudio.setVolume) {
-                        // THREE.Audio
-                        loopingAudio.setVolume(this.isMuted ? 0 : 1.0);
+                if (this.isMuted) {
+                    // MUTE: Store current time and pause the audio
+                    if (!loopingAudio.paused) {
+                        loopingAudio.pause();
+                        loopingAudio.dataset = loopingAudio.dataset || {};
+                        loopingAudio.dataset.wasPlaying = true;
+                        console.log(`🔇 PAUSED currently playing audio at ${loopingAudio.currentTime}s`);
+                    }
+                } else {
+                    // UNMUTE: Resume playing
+                    if (loopingAudio.paused && loopingAudio.dataset?.wasPlaying) {
+                        loopingAudio.play().catch(err => console.warn('Resume failed:', err));
+                        delete loopingAudio.dataset.wasPlaying;
+                        console.log(`🔊 RESUMED audio from ${loopingAudio.currentTime}s`);
                     }
                 }
+            } else {
+                console.log(`⚠️ No currentLoopingAudio found!`);
+            }
+            
+            // Also update mute state on all hotspot audio objects (for future playback)
+            if (this.hotspotManager && this.hotspotManager.hotspots) {
+                console.log(`🔊 Updating ${this.hotspotManager.hotspots.length} hotspots for future playback...`);
+                
+                this.hotspotManager.hotspots.forEach((hotspot, index) => {
+                    if (hotspot.audio) {
+                        hotspot.audio.muted = this.isMuted;
+                    }
+                });
                 
                 console.log(`🔊 ${this.isMuted ? 'Muted' : 'Unmuted'} all sounds (video + ${this.hotspotManager.hotspots.length} hotspots)`);
             }
@@ -1777,6 +1929,147 @@ export class PanoramaPlayer {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    
+    // Show VR End Screen as immersive overlay
+    showVREndScreen() {
+        console.log('🎬 Creating VR end screen overlay...');
+        
+        // Remove existing end screen if any
+        if (this.vrEndScreenGroup) {
+            this.scene.remove(this.vrEndScreenGroup);
+        }
+        
+        // Create overlay group (positioned above VR menu)
+        const endScreenGroup = new THREE.Group();
+        
+        // Position closer than menu (menu is at z=-3, put this at z=-2.2 for prominence)
+        endScreenGroup.position.set(0, 1.5, -2.2);
+        
+        // Create main panel with gradient background (larger for better visibility)
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 1536;
+        const ctx = canvas.getContext('2d');
+        
+        // Beautiful gradient background (matching loading overlay: #667eea → #764ba2)
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#667eea');  // Purple
+        gradient.addColorStop(1, '#764ba2');  // Pink
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Add subtle border glow
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.lineWidth = 20;
+        ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+        
+        // Title with shadow for depth
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+        ctx.shadowBlur = 20;
+        ctx.shadowOffsetX = 5;
+        ctx.shadowOffsetY = 5;
+        ctx.font = 'bold 140px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Experience Complete', canvas.width / 2, 220);
+        
+        // Reset shadow for other text
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        
+        // Subtitle with slightly transparent white
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = '85px Arial';
+        ctx.fillText('Matrix Caracas Sphere', canvas.width / 2, 360);
+        
+        // Divider line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2 - 400, 420);
+        ctx.lineTo(canvas.width / 2 + 400, 420);
+        ctx.stroke();
+        
+        // Stats with icon-style presentation
+        const totalHotspots = this.hotspotManager?.hotspots?.length || 0;
+        const discoveredHotspots = this.hotspotManager?.hotspots?.filter(h => h.discovered).length || 0;
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = 'bold 75px Arial';
+        ctx.fillText(`🎯 Hotspots Discovered: ${discoveredHotspots} / ${totalHotspots}`, canvas.width / 2, 570);
+        
+        // Completion percentage
+        const completionRate = totalHotspots > 0 ? Math.round((discoveredHotspots / totalHotspots) * 100) : 0;
+        ctx.fillStyle = completionRate === 100 ? '#FFD700' : 'rgba(255, 255, 255, 0.8)'; // Gold if 100%
+        ctx.font = '65px Arial';
+        ctx.fillText(`${completionRate}% Complete`, canvas.width / 2, 680);
+        
+        // Divider line
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(canvas.width / 2 - 400, 740);
+        ctx.lineTo(canvas.width / 2 + 400, 740);
+        ctx.stroke();
+        
+        // Instructions with better formatting
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.font = '55px Arial';
+        ctx.fillText('Press trigger to restart experience', canvas.width / 2, 850);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+        ctx.font = '50px Arial';
+        ctx.fillText('or use VR Menu to return to gallery', canvas.width / 2, 930);
+        
+        // Creator credits at bottom
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = '45px Arial';
+        ctx.fillText('Music: "Caracas" by Phil Manzanera', canvas.width / 2, 1100);
+        ctx.font = '48px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        ctx.fillText('Created by David Aughenbaugh', canvas.width / 2, 1180);
+        
+        // Create texture from gradient canvas
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.needsUpdate = true;
+        
+        // Create mesh with larger size for better VR visibility (6x4.5)
+        const textGeometry = new THREE.PlaneGeometry(6, 4.5);
+        const textMaterial = new THREE.MeshBasicMaterial({
+            map: texture,
+            transparent: true,
+            side: THREE.DoubleSide,
+            opacity: 1.0
+        });
+        const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+        endScreenGroup.add(textMesh);
+        
+        // Add to scene
+        this.scene.add(endScreenGroup);
+        this.vrEndScreenGroup = endScreenGroup;
+        
+        // Make it face the camera
+        if (this.camera) {
+            const cameraDirection = new THREE.Vector3();
+            this.camera.getWorldDirection(cameraDirection);
+            cameraDirection.multiplyScalar(-2.5);
+            cameraDirection.add(this.camera.position);
+            cameraDirection.y = this.camera.position.y;
+            endScreenGroup.position.copy(cameraDirection);
+            endScreenGroup.lookAt(this.camera.position);
+        }
+        
+        console.log('✅ VR end screen created and positioned');
+    }
+    
+    // Hide VR End Screen
+    hideVREndScreen() {
+        if (this.vrEndScreenGroup) {
+            this.scene.remove(this.vrEndScreenGroup);
+            this.vrEndScreenGroup = null;
+            console.log('🎬 VR end screen hidden');
+        }
     }
     
     // Save progress to localStorage
@@ -2131,32 +2424,23 @@ export class PanoramaPlayer {
     setVolume(val) {
         if (this.video) {
             this.video.volume = val;
+            console.log(`🔊 setVolume(${Math.round(val * 100)}%) called`);
             
-            // Also set volume for all hotspot sounds
+            // Handle currently playing looped audio FIRST
+            if (this.hotspotManager?.currentLoopingAudio) {
+                const loopingAudio = this.hotspotManager.currentLoopingAudio;
+                loopingAudio.volume = val;
+                console.log(`🔊 Set currentLoopingAudio volume to ${Math.round(val * 100)}%`);
+            }
+            
+            // Also set volume for all hotspot sounds (for future playback)
             if (this.hotspotManager && this.hotspotManager.hotspots) {
                 this.hotspotManager.hotspots.forEach(hotspot => {
                     if (hotspot.audio) {
-                        if (hotspot.isRegularAudio) {
-                            // HTML5 Audio element
-                            hotspot.audio.volume = val;
-                        } else {
-                            // THREE.Audio
-                            hotspot.audio.setVolume(val);
-                        }
+                        hotspot.audio.volume = val;
                     }
                 });
-            }
-            
-            // Also control currently playing looped audio
-            if (this.hotspotManager && this.hotspotManager.currentLoopingAudio) {
-                const loopingAudio = this.hotspotManager.currentLoopingAudio;
-                if (loopingAudio.volume !== undefined) {
-                    // HTML5 Audio
-                    loopingAudio.volume = val;
-                } else if (loopingAudio.setVolume) {
-                    // THREE.Audio
-                    loopingAudio.setVolume(val);
-                }
+                console.log(`🔊 Updated ${this.hotspotManager.hotspots.length} hotspot volumes`);
             }
         }
     }
@@ -2170,12 +2454,20 @@ export class PanoramaPlayer {
             return;
         }
         
-        // Create new modern VR menu
-        this.vrMenu = new VRMenu(this.scene, this.camera, this.video);
+        // Create new modern VR menu - pass panoramaPlayer for proper audio control
+        this.vrMenu = new VRMenu(this.scene, this.camera, this);
         this.vrMenu.show();
         this.vrMenuVisible = true;
         
-        console.log('✨ [VR] Modern VR menu created');
+        console.log('✨ [VR] Modern VR menu created and shown');
+        
+        // DISABLED: VR end screen creation for performance (heavy ThreeMeshUI 3D text)
+        // if (!this.vrEndScreen) {
+        //     this.vrEndScreen = new VREndScreen(this.scene, this.camera, this);
+        //     this.vrEndScreen.create();
+        //     console.log('✨ [VR] End screen created');
+        // }
+        console.log('⚡ [VR] End screen creation DISABLED for performance');
     }
     
     showVRMenu() {

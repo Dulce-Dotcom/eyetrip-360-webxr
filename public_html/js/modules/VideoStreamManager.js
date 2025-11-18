@@ -103,7 +103,7 @@ class VideoStreamManager {
         video.setAttribute('playsinline', '');
         video.setAttribute('data-quality', quality);
         
-        video.loop = true;
+        video.loop = false; // Disable loop so end screen can show
         video.muted = true; // Start muted for autoplay
         video.playsInline = true;
         video.src = src;

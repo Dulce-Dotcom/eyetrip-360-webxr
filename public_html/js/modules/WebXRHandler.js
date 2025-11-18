@@ -20,6 +20,25 @@ export class WebXRHandler {
         this.supportsLayers = false;
         this.isMetaQuest = false;
         
+        // Listen for VR session start (when VRButton creates session)
+        this.renderer.xr.addEventListener('sessionstart', () => {
+            console.log('🎮 [DEBUG] VR session started - setting up WebXRHandler controllers');
+            this.xrSession = this.renderer.xr.getSession();
+            this.setupVRControllers();
+        });
+        
+        this.renderer.xr.addEventListener('sessionend', () => {
+            console.log('🎮 [DEBUG] VR session ended');
+            this.cleanup();
+            
+            // Hide loading overlay when exiting VR (prevents gradient overlay bug)
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+                console.log('✅ Loading overlay hidden on VR session end');
+            }
+        });
+        
         this.checkSupport();
     }
     
@@ -359,6 +378,21 @@ export class WebXRHandler {
 
             this.xrSession.addEventListener('visibilitychange', (event) => {
                 console.log('👁️ [DEBUG] WebXR visibility changed:', event.session.visibilityState);
+                
+                // CRITICAL: Resume video when session becomes visible again
+                // (after Quest OS room scale prompt, guardian setup, etc.)
+                if (event.session.visibilityState === 'visible') {
+                    console.log('🔊 [VR] Session visible again - resuming video');
+                    if (this.panoramaPlayer?.video && this.panoramaPlayer.video.paused) {
+                        this.panoramaPlayer.video.play().then(() => {
+                            console.log('✅ [VR] Video resumed successfully');
+                        }).catch(err => {
+                            console.error('❌ [VR] Failed to resume video:', err);
+                        });
+                    }
+                } else if (event.session.visibilityState === 'hidden') {
+                    console.log('⏸️ [VR] Session hidden (Quest OS prompt or guardian)');
+                }
             });
 
             console.log('🔄 [DEBUG] Starting render loop...');
@@ -383,6 +417,17 @@ export class WebXRHandler {
                 
                 // Auto-play video and show VR menu when entering VR
                 if (this.panoramaPlayer) {
+                    // Preserve audio state before any VR operations
+                    const wasPlaying = this.panoramaPlayer.video && !this.panoramaPlayer.video.paused;
+                    const wasMuted = this.panoramaPlayer.video && this.panoramaPlayer.video.muted;
+                    const currentVolume = this.panoramaPlayer.video ? this.panoramaPlayer.video.volume : 1.0;
+                    
+                    console.log('🔊 [VR] Audio state before VR:', {
+                        playing: wasPlaying,
+                        muted: wasMuted,
+                        volume: currentVolume
+                    });
+                    
                     console.log('🎬 [VR] Auto-playing video on VR entry');
                     if (this.panoramaPlayer.video && this.panoramaPlayer.video.paused) {
                         this.panoramaPlayer.video.play().catch(err => {
@@ -390,8 +435,30 @@ export class WebXRHandler {
                         });
                     }
                     
-                    console.log('📋 [VR] Showing VR menu on entry');
+                    // CRITICAL: Restore audio state after play
+                    if (this.panoramaPlayer.video) {
+                        this.panoramaPlayer.video.muted = wasMuted;
+                        this.panoramaPlayer.video.volume = currentVolume;
+                        console.log('🔊 [VR] Audio state restored:', {
+                            muted: this.panoramaPlayer.video.muted,
+                            volume: this.panoramaPlayer.video.volume
+                        });
+                    }
+                    
+                    // Show VR menu 
+                    console.log('📋 [VR] Showing VR menu');
                     this.panoramaPlayer.showVRMenu();
+                    
+                    // Double-check audio state after menu shown
+                    setTimeout(() => {
+                        if (this.panoramaPlayer.video) {
+                            console.log('🔊 [VR] Audio state after menu:', {
+                                playing: !this.panoramaPlayer.video.paused,
+                                muted: this.panoramaPlayer.video.muted,
+                                volume: this.panoramaPlayer.video.volume
+                            });
+                        }
+                    }, 100);
                 }
             }, 1000);
 
@@ -520,14 +587,17 @@ export class WebXRHandler {
     }
 
     createVRControllerRay(color = 0x00ff00) {
+        // Extended ray to 25 units to reach hotspots (positioned at 5-12 units away)
         const geometry = new THREE.BufferGeometry().setFromPoints([
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, -5)
+            new THREE.Vector3(0, 0, -25)
         ]);
         
         const material = new THREE.LineBasicMaterial({ 
             color: color,
-            linewidth: 2
+            linewidth: 3,
+            transparent: true,
+            opacity: 0.8
         });
         
         return new THREE.Line(geometry, material);
@@ -535,7 +605,7 @@ export class WebXRHandler {
 
     onVRControllerSelect(controllerIndex, isPressed) {
         if (isPressed) {
-            console.log(`🎮 VR Controller ${controllerIndex} trigger pressed`);
+            console.log(`🎮 [VR] Controller ${controllerIndex} trigger pressed`);
             
             // Get the controller
             const controller = this.controllers[controllerIndex];
@@ -544,68 +614,182 @@ export class WebXRHandler {
                 return;
             }
             
-            // First check for hotspot interactions
-            const tempMatrix = new THREE.Matrix4();
-            const raycaster = new THREE.Raycaster();
-            
-            // Get controller's world matrix
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
-            
-            // Set raycaster from controller's world position and direction
-            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-            
-            console.log('🔍 [VR DEBUG] Controller raycaster:', {
-                origin: raycaster.ray.origin.toArray(),
-                direction: raycaster.ray.direction.toArray()
-            });
-            
-            // Check if we're pointing at a hotspot
-            if (this.panoramaPlayer?.hotspotManager?.hotspots) {
-                const allHotspots = this.panoramaPlayer.hotspotManager.hotspots;
-                console.log('🔍 [VR DEBUG] Total hotspots:', allHotspots.length);
-                
-                const hotspotMeshes = allHotspots
-                    .filter(h => h.mesh && h.active && !h.discovered)
-                    .map(h => h.mesh);
-                
-                console.log('🔍 [VR DEBUG] Hotspot meshes to check:', hotspotMeshes.length);
-                
-                if (hotspotMeshes.length > 0) {
-                    const hotspotIntersects = raycaster.intersectObjects(hotspotMeshes, true);
-                    
-                    console.log('🔍 [VR DEBUG] Hotspot intersections found:', hotspotIntersects.length);
-                    
-                    if (hotspotIntersects.length > 0) {
-                        const intersectedMesh = hotspotIntersects[0].object;
-                        const hotspot = intersectedMesh.userData.hotspot;
-                        
-                        console.log('🎯 [VR DEBUG] Hotspot intersection details:', {
-                            distance: hotspotIntersects[0].distance,
-                            point: hotspotIntersects[0].point.toArray(),
-                            hasHotspot: !!hotspot,
-                            hotspotId: hotspot?.id,
-                            discovered: hotspot?.discovered
-                        });
-                        
-                        if (hotspot && !hotspot.discovered) {
-                            console.log('🎮 VR Controller discovered hotspot:', hotspot.id);
-                            this.panoramaPlayer.hotspotManager.discoverHotspot(hotspot);
-                            return; // Don't show menu if we discovered a hotspot
+            // Check if VR menu is visible and handle button clicks
+            if (this.panoramaPlayer && this.panoramaPlayer.vrMenuVisible) {
+                console.log('🎮 [VR] Checking for VR menu click...');
+                const vrMenu = this.panoramaPlayer.vrMenu;
+                if (vrMenu && vrMenu.checkIntersection) {
+                    const intersectedButton = vrMenu.checkIntersection(controller);
+                    if (intersectedButton) {
+                        console.log('🎮 [VR] Menu button clicked!');
+                        vrMenu.selectButton(intersectedButton);
+                        // Haptic feedback
+                        if (controller.gamepad?.hapticActuators?.[0]) {
+                            controller.gamepad.hapticActuators[0].pulse(0.3, 100);
                         }
+                        return;
                     } else {
-                        console.log('⚠️ [VR DEBUG] No hotspot intersections found');
+                        console.log('ℹ️ [VR] Menu visible but no button intersected');
                     }
+                } else {
+                    console.warn('⚠️ [VR] VR menu missing checkIntersection method');
                 }
-            } else {
-                console.error('❌ [VR DEBUG] No hotspotManager or hotspots available!');
             }
             
-            // If no hotspot was discovered, toggle VR menu
-            if (this.vrMenuVisible) {
-                this.hideVRMenu();
+            // Check if VR end screen is visible and handle button clicks
+            if (this.panoramaPlayer && this.panoramaPlayer.vrEndScreenVisible) {
+                console.log('🎬 [VR] Checking for end screen button click...');
+                const vrEndScreen = this.panoramaPlayer.vrEndScreen;
+                if (vrEndScreen && vrEndScreen.checkIntersection) {
+                    const intersectedButton = vrEndScreen.checkIntersection(controller);
+                    if (intersectedButton) {
+                        console.log('🎬 [VR] End screen button clicked!');
+                        vrEndScreen.selectButton(intersectedButton);
+                        // Haptic feedback
+                        if (controller.gamepad?.hapticActuators?.[0]) {
+                            controller.gamepad.hapticActuators[0].pulse(0.5, 150);
+                        }
+                        return;
+                    } else {
+                        console.log('ℹ️ [VR] End screen visible but no button intersected');
+                    }
+                } else {
+                    console.warn('⚠️ [VR] VR end screen missing checkIntersection method');
+                }
+            }
+            
+            // ===== HOTSPOT DISCOVERY LOGIC =====
+            console.log('🔍 [VR] Checking for hotspot discovery...');
+            
+            if (!this.panoramaPlayer || !this.panoramaPlayer.hotspotManager) {
+                console.warn('⚠️ [VR] No hotspot manager available');
+                return;
+            }
+            
+            const hotspotManager = this.panoramaPlayer.hotspotManager;
+            const hotspots = hotspotManager.hotspots;
+            
+            if (!hotspots || hotspots.length === 0) {
+                console.log('ℹ️ [VR] No hotspots to check');
+                return;
+            }
+            
+            // Get controller position and direction
+            const tempMatrix = new THREE.Matrix4();
+            tempMatrix.identity().extractRotation(controller.matrixWorld);
+            
+            const raycaster = new THREE.Raycaster();
+            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+            raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+            raycaster.far = 30; // Extended range to reach hotspots
+            
+            console.log('🔍 [VR] Controller position:', raycaster.ray.origin);
+            console.log('🔍 [VR] Ray direction:', raycaster.ray.direction);
+            
+            // Filter to only active, undiscovered hotspots
+            const activeHotspots = hotspots.filter(h => {
+                const isValid = h.active && !h.discovered && h.mesh && h.visible;
+                if (!isValid && h.mesh) {
+                    console.log(`⚠️ Skipping hotspot: active=${h.active}, discovered=${h.discovered}, visible=${h.visible}`);
+                }
+                return isValid;
+            });
+            
+            console.log(`🔍 [VR] Total hotspots: ${hotspots.length}, Active undiscovered: ${activeHotspots.length}`);
+            
+            if (activeHotspots.length === 0) {
+                console.log('ℹ️ [VR] No active hotspots to discover');
+                return;
+            }
+            
+            // Collect all meshes to check (main mesh + glow layers + particles)
+            const meshesToCheck = [];
+            activeHotspots.forEach(hotspot => {
+                // Add main mesh
+                if (hotspot.mesh) {
+                    meshesToCheck.push(hotspot.mesh);
+                }
+                
+                // Add glow layers
+                if (hotspot.glowLayers && Array.isArray(hotspot.glowLayers)) {
+                    hotspot.glowLayers.forEach(glow => meshesToCheck.push(glow));
+                }
+                
+                // Add particles if they exist
+                if (hotspot.particles) {
+                    meshesToCheck.push(hotspot.particles);
+                }
+            });
+            
+            console.log(`🔍 [VR] Checking ${meshesToCheck.length} meshes for intersection`);
+            
+            // Log distances to help debug
+            activeHotspots.forEach(hotspot => {
+                if (hotspot.mesh) {
+                    const distance = raycaster.ray.origin.distanceTo(hotspot.mesh.position);
+                    console.log(`� Distance to ${hotspot.id} at (${hotspot.mesh.position.x.toFixed(2)}, ${hotspot.mesh.position.y.toFixed(2)}, ${hotspot.mesh.position.z.toFixed(2)}): ${distance.toFixed(2)} units`);
+                }
+            });
+            
+            // Check for intersections with hotspot meshes
+            const intersects = raycaster.intersectObjects(meshesToCheck, true);
+            
+            console.log(`🎯 [VR] Intersections found: ${intersects.length}`);
+            
+            if (intersects.length > 0) {
+                // Log first few intersections for debugging
+                intersects.slice(0, 3).forEach((intersect, i) => {
+                    console.log(`🎯 Intersection ${i + 1}:`, {
+                        distance: intersect.distance.toFixed(2),
+                        point: intersect.point,
+                        object: intersect.object.type,
+                        hasUserData: !!intersect.object.userData.hotspot,
+                        hotspotId: intersect.object.userData.hotspot?.id
+                    });
+                });
+                
+                // Find the hotspot from the intersection
+                for (const intersect of intersects) {
+                    let hotspot = null;
+                    
+                    // Check if the intersected object has hotspot userData
+                    if (intersect.object.userData && intersect.object.userData.hotspot) {
+                        hotspot = intersect.object.userData.hotspot;
+                    }
+                    
+                    // If not, traverse up the parent chain
+                    if (!hotspot) {
+                        let parent = intersect.object.parent;
+                        while (parent && !hotspot) {
+                            if (parent.userData && parent.userData.hotspot) {
+                                hotspot = parent.userData.hotspot;
+                                break;
+                            }
+                            parent = parent.parent;
+                        }
+                    }
+                    
+                    // If found, discover the hotspot
+                    if (hotspot && !hotspot.discovered && hotspot.active) {
+                        console.log('✨ [VR] HOTSPOT DISCOVERED!', hotspot.id);
+                        
+                        // Discover the hotspot using the manager
+                        hotspotManager.discoverHotspot(hotspot);
+                        
+                        // Strong haptic feedback for discovery
+                        if (controller.gamepad?.hapticActuators?.[0]) {
+                            controller.gamepad.hapticActuators[0].pulse(0.8, 200);
+                        }
+                        
+                        console.log('🎉 [VR] Hotspot collected successfully!');
+                        return; // Exit after first discovery
+                    }
+                }
+                
+                console.log('⚠️ [VR] Intersected objects but no valid hotspot found');
+                console.log('⚠️ [VR] Intersected objects but no valid hotspot found');
             } else {
-                this.showVRMenu();
+                console.log('ℹ️ [VR] No intersections with hotspot meshes');
             }
         }
     }
@@ -657,18 +841,17 @@ export class WebXRHandler {
             
             // Handle button presses
             if (gamepad.buttons) {
-                // A button for Quest controllers (button 3 on right controller, button 4 on left controller)
+                // A button - currently not mapped (reserved for future use)
                 // Note: buttons[0] is the TRIGGER and is handled by selectstart event for hotspot discovery
                 const aButtonIndex = inputSource.handedness === 'right' ? 3 : 4;
                 if (gamepad.buttons[aButtonIndex]?.pressed && !this.aButtonPressed) {
                     this.aButtonPressed = true;
-                    console.log('🎮 [DEBUG] A button pressed (button', aButtonIndex, ') - calling togglePlayPause');
-                    this.togglePlayPause();
+                    console.log('🎮 [DEBUG] A button pressed (button', aButtonIndex, ') - no action (reserved)');
                 } else if (!gamepad.buttons[aButtonIndex]?.pressed) {
                     this.aButtonPressed = false;
                 }
                 
-                // B button for Quest controllers (button 4 on right controller, button 5 on left controller)
+                // B button for Quest controllers - toggles mute/unmute
                 const bButtonIndex = inputSource.handedness === 'right' ? 4 : 5;
                 if (gamepad.buttons[bButtonIndex]?.pressed && !this.bButtonPressed) {
                     this.bButtonPressed = true;
@@ -720,10 +903,34 @@ export class WebXRHandler {
     onSelectStart(event) {
         console.log('🎮 Controller select start - trigger pressed');
         
+        // Check if end screen is visible - if so, restart the video
+        if (this.panoramaPlayer?.vrEndScreenGroup) {
+            console.log('🔄 Trigger pressed on end screen - restarting video...');
+            
+            // Hide end screen
+            if (this.panoramaPlayer.vrEndScreenGroup) {
+                this.panoramaPlayer.scene.remove(this.panoramaPlayer.vrEndScreenGroup);
+                this.panoramaPlayer.vrEndScreenGroup = null;
+            }
+            
+            // Restart video
+            if (this.panoramaPlayer.video) {
+                this.panoramaPlayer.video.currentTime = 0;
+                this.panoramaPlayer.video.play().then(() => {
+                    console.log('✅ Video restarted from beginning');
+                }).catch(err => {
+                    console.error('❌ Failed to restart video:', err);
+                });
+            }
+            
+            return; // Don't process hotspot checks when restarting
+        }
+        
         // First check for hotspot interactions
         const controller = event.target;
         const tempMatrix = new THREE.Matrix4();
         const raycaster = new THREE.Raycaster();
+        raycaster.far = 30; // Set far distance to reach hotspots
         
         // Get controller's world matrix
         tempMatrix.identity().extractRotation(controller.matrixWorld);
@@ -758,13 +965,23 @@ export class WebXRHandler {
                 console.log('🔍 [VR DEBUG] First hotspot mesh position:', hotspotMeshes[0].position.toArray());
             }
             
+            // Check intersections with hotspot meshes and their children (recursive = true)
             const hotspotIntersects = raycaster.intersectObjects(hotspotMeshes, true);
             
             console.log('🔍 [VR DEBUG] Hotspot intersections found:', hotspotIntersects.length);
             
             if (hotspotIntersects.length > 0) {
-                const intersectedMesh = hotspotIntersects[0].object;
-                const hotspot = intersectedMesh.userData.hotspot;
+                // Find the hotspot from the intersected object or its parent
+                let hotspot = null;
+                let intersectedObject = hotspotIntersects[0].object;
+                
+                // Search up the parent chain for userData.hotspot
+                while (intersectedObject && !hotspot) {
+                    hotspot = intersectedObject.userData.hotspot;
+                    if (!hotspot) {
+                        intersectedObject = intersectedObject.parent;
+                    }
+                }
                 
                 console.log('🎯 [VR DEBUG] Hotspot intersection details:', {
                     distance: hotspotIntersects[0].distance,
@@ -777,6 +994,12 @@ export class WebXRHandler {
                 if (hotspot && !hotspot.discovered) {
                     console.log('🎮 VR Controller discovered hotspot:', hotspot.id);
                     this.panoramaPlayer.hotspotManager.discoverHotspot(hotspot);
+                    
+                    // Haptic feedback
+                    if (controller?.gamepad?.hapticActuators?.[0]) {
+                        controller.gamepad.hapticActuators[0].pulse(0.8, 200);
+                    }
+                    
                     return; // Don't show menu if we discovered a hotspot
                 }
             } else {
@@ -786,13 +1009,8 @@ export class WebXRHandler {
             console.error('❌ [VR DEBUG] No hotspotManager or hotspots available!');
         }
         
-        // Handle VR menu interactions if no hotspot was discovered
-        if (this.vrMenuVisible) {
-            this.handleVRMenuInteraction(event);
-        } else {
-            // Show VR menu when trigger is pressed
-            this.showVRMenu();
-        }
+        // Trigger is ONLY for hotspot discovery - don't show VR menu
+        // VR menu can be accessed via the desktop menu or other controls
     }
 
     onSelectEnd(event) {
@@ -1047,12 +1265,17 @@ export class WebXRHandler {
     }
 
     toggleMute() {
+        console.log('🎮 WebXRHandler.toggleMute called');
         // Call PanoramaPlayer's toggleMute which handles both video AND hotspot audio
         if (this.panoramaPlayer?.toggleMute) {
+            console.log('🎮 Calling panoramaPlayer.toggleMute()');
             this.panoramaPlayer.toggleMute();
         } else if (this.panoramaPlayer?.video) {
             // Fallback if toggleMute doesn't exist
+            console.log('⚠️ Fallback: directly toggling video.muted');
             this.panoramaPlayer.video.muted = !this.panoramaPlayer.video.muted;
+        } else {
+            console.error('❌ Cannot toggle mute - no panoramaPlayer available!');
         }
     }
 
@@ -1176,8 +1399,9 @@ export class WebXRHandler {
     cleanup() {
         this.xrSession = null;
         this.referenceSpace = null;
-        this.renderer.xr.setSession(null);
-        this.renderer.setAnimationLoop(null);
+        
+        // DO NOT stop the animation loop - PanoramaPlayer manages this
+        // this.renderer.setAnimationLoop(null); // REMOVED - causes black screen on VR re-entry
         
         // Clean up controllers
         this.controllers.forEach(controller => {
@@ -1195,6 +1419,8 @@ export class WebXRHandler {
             this.vrMenuGroup = null;
             this.vrMenuVisible = false;
         }
+        
+        console.log('✅ WebXR cleanup complete - animation loop preserved');
     }
     
     async enterInlineFallback() {
