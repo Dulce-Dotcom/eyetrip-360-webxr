@@ -110,7 +110,9 @@
         // Set single video configuration ONLY if not already set (allows gallery to override)
         if (!sessionStorage.getItem('selectedVideo')) {
             sessionStorage.setItem('selectedVideo', 'assets/videos/processed/matrixCaracasSphere_1/matrixCaracasSphere_1_1080p.mp4');
-            console.log('🎬 Using default video: Matrix Caracas Sphere');
+            sessionStorage.setItem('initialRotation', '0');
+            sessionStorage.setItem('initialLat', '0');
+            console.log('🎬 Using default video: Matrix Caracas Sphere (rotation=0°, lat=0°)');
         }
         if (!sessionStorage.getItem('selectedTitle')) {
             sessionStorage.setItem('selectedTitle', 'Affirmation Journey: Matrix Caracas Sphere');
@@ -337,7 +339,7 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: url('assets/thumbnails/eyetrip-test-video2.jpg') center/cover no-repeat;
+                background: url('assets/thumbnails/eyetrip-test-video2-optimized.jpg') center/cover no-repeat;
                 z-index: 9998; /* Below loading overlay (9999) */
                 display: flex;
                 justify-content: center;
@@ -1232,6 +1234,19 @@
                         audio.volume = 1.0;
                         audio.loop = false;
                         audio.preload = 'auto';
+                        audio.crossOrigin = 'anonymous'; // Enable Web Audio API processing
+                        
+                        // Create Web Audio API context for volume boost beyond 100%
+                        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        const source = audioContext.createMediaElementSource(audio);
+                        const gainNode = audioContext.createGain();
+                        gainNode.gain.value = 3.0; // Boost to 300% volume
+                        source.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        // Store audio context for cleanup
+                        audio.audioContext = audioContext;
+                        audio.gainNode = gainNode;
                         
                         // Force volume back to 1.0 if anything tries to change it
                         audio.addEventListener('volumechange', () => {
@@ -1860,6 +1875,26 @@
                     console.log('🎥 Setting video path from experience data:', videoPath);
                     sessionStorage.setItem('selectedVideo', videoPath);
                     sessionStorage.setItem('selectedTitle', parsed.experience.title || 'Affirmation Journey');
+                    
+                    // Set initial camera rotation based on video
+                    if (videoPath.includes('matrixCaracasSphere')) {
+                        sessionStorage.setItem('initialRotation', '0');
+                        sessionStorage.setItem('initialLat', '0');
+                        console.log('📐 Matrix Caracas Sphere: rotation=0°, lat=0°');
+                    } else if (videoPath.includes('Scraptangle')) {
+                        sessionStorage.setItem('initialRotation', '90');
+                        sessionStorage.setItem('initialLat', '0');
+                        console.log('📐 Scraptangle: rotation=90°, lat=0°');
+                    } else if (videoPath.includes('ShroomZoom')) {
+                        sessionStorage.setItem('initialRotation', '140');
+                        sessionStorage.setItem('initialLat', '0');
+                        console.log('📐 Shroom Zoom: rotation=140°, lat=0°');
+                    } else if (videoPath.includes('StumpyWave')) {
+                        sessionStorage.setItem('initialRotation', '-5');
+                        sessionStorage.setItem('initialLat', '0');
+                        console.log('📐 Stumpy Waves: rotation=-5°, lat=0°');
+                    }
+                    
                     console.log('   ✅ Video path set in sessionStorage');
                 } else {
                     console.warn('⚠️ No videoSrc in experience data, using default');

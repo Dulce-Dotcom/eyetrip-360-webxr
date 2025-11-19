@@ -26,6 +26,7 @@ export class HotspotManager {
         this.currentLoopingAudio = null; // Track currently playing looped sound
         this.proximityAudio = null; // Audio cue for proximity hints
         this.lastProximitySound = 0; // Throttle proximity sounds
+        this.pingAudioBuffer = null; // Preloaded ping sound buffer
         
         // Raycaster for interaction detection
         this.raycaster = new THREE.Raycaster();
@@ -51,6 +52,14 @@ export class HotspotManager {
             this.audioListener = new THREE.AudioListener();
             this.camera.add(this.audioListener);
             console.log('🔊 Audio listener attached to camera');
+            
+            // Preload ping sound for instant playback
+            this.audioLoader.load('assets/sound/ES_BellsDistortedRiserReversed 01.mp3', (buffer) => {
+                this.pingAudioBuffer = buffer;
+                console.log('🔔 Ping sound preloaded and ready');
+            }, undefined, (error) => {
+                console.warn('⚠️ Failed to preload ping sound:', error);
+            });
         }
     }
     
@@ -417,8 +426,8 @@ export class HotspotManager {
             this.activeHotspots.push(hotspot);
         }
         
-        // Play appearance sound immediately when orb spawns
-        this.playAppearanceSound();
+        // Play spatial ping sound immediately when orb spawns
+        this.playAppearancePing(hotspot);
         
         console.log(`✨ Hotspot appeared: ${hotspot.label} at ${hotspot.time}s`);
     }
@@ -598,50 +607,47 @@ export class HotspotManager {
     }
     
     /**
-     * Play sound when orb first appears
+     * Play spatial ping sound when orb first appears
      */
-    playAppearanceSound() {
-        if (!this.audioListener) return;
-        
-        // Respect video mute state
-        if (this.video.muted) {
-            console.log('🔇 Appearance sound skipped (video muted)');
+    playAppearancePing(hotspot) {
+        if (!this.audioListener || !this.scene) {
+            console.warn('⚠️ Cannot play appearance ping: audio listener or scene not available');
             return;
         }
         
-        // TEMPORARY FIX: Disable appearance sounds to prevent video muting issue
-        // The Web Audio API oscillator seems to interfere with video audio in VR
-        console.log('🔕 Appearance sound disabled (preventing audio conflict)');
-        return;
-        
-        const context = this.audioListener.context;
-        if (context.state === 'suspended') {
-            context.resume();
+        // Respect video mute state
+        if (this.video.muted) {
+            console.log('🔇 Appearance ping skipped (video muted)');
+            return;
         }
         
-        // Create a bright, clear notification chime
-        const oscillator = context.createOscillator();
-        const gainNode = context.createGain();
+        // Use preloaded buffer for instant playback
+        if (!this.pingAudioBuffer) {
+            console.warn('⚠️ Ping sound buffer not loaded yet');
+            return;
+        }
         
-        oscillator.connect(gainNode);
-        gainNode.connect(context.destination);
+        // Create a spatial audio source at the hotspot position
+        const positionalAudio = new THREE.PositionalAudio(this.audioListener);
+        positionalAudio.setBuffer(this.pingAudioBuffer);
+        positionalAudio.setRefDistance(20); // Can hear from 20 units away
+        positionalAudio.setVolume(2.0); // Loud and clear
+        positionalAudio.setLoop(false); // One-shot sound
         
-        oscillator.frequency.value = 1200; // Higher pitch than proximity sound
-        oscillator.type = 'sine';
+        // Attach audio to hotspot mesh for spatial positioning
+        hotspot.mesh.add(positionalAudio);
         
-        // Apply video volume to gain
-        const videoVolume = this.video.volume;
-        const adjustedVolume = 1.0 * videoVolume; // Scale by video volume
+        // Play immediately (no loading delay)
+        positionalAudio.play();
         
-        // Louder, clearer envelope for appearance
-        gainNode.gain.setValueAtTime(0, context.currentTime);
-        gainNode.gain.linearRampToValueAtTime(adjustedVolume, context.currentTime + 0.02); // Quick attack
-        gainNode.gain.exponentialRampToValueAtTime(0.01, context.currentTime + 0.5); // Gentle decay
+        // Clean up after sound finishes
+        setTimeout(() => {
+            if (positionalAudio.parent) {
+                positionalAudio.parent.remove(positionalAudio);
+            }
+        }, 2000);
         
-        oscillator.start(context.currentTime);
-        oscillator.stop(context.currentTime + 0.5);
-        
-        console.log(`✨ Orb appearance sound played (volume: ${adjustedVolume.toFixed(2)})`);
+        console.log(`🔔 Appearance ping playing at ${hotspot.label} position`);
     }
     
     /**
@@ -720,12 +726,26 @@ export class HotspotManager {
             
             if (hotspot.isRegularAudio) {
                 // Regular HTML5 Audio element
-                hotspot.audio.currentTime = 0;
                 hotspot.audio.muted = videoMuted;
-                hotspot.audio.volume = videoVolume;
-                hotspot.audio.play().catch(err => {
-                    console.warn('Audio play failed:', err);
-                });
+                // Boost affirmation audio volume to 100% (always at max)
+                hotspot.audio.volume = 1.0;
+                
+                // DON'T reset currentTime for segment audio - it has its own start position
+                // The audio element's overridden play() method handles seeking to segmentStart
+                
+                // Ensure audio is fully loaded before playing
+                if (hotspot.audio.readyState >= 2) {
+                    hotspot.audio.play().catch(err => {
+                        console.warn('Audio play failed:', err);
+                    });
+                } else {
+                    // Wait for audio to load
+                    hotspot.audio.addEventListener('canplay', () => {
+                        hotspot.audio.play().catch(err => {
+                            console.warn('Audio play failed:', err);
+                        });
+                    }, { once: true });
+                }
             } else {
                 // THREE.Audio
                 if (hotspot.audio.buffer) {

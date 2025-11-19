@@ -29,14 +29,14 @@ export class ElevenLabsService {
         // AudioContext will be created lazily on first use (during user gesture)
         this.audioContext = null;
         
-        // Voice IDs for different emotional tones
+        // Voice IDs for different emotional tones (ALL FEMALE VOICES)
         this.voiceIds = {
-            calming: 'EXAVITQu4vr4xnSDxMaL',      // Sarah - calm, soothing
-            grounding: 'VR6AewLTigWG4xSOukaG',    // Arnold - deep, steady
-            energizing: '21m00Tcm4TlvDq8ikWAM',   // Rachel - energetic, confident
-            uplifting: '21m00Tcm4TlvDq8ikWAM',    // Rachel - energetic, confident (same as energizing)
-            meditative: 'EXAVITQu4vr4xnSDxMaL',   // Sarah - calm, soothing (same as calming)
-            transformative: 'VR6AewLTigWG4xSOukaG' // Arnold - deep, steady (same as grounding)
+            calming: 'EXAVITQu4vr4xnSDxMaL',      // Sarah - calm, soothing (female)
+            grounding: 'pNInz6obpgDQGcFmaJgB',    // Charlotte - steady, grounding (female)
+            energizing: '21m00Tcm4TlvDq8ikWAM',   // Rachel - energetic, confident (female)
+            uplifting: '21m00Tcm4TlvDq8ikWAM',    // Rachel - energetic, confident (female)
+            meditative: 'EXAVITQu4vr4xnSDxMaL',   // Sarah - calm, soothing (female)
+            transformative: 'pNInz6obpgDQGcFmaJgB' // Charlotte - steady, grounding (female)
         };
         
         // Affirmation library: 4 tones × 4 focus areas = 16 combinations
@@ -647,7 +647,8 @@ export class ElevenLabsService {
         const url = `${this.baseUrl}/text-to-speech/${voiceId}`;
         const requestBody = {
             text: text,
-            model_id: 'eleven_monolingual_v1',
+            model_id: 'eleven_turbo_v2_5',  // Latest model with better quality
+            output_format: 'mp3_44100_128',  // High quality 128kbps MP3
             voice_settings: voiceSettings[tone] || voiceSettings.calming
         };
         
